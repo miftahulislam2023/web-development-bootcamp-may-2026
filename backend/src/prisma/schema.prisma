@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../prisma/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum AccountStatus {
+  active
+  inactive
+  suspended
+  pending_verification
+}
+
+model User {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email           String        @unique
+  username        String?       @unique
+  firstName       String
+  lastName        String
+  displayName     String?
+  role            UserRole      @default(user)
+  status          AccountStatus @default(pending_verification)
+  password        String
+  emailVerifiedAt DateTime?
+  bio             String?
+  avatarUrl       String?
+  isDeleted       Boolean       @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
+  deletedAt       DateTime?
+}

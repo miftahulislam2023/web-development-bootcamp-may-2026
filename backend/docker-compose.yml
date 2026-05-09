@@ -1,0 +1,25 @@
+services:
+    postgres:
+        image: postgres:17
+        container_name: express_class_template_postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: fiamanillah
+            POSTGRES_PASSWORD: fiamanillah
+            POSTGRES_DB: express_class_template_db
+        ports:
+            - '5435:5432'
+        volumes:
+            - express_class_template_data:/var/lib/postgresql/data
+        networks:
+            - express_class_template_network
+
+networks:
+    express_class_template_network:
+        driver: bridge
+        name: express_class_template_network
+
+volumes:
+    express_class_template_data:
+        driver: local
+        name: express_class_template_data

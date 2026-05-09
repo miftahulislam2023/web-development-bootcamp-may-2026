@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+coverage
+.env
+.env.*
+.git
+.github
+.DS_Store
+*.md
+*.log
+logs
+Session.vim
+cndymnn_music.session.sql

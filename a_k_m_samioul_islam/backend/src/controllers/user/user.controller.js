@@ -1,4 +1,4 @@
-import { createUserService, getUserDetailsService, updateUserDetailsService } from "../../services/user/user.service.js";
+import { createUserService, updateUserDetailsService } from "../../services/user/user.service.js";
 
 // User creation 
 
@@ -23,12 +23,10 @@ export const createUser = async (req, res) => {
 
 export const getUserDetails=async(req,res)=>{
     try {
-        const user=await getUserDetailsService(req.params.email);
-
         return res.status(200).json({
             success: true,
             message: "User details fetched successfully",
-            data: user
+            data: req.dbUser
         });
     } catch (error) {
         return res.status(error.statusCode || 500).json({
@@ -42,7 +40,7 @@ export const getUserDetails=async(req,res)=>{
 
 export const updateUserDetails=async(req,res)=>{
     try {
-        const updatedUser=await updateUserDetailsService({...req.body, email:req.params.email});
+        const updatedUser=await updateUserDetailsService(req.body, req.dbUser);
 
         return res.status(200).json({
             success: true,

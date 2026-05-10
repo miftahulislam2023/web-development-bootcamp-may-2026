@@ -1,6 +1,6 @@
 import { User } from "../../models/user/user.model.js";
 
-export const createUser = async (userData) => {
+export const createUserService = async (userData) => {
     const { name, email, currency } = userData;
 
     if (!email || !name || !currency) {
@@ -21,3 +21,4 @@ export const createUser = async (userData) => {
 
     return user;
 };
+

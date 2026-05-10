@@ -1,9 +1,11 @@
 import { User } from "../../models/user/user.model.js";
 
+// User creation service
+
 export const createUserService = async (userData) => {
     const { name, email, currency } = userData;
 
-    if (!email || !name || !currency) {
+    if (!email || !name || !currency || !photoURL) {
         const error = new Error("All fields required");
         error.statusCode = 400;
         throw error;
@@ -22,3 +24,16 @@ export const createUserService = async (userData) => {
     return user;
 };
 
+// User details service
+
+export const getUserDetailsService=async(email)=>{
+    const user=await User.findOne({email});
+
+    if(!user){
+        const error = new Error("User not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return user;
+};

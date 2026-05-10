@@ -23,6 +23,10 @@ const userSchema = new Schema(
       uppercase: true,
       default: "BDT",
     },
+    photoURL:{
+        type:String,
+        required:true
+    }
   },
   {
     timestamps: true,

@@ -1,4 +1,4 @@
-import { createUserService, getUserDetailsService } from "../../services/user/user.service.js";
+import { createUserService, getUserDetailsService, updateUserDetailsService } from "../../services/user/user.service.js";
 
 // User creation 
 
@@ -6,20 +6,20 @@ export const createUser = async (req, res) => {
     try {
         const user = await createUserService(req.body);
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             message: "User created successfully",
             data: user
         });
     } catch (error) {
-        res.status(error.statusCode || 500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message
         });
     }
 };
 
-// User details
+// User details fetch
 
 export const getUserDetails=async(req,res)=>{
     try {
@@ -27,15 +27,33 @@ export const getUserDetails=async(req,res)=>{
 
         return res.status(200).json({
             success: true,
-            message: "User details received successfully",
+            message: "User details fetched successfully",
             data: user
-        })
+        });
     } catch (error) {
-        res.status(error.statusCode || 500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message
         });
     }
 };
 
+// User details update
+
+export const updateUserDetails=async(req,res)=>{
+    try {
+        const updatedUser=await updateUserDetailsService(req.body);
+
+        return res.status(200).json({
+            success: true,
+            message: "User details updated successfully",
+            data: updatedUser
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 

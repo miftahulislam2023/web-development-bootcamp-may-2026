@@ -1,35 +1,35 @@
 import mongoose, { Schema } from "mongoose";
 
-const userSchema = new Schema(
-  {
+const userSchema = new Schema({
     name: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
+        type: String,
+        required: true,
+        lowercase: true,
+        trim: true
     },
     email: {
-      type: String,
-      unique: true,
-      required: true,
-      lowercase: true,
-      trim: true,
-      index: true,
+        type: String,
+        unique: true,
+        required: true,
+        lowercase: true,
+        trim: true,
+        index: true
     },
     currency: {
-      type: String,
-      required: true,
-      trim: true,
-      uppercase: true,
-      default: "BDT",
+        type: String,
+        required: true,
+        trim: true,
+        uppercase: true,
+        default: "BDT"
     },
     photoURL:{
         type:String,
-        required:true
+        required:true,
+        trim:true
     }
   },
   {
-    timestamps: true,
+        timestamps: true,
   },
 );
 

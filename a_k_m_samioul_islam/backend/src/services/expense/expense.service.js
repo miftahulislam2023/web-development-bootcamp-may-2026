@@ -73,3 +73,7 @@ export const deleteExpenseService=async(id)=>{
 
     return expense;
 }
+
+export const getExpensesService=async(id)=>{
+    
+}

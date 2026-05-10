@@ -29,3 +29,33 @@ export const getExpenseDetailsService=async(id)=>{
 
     return expense;
 }
+
+// Expense details update
+
+export const updateExpenseDetailsService=async(expenseData)=>{
+    const {id,amount,note}=expenseData;
+
+    const expense=await Expense.findById(id);
+
+    if (!expense) {
+        const error = new Error("Expense not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (!amount && !note) {
+        const error = new Error("At least one field is required to update profile");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if(amount)
+        expense.amount=amount;
+
+    if(note)
+        expense.note=note;
+
+    await expense.save();
+
+    return expense;
+}

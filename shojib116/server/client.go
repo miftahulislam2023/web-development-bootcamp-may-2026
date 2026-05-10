@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -25,11 +26,6 @@ type Client struct {
 	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
 }
 
 func (c *Client) readPump() {
@@ -98,6 +94,16 @@ func (c *Client) writePump() {
 }
 
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
+	var upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			return origin == allowedOrigin
+		},
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)

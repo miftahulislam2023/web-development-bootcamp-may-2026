@@ -18,7 +18,7 @@ export const createExpenseService = async (expenseData) => {
 
 // Expense fetch
 
-export const getExpenseDetailsService=async(id)=>{
+export const getExpenseDetailsService=async(id, dbUser)=>{
     const expense= await Expense.findById(id).populate("user", "email");
 
     if(!expense){
@@ -27,12 +27,18 @@ export const getExpenseDetailsService=async(id)=>{
         throw error;
     }
 
+    if(dbUser._id.toString()!==expense.user._id.toString()){
+        const error = new Error("You can access your own expense data only");
+        error.statusCode = 403;
+        throw error;
+    }
+
     return expense;
 }
 
 // Expense details update
 
-export const updateExpenseDetailsService=async(expenseData)=>{
+export const updateExpenseDetailsService=async(expenseData, dbUser)=>{
     const {id,amount,note}=expenseData;
 
     const expense=await Expense.findById(id);
@@ -40,6 +46,12 @@ export const updateExpenseDetailsService=async(expenseData)=>{
     if (!expense) {
         const error = new Error("Expense not found");
         error.statusCode = 404;
+        throw error;
+    }
+
+    if(dbUser._id.toString()!==expense.user.toString()){
+        const error = new Error("You can update your own expense data only");
+        error.statusCode = 403;
         throw error;
     }
 
@@ -62,8 +74,8 @@ export const updateExpenseDetailsService=async(expenseData)=>{
 
 // Expense delete
 
-export const deleteExpenseService=async(id)=>{
-    const expense=await Expense.findByIdAndDelete(id);
+export const deleteExpenseService=async(id, dbUser)=>{
+    const expense=await Expense.findById(id);
 
     if (!expense) {
         const error = new Error("Expense not found");
@@ -71,9 +83,46 @@ export const deleteExpenseService=async(id)=>{
         throw error;
     }
 
+    if(dbUser._id.toString()!==expense.user.toString()){
+        const error = new Error("You can update your own expense data only");
+        error.statusCode = 403;
+        throw error;
+    }
+
+    await expense.deleteOne();
+
     return expense;
 }
 
-export const getExpensesService=async(id)=>{
-    
+// Users expenses
+
+export const getExpensesService=async({ dbUser, page=1, limit=10, category, search, startDate, endDate })=>{
+    const query={
+        user:dbUser._id
+    }
+
+    if(category)
+        query.category=category;
+
+    if(search)
+        query.title={
+            $regex:search,
+            $options:"i"
+        };
+
+    if(startDate || endDate){
+        query.createdAt={};
+
+        if(startDate)
+            query.createdAt.$gte=new Date(startDate);
+
+        if(endDate)
+            query.createdAt.$lte=new Date(endDate)
+    }
+
+    const skip=(page-1)*limit;
+
+    const expenses= await Expense.find(query).sort({createdAt:-1}).skip(skip).limit(Number(limit));
+
+    return expenses;
 }

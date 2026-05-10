@@ -42,7 +42,7 @@ export const getUserDetails=async(req,res)=>{
 
 export const updateUserDetails=async(req,res)=>{
     try {
-        const updatedUser=await updateUserDetailsService(req.body);
+        const updatedUser=await updateUserDetailsService({...req.body, email:req.params.email});
 
         return res.status(200).json({
             success: true,

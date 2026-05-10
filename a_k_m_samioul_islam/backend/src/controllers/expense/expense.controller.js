@@ -1,4 +1,4 @@
-import { createExpenseService, getExpenseDetailsService, updateExpenseDetailsService } from "../../services/expense/expense.service"
+import { createExpenseService, deleteExpenseService, getExpenseDetailsService, updateExpenseDetailsService } from "../../services/expense/expense.service"
 
 // Expense creation
 
@@ -53,6 +53,24 @@ export const updateExpenseDetails=async(req,res)=>{
             data: expense
         });
 
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+// Expense deletion
+
+export const deleteExpense=async(req,res)=>{
+    try {
+        const expense=await deleteExpenseService(req.params.id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Expense deleted successfully",
+        });
     } catch (error) {
         return res.status(error.statusCode || 500).json({
             success: false,

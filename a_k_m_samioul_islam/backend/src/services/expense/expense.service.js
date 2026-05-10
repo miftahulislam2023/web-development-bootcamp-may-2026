@@ -59,3 +59,17 @@ export const updateExpenseDetailsService=async(expenseData)=>{
 
     return expense;
 }
+
+// Expense delete
+
+export const deleteExpenseService=async(id)=>{
+    const expense=await Expense.findByIdAndDelete(id);
+
+    if (!expense) {
+        const error = new Error("Expense not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return expense;
+}

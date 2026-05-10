@@ -1,5 +1,7 @@
 import { Expense } from "../../models/expense/expense.model.js";
 
+// Expense creation
+
 export const createExpenseService = async (expenseData) => {
     const { title, amount, user, category, note } = expenseData;
 
@@ -13,3 +15,17 @@ export const createExpenseService = async (expenseData) => {
 
     return expense;
 };
+
+// Expense fetch
+
+export const getExpenseDetailsService=async(id)=>{
+    const expense= await Expense.findById(id).populate("user", "email");
+
+    if(!expense){
+        const error = new Error("Expense not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return expense;
+}

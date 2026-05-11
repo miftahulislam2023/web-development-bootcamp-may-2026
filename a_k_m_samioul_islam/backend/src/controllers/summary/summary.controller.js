@@ -1,10 +1,10 @@
-import { getSummaryService } from "../../services/summary/summary.service.js";
+import { categoryWiseExpenseService, getSummaryService } from "../../services/summary/summary.service.js";
 
 // Dashboard summary fetch
 
 export const getSummary=async(req,res)=>{
     try {
-        const summary=await getSummaryService(dbUser);
+        const summary=await getSummaryService(req.dbUser);
 
         return res.status(200).json({
             success: true,
@@ -18,3 +18,22 @@ export const getSummary=async(req,res)=>{
         });
     }
 };
+
+// Last 7 days category wise expense
+
+export const categoryWiseExpense=async(req,res)=>{
+    try {
+        const expense=await categoryWiseExpenseService(req.dbUser);
+
+        return res.status(200).json({
+            success: true,
+            message: "Expense fetched successfully",
+            data: expense
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}

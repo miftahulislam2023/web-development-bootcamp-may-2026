@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -94,7 +93,7 @@ func (c *Client) writePump() {
 }
 
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
+	allowedOrigin := hub.cfg.FrontendDomain
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")

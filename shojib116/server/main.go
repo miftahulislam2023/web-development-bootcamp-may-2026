@@ -1,23 +1,40 @@
 package main
 
 import (
-	"flag"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+
+	_ "github.com/lib/pq"
+	"github.com/shojib116/chat-app-server/config"
+	"github.com/shojib116/chat-app-server/internal/database"
 )
 
-var addr = flag.String("addr", ":8080", "http service address")
-
 func main() {
-	flag.Parse()
-	hub := newHub()
+	cfg := config.GetConfig()
+
+	dbURL := database.GetConnectionString(cfg.DB)
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Println(err)
+	}
+
+	hub := newHub(db, cfg)
 	go hub.run()
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
 
-	err := http.ListenAndServe(*addr, nil)
+	addr := fmt.Sprintf(":%d", cfg.HttpPort)
+	err = http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

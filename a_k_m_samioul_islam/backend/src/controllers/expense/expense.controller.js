@@ -1,4 +1,4 @@
-import { createExpenseService, deleteExpenseService, getExpenseDetailsService, getExpensesService, updateExpenseDetailsService, } from "../../services/expense/expense.service";
+import { createExpenseService, deleteExpenseService, getExpenseDetailsService, getExpensesService, updateExpenseDetailsService, } from "../../services/expense/expense.service.js";
 
 // Expense creation
 

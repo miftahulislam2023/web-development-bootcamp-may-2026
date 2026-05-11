@@ -34,4 +34,40 @@ export const getIncomeDetailsService=async(id, dbUser)=>{
     }
 
     return income;
+};
+
+// Income details update
+
+export const updateIncomeDetailsService=async(incomeData, dbUser)=>{
+    const {id,amount,note}=incomeData;
+
+    const income=await Income.findById(id);
+
+    if (!income) {
+        const error = new Error("Income not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if(dbUser._id.toString()!==income.user.toString()){
+        const error = new Error("You can update your own income data only");
+        error.statusCode = 403;
+        throw error;
+    }
+
+    if (!amount && !note) {
+        const error = new Error("At least one field is required to update income");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if(amount)
+        income.amount=amount;
+
+    if(note)
+        income.note=note;
+
+    await income.save();
+
+    return income;
 }

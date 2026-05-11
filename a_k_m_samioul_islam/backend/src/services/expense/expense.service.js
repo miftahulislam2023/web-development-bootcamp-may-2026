@@ -56,7 +56,7 @@ export const updateExpenseDetailsService=async(expenseData, dbUser)=>{
     }
 
     if (!amount && !note) {
-        const error = new Error("At least one field is required to update profile");
+        const error = new Error("At least one field is required to update expense");
         error.statusCode = 400;
         throw error;
     }

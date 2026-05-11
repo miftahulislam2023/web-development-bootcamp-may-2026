@@ -93,3 +93,36 @@ export const deleteIncomeService=async(id, dbUser)=>{
 
     return income;
 }
+
+// Users incomes
+
+export const getIncomesService=async({ dbUser, page=1, limit=10, source, search, startDate, endDate })=>{
+    const query={
+        user:dbUser._id
+    }
+
+    if(source)
+        query.source=source;
+
+    if(search)
+        query.title={
+            $regex:search,
+            $options:"i"
+        };
+
+    if(startDate || endDate){
+        query.createdAt={};
+
+        if(startDate)
+            query.createdAt.$gte=new Date(startDate);
+
+        if(endDate)
+            query.createdAt.$lte=new Date(endDate)
+    }
+
+    const skip=(page-1)*limit;
+
+    const incomes= await Income.find(query).sort({createdAt:-1}).skip(skip).limit(Number(limit));
+
+    return incomes;
+}

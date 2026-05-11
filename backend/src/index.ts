@@ -7,6 +7,9 @@ import { config } from "./core/config";
 import { PrismaProvider } from "./providers/PrismaProvider";
 import { prisma } from "./lib/prisma";
 import { AuthModule } from "./Modules/Auth/AuthModule";
+import { TransactionModule } from "./Modules/Transactions/TransactionModule";
+import { CategoryModule } from "./Modules/Categories/CategoryModule";
+import { BudgetModule } from "./Modules/Budgets/BudgetModule";
 
 // Modules (Business Logic)
 
@@ -24,6 +27,9 @@ async function bootstrap() {
     // 3. Register Application Modules
     AppLogger.info("⚙ Registering modules...");
     app.registerModule(new AuthModule());
+    app.registerModule(new TransactionModule());
+    app.registerModule(new CategoryModule());
+    app.registerModule(new BudgetModule());
     // app.registerModule(new ProductModule());
     AppLogger.info("✔ All modules registered successfully");
 

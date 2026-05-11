@@ -12,11 +12,10 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
-    "db:seed": "bun run prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
     "setup": "bun install && bun run db:generate && bun run db:migrate",
-    "reset": "bun run db:reset && bun run db:seed",
+    "reset": "bun run db:reset",
     "clean": "rm -rf dist node_modules .next",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
@@ -28,8 +27,10 @@
     "add:module": "bun scripts/generate-module.ts"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.5.0",
-    "@prisma/client": "^7.2.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.8.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "chalk": "^5.6.0",
@@ -45,15 +46,15 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "multer": "^2.0.2",
-    "pg": "^8.16.3",
-    "prisma": "^7.2.0",
+    "pg": "^8.20.0",
+    "prisma": "^7.8.0",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
+    "ws": "^8.20.0",
     "zod": "^4.1.1"
   },
   "devDependencies": {
-    "@types/pg": "^8.16.0",
     "@types/bcrypt": "^6.0.0",
     "@types/bun": "latest",
     "@types/compression": "^1.8.1",
@@ -64,7 +65,9 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/lodash": "^4.17.20",
     "@types/multer": "^2.0.0",
-    "@types/node": "^25.0.3"
+    "@types/node": "^25.6.2",
+    "@types/pg": "^8.16.0",
+    "@types/ws": "^8.18.1"
   },
   "peerDependencies": {
     "typescript": "^5"

@@ -19,7 +19,6 @@ interface ErrorResponse {
     timestamp: string;
     requestId: string;
     details?: unknown;
-    stack?: string;
   };
 }
 
@@ -39,9 +38,9 @@ export function errorHandler() {
         statusCode: appError.statusCode,
         timestamp: new Date().toISOString(),
         requestId: req.id || "unknown",
-        ...(appError.details ? { details: appError.details } : {}),
-        ...(process.env.NODE_ENV === "development"
-          ? { stack: appError.stack }
+        ...(appError.statusCode < HTTPStatusCode.INTERNAL_SERVER_ERROR &&
+        appError.details
+          ? { details: appError.details }
           : {}),
       },
     };

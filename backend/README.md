@@ -85,4 +85,4 @@ Here are some of the most useful commands included in this template:
 - **`bun run lint:fix`**: Automatically scans and fixes ESLint rule violations.
 - **`bun run format`**: Formats your code using Prettier to maintain a consistent style.
 
-> 💡 **Tip:** If your local database ever gets into an unrecoverable state, use `bun run reset`. This command safely resets the Prisma migrations and runs your database seeder to give you a fresh slate.
+> 💡 **Tip:** If your local database ever gets into an unrecoverable state, use `bun run reset`. This command safely resets the Prisma migrations and recreates the database from your Prisma schema.

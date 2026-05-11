@@ -16,3 +16,9 @@ type Message struct {
 	SentAt    time.Time `json:"sent_at"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+}

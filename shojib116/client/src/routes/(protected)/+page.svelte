@@ -6,7 +6,7 @@
   let msg = $state("");
   const messages: Message[] = $state([]);
 
-  const conn = new WebSocket(import.meta.env.VITE_WS_URL);
+  const conn = new WebSocket(import.meta.env.VITE_SERVER_BASE_URL + "/ws");
   conn.onclose = () => {
     messages.push({ text: "Connection closed" });
   };

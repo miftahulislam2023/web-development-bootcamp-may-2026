@@ -13,6 +13,7 @@ import (
 
 func main() {
 	cfg := config.GetConfig()
+	sessionStore := NewSession()
 
 	dbURL := database.GetConnectionString(cfg.DB)
 
@@ -29,12 +30,16 @@ func main() {
 	hub := newHub(db, cfg)
 	go hub.run()
 
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
-	})
+	mux := http.NewServeMux()
+
+	h := NewHandler(db, cfg, sessionStore)
+	mux.HandleFunc("/ws", h.requireAuth(h.handleWS(hub)))
+
+	mux.HandleFunc("POST /signin", h.handleSignin)
+	mux.HandleFunc("GET /me", h.requireAuth(h.handleMe))
 
 	addr := fmt.Sprintf(":%d", cfg.HttpPort)
-	err = http.ListenAndServe(addr, nil)
+	err = http.ListenAndServe(addr, h.handleCORS(mux))
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

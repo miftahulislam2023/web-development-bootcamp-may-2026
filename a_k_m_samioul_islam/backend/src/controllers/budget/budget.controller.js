@@ -1,4 +1,4 @@
-import { createBudgetService, getCurrentBudgetService } from "../../services/budget/budget.service.js";
+import { createBudgetService, getBudgetSummaryService, getCurrentBudgetService } from "../../services/budget/budget.service.js";
 
 // Budget creation
 
@@ -40,3 +40,22 @@ export const getCurrentBudget=async(req,res)=>{
         });
     }
 }
+
+// Budget summary
+
+export const getBudgetSummary=async(req,res)=>{
+    try {
+        const summary=await getBudgetSummaryService(req.dbUser);
+
+        return res.status(200).json({
+            success: true,
+            message: "Budget summary fetched successfully",
+            data: summary
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

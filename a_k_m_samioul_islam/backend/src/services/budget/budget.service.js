@@ -95,3 +95,77 @@ export const getCurrentBudgetService=async(dbUser)=>{
         status:"active"
     }
 }
+
+// Budget summary
+
+export const getBudgetSummaryService=async(dbUser)=>{
+    const now=new Date();
+
+    const budgets=await Budget.find({
+        user:dbUser._id,
+        endDate:{$lt:now}
+    }).sort({startDate:-1});
+
+    if(!budgets.length)
+        return {
+            totalCompletedBudgets: 0,
+            fulfilledCount:0,
+            overspentCount:0,
+            bestPerformance:null
+        };
+
+    let fulfilledCount=0;
+    let overspentCount=0;
+    let bestPerformance=null;
+
+    for(const budget of budgets){
+        const spentData= await Expense.aggregate([
+            {
+                $match:{
+                    user:dbUser._id,
+                    createdAt:{
+                        $gte:budget.startDate,
+                        $lte: budget.endDate
+                    }
+                }
+            },
+            {
+                $group:{
+                    _id:null,
+                    totalSpent: {$sum:"$amount"}
+                }
+            }
+        ]);
+
+        const spentAmount= spentData[0]?.totalSpent || 0;
+        const savingAmount= budget.amount-spentAmount;
+
+        if(spentAmount<=budget.amount)
+            fulfilledCount++;
+        else
+            overspentCount++;
+
+        if (savingAmount >= 0) {
+            if (!bestPerformance || (savingAmount > bestPerformance.savingAmount)) {
+                bestPerformance = {
+                    budgetId: budget._id,
+                    period: {
+                        startDate: budget.startDate,
+                        endDate: budget.endDate
+                    },
+                    budgetAmount: budget.amount,
+                    spentAmount,
+                    savingAmount
+                };
+            }
+        }
+
+    }
+
+    return {
+        totalCompletedBudgets:budgets.length,
+        fulfilledCount,
+        overspentCount,
+        bestPerformance
+    };
+};

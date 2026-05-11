@@ -1,4 +1,4 @@
-import { Income } from "../../models/income/income.model";
+import { Income } from "../../models/income/income.model.js";
 
 // Income creation
 

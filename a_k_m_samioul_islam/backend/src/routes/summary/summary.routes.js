@@ -1,5 +1,5 @@
 import express from "express";
-import { categoryWiseExpense, getSummary } from "../../controllers/summary/summary.controller.js";
+import { categoryWiseExpense, getSummary, getTransactions } from "../../controllers/summary/summary.controller.js";
 import { verifyFirebaseToken } from "../../middlewares/auth/auth.middleware.js";
 import { loadDbUser } from "../../middlewares/dbuser/dbuser.middleware.js";
 
@@ -12,5 +12,9 @@ router.get("/summary", verifyFirebaseToken, loadDbUser, getSummary);
 // Last 7 days category wise expenses
 
 router.get("/summary/expenses", verifyFirebaseToken, loadDbUser, categoryWiseExpense);
+
+// Income vs Expense
+
+router.get("/summary/transactions", verifyFirebaseToken, loadDbUser, getTransactions);
 
 export default router;

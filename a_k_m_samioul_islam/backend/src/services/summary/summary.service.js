@@ -79,3 +79,71 @@ export const categoryWiseExpenseService = async (dbUser) => {
 
     return categoryWiseCount;
 };
+
+// Last 7 days incomes vs expense
+
+export const getTransactionsService=async(dbUser)=>{
+    const day = new Date();
+
+    day.setDate(day.getDate() - 7);
+
+    const expenses = await Expense.find({
+        user: dbUser._id,
+        createdAt: {
+            $gte: day
+        }
+    }).sort({ createdAt: -1 });
+
+    const incomes = await Income.find({
+        user: dbUser._id,
+        createdAt: {
+            $gte: day
+        }
+    }).sort({ createdAt: -1 });
+
+    const totalIncomes=incomes.reduce((result,income)=>{
+        const dayName= income.createdAt.toLocaleDateString("en-US",{weekday:"long"});
+
+        if(!result[`${dayName}`])
+            result[`${dayName}`]=0;
+
+        result[`${dayName}`]+=income.amount;
+
+        return result;
+    },{});
+
+    const totalExpenses=expenses.reduce((result,expense)=>{
+        const dayName= expense.createdAt.toLocaleDateString("en-US",{weekday:"long"});
+
+        if(!result[`${dayName}`])
+            result[`${dayName}`]=0;
+
+        result[`${dayName}`]+=expense.amount;
+
+        return result;
+    },{});
+
+    const transactions={};
+
+    for(const day in totalIncomes){
+        if(!transactions[day])
+            transactions[day]={
+                income:0,
+                expense:0
+            };
+
+        transactions[day].income=totalIncomes[day];
+    }
+
+    for(const day in totalExpenses){
+        if(!transactions[day])
+            transactions[day]={
+                income:0,
+                expense:0
+            };
+
+        transactions[day].expense=totalExpenses[day];
+    }
+
+    return transactions;
+}

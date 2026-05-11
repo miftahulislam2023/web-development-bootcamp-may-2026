@@ -70,4 +70,26 @@ export const updateIncomeDetailsService=async(incomeData, dbUser)=>{
     await income.save();
 
     return income;
+};
+
+// Income delete
+
+export const deleteIncomeService=async(id, dbUser)=>{
+    const income=await Income.findById(id);
+
+    if (!income) {
+        const error = new Error("Income not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if(dbUser._id.toString()!==income.user.toString()){
+        const error = new Error("You can delete your own income data only");
+        error.statusCode = 403;
+        throw error;
+    }
+
+    await income.deleteOne();
+
+    return income;
 }

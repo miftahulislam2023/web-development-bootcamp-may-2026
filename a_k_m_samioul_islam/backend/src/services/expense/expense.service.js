@@ -84,7 +84,7 @@ export const deleteExpenseService=async(id, dbUser)=>{
     }
 
     if(dbUser._id.toString()!==expense.user.toString()){
-        const error = new Error("You can update your own expense data only");
+        const error = new Error("You can delete your own expense data only");
         error.statusCode = 403;
         throw error;
     }

@@ -1,4 +1,5 @@
 import { Budget } from "../../models/budget/budget.model.js";
+import { Expense } from "../../models/expense/expense.model.js";
 
 // Budget create
 
@@ -45,4 +46,52 @@ export const createBudgetService=async({amount, startDate, endDate, dbUser})=>{
     });
 
     return budget;
+}
+
+// Current budget
+
+export const getCurrentBudgetService=async(dbUser)=>{
+    const now= new Date();
+
+    const budget=await Budget.findOne({
+        user:dbUser._id,
+        startDate:{$lte:now},
+        endDate:{$gte:now}
+    });
+
+    if(!budget){
+        const error=new Error("No current budget found");
+        error.statusCode=404;
+        throw error;
+    }
+
+    const spentData= await Expense.aggregate([
+        {
+            $match:{
+                user:dbUser._id,
+                createdAt:{
+                    $gte:budget.startDate,
+                    $lte: budget.endDate
+                }
+            }
+        },
+        {
+            $group:{
+                _id:null,
+                totalSpent: {$sum:"$amount"}
+            }
+        }
+    ]);
+
+    const spentAmount= spentData[0]?.totalSpent || 0;
+    const remainingAmount= budget.amount-spentAmount > 0 ? budget.amount-spentAmount:0;
+    const exceededAmount= budget.amount-spentAmount < 0 ? spentAmount-budget.amount: 0;
+
+    return {
+        ...budget.toObject(),
+        spentAmount,
+        remainingAmount,
+        exceededAmount,
+        status:"active"
+    }
 }

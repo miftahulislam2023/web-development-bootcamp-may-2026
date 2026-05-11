@@ -3,7 +3,7 @@ import { Expense } from "../../models/expense/expense.model.js";
 // Expense creation
 
 export const createExpenseService = async (expenseData) => {
-    const { title, amount, user, category, note } = expenseData;
+    const { title, amount, category, note } = expenseData;
 
     if (!title || !amount || !category) {
         const error = new Error("All fields required");

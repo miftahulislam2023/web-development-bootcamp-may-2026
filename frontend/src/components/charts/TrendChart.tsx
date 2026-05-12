@@ -1,46 +1,34 @@
-// src/components/charts/TrendChart.tsx
 "use client";
 
 import {
-  LineChart,
+  CartesianGrid,
+  Legend,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface TrendChartProps {
-  data: Array<{
-    date: string;
-    income: number;
-    expense: number;
-  }>;
-}
-
-export default function TrendChart({ data }: TrendChartProps) {
+export default function TrendChart({
+  data,
+}: {
+  data: Array<{ date: string; income: number; expense: number }>;
+}) {
   return (
-    <Card className="col-span-2">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Income vs Expense Trend</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="date" stroke="#9ca3af" />
-            <YAxis stroke="#9ca3af" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1f2937",
-                border: "none",
-                borderRadius: "8px",
-                color: "#f3f4f6",
-              }}
-            />
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
             <Legend />
             <Line
               type="monotone"

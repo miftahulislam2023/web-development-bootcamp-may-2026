@@ -1,28 +1,33 @@
-// src/components/cards/TransactionRow.tsx
 import { format } from "date-fns";
-import { ArrowDownRight, ArrowUpLeft, ArrowRightLeft } from "lucide-react";
-import { TableCell, TableRow } from "@/components/ui/table";
+import { ArrowDownRight, ArrowRightLeft, ArrowUpLeft } from "lucide-react";
+import { TableCell } from "@/components/ui/table";
 
-interface TransactionRowProps {
+type Props = {
   id: string;
   type: "income" | "expense" | "transfer";
   amount: number;
-  category: string;
+  category:
+    | string
+    | {
+        name?: string;
+      }
+    | null
+    | undefined;
   date: string;
   description?: string;
   currency?: string;
-}
+};
 
 export default function TransactionRow({
-  id,
   type,
   amount,
   category,
   date,
   description,
   currency = "$",
-}: TransactionRowProps) {
-  const typeConfig = {
+}: Props) {
+  const normalizedAmount = Number(amount);
+  const config = {
     income: {
       icon: ArrowDownRight,
       color: "text-green-500",
@@ -34,41 +39,42 @@ export default function TransactionRow({
       color: "text-blue-500",
       bg: "bg-blue-50",
     },
-  };
-
-  const config = typeConfig[type];
+  }[type];
   const Icon = config.icon;
+  const categoryLabel =
+    typeof category === "string" ? category : category?.name || "Uncategorized";
 
   return (
-    <TableRow>
+    <>
       <TableCell>
         <div
-          className={`w-10 h-10 rounded-full ${config.bg} flex items-center justify-center`}
+          className={
+            "flex h-10 w-10 items-center justify-center rounded-full " +
+            config.bg
+          }
         >
-          <Icon className={config.color} size={20} />
+          <Icon className={config.color} size={18} />
         </div>
       </TableCell>
       <TableCell>
         <div>
-          <p className="font-medium capitalize">{category}</p>
-          {description && (
+          <p className="font-medium capitalize">{categoryLabel}</p>
+          {description ? (
             <p className="text-sm text-muted-foreground">{description}</p>
-          )}
+          ) : null}
         </div>
       </TableCell>
       <TableCell className="text-right">
         <p className="font-medium">{format(new Date(date), "MMM d, yyyy")}</p>
         <p className="text-sm text-muted-foreground capitalize">{type}</p>
       </TableCell>
-      <TableCell className="text-right">
-        <p
-          className={`font-semibold ${type === "income" ? "text-green-500" : "text-red-500"}`}
-        >
-          {type === "income" ? "+" : "-"}
-          {currency}
-          {amount.toFixed(2)}
-        </p>
+      <TableCell className="text-right font-semibold">
+        {type === "income" ? "+" : "-"}
+        {currency}
+        {Number.isFinite(normalizedAmount)
+          ? normalizedAmount.toFixed(2)
+          : "0.00"}
       </TableCell>
-    </TableRow>
+    </>
   );
 }

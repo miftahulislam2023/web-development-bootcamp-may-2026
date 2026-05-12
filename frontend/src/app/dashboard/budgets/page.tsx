@@ -85,10 +85,11 @@ export default function BudgetsPage() {
             {budgets.map((budget: any) => (
               <div key={budget.id} className="relative">
                 <BudgetCard
-                  title={budget.category}
+                  title={budget.name}
                   spent={budget.spent || 0}
                   limit={budget.limitAmount}
                   period={budget.period === "monthly" ? "Monthly" : "Yearly"}
+                  category={budget.category?.name ?? budget.category}
                 />
                 <div className="absolute top-4 right-4 space-x-2 flex">
                   <button

@@ -28,6 +28,8 @@ export default function SettingsPage() {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
       email: user?.email || "",
+      currency: user?.currency || "USD",
+      monthlyIncome: user?.monthlyIncome || 0,
     },
   });
 
@@ -36,6 +38,8 @@ export default function SettingsPage() {
       await updateUser({
         firstName: data.firstName,
         lastName: data.lastName,
+        currency: data.currency,
+        monthlyIncome: Number(data.monthlyIncome),
       });
       reset(data);
     } catch (error) {
@@ -88,6 +92,30 @@ export default function SettingsPage() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Email cannot be changed
                   </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="currency">Currency</Label>
+                    <select
+                      className="w-full rounded-md border border-input px-3 py-2 mt-1"
+                      {...register("currency")}
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="JPY">JPY</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="monthlyIncome">Monthly Income</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register("monthlyIncome")}
+                    />
+                  </div>
                 </div>
 
                 <Button type="submit" disabled={isSubmitting}>

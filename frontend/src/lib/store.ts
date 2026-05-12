@@ -1,21 +1,20 @@
-// src/lib/store.ts
 import { create } from "zustand";
-import { apiClient } from "./api";
+import { apiClient } from "@/lib/api";
 
-interface User {
+type User = {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  displayName?: string;
-  role: string;
-  avatarUrl?: string;
-}
+  currency?: string;
+  monthlyIncome?: number;
+};
 
-interface AuthStore {
+type AuthStore = {
   user: User | null;
-  isLoading: boolean;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  fetchUser: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (
     email: string,
@@ -24,91 +23,67 @@ interface AuthStore {
     password: string,
   ) => Promise<void>;
   logout: () => Promise<void>;
-  fetchUser: () => Promise<void>;
-  updateUser: (data: Record<string, any>) => Promise<void>;
-}
+  updateUser: (payload: Record<string, unknown>) => Promise<void>;
+};
 
-export const useAuthStore = create<AuthStore>((set, get) => ({
+export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
-  isLoading: false,
   isAuthenticated: false,
-
-  login: async (email: string, password: string) => {
-    set({ isLoading: true });
-    try {
-      const response = await apiClient.login(email, password);
-      if (response.data?.user) {
-        set({ user: response.data.user, isAuthenticated: true });
-      }
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  register: async (
-    email: string,
-    firstName: string,
-    lastName: string,
-    password: string,
-  ) => {
-    set({ isLoading: true });
-    try {
-      await apiClient.register(email, firstName, lastName, password);
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  logout: async () => {
-    set({ isLoading: true });
-    try {
-      await apiClient.logout();
-      set({ user: null, isAuthenticated: false });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
+  isLoading: false,
   fetchUser: async () => {
     set({ isLoading: true });
     try {
       const response = await apiClient.getProfile();
-      if (response.data) {
-        set({ user: response.data, isAuthenticated: true });
-      }
+      set({
+        user: response.data?.data ?? response.data,
+        isAuthenticated: true,
+      });
     } catch {
       set({ user: null, isAuthenticated: false });
     } finally {
       set({ isLoading: false });
     }
   },
-
-  updateUser: async (data: Record<string, any>) => {
+  login: async (email, password) => {
     set({ isLoading: true });
     try {
-      const response = await apiClient.updateProfile(data);
-      if (response.data) {
-        set({ user: response.data });
+      const response = await apiClient.login({ email, password });
+      const token = response.data?.data?.accessToken;
+      if (token && typeof window !== "undefined") {
+        window.localStorage.setItem("accessToken", token);
       }
+      await useAuthStore.getState().fetchUser();
     } finally {
       set({ isLoading: false });
     }
   },
-}));
-
-interface UiStore {
-  isDialogOpen: boolean;
-  openDialog: () => void;
-  closeDialog: () => void;
-  isSidebarCollapsed: boolean;
-  toggleSidebar: () => void;
-}
-
-export const useUiStore = create<UiStore>((set) => ({
-  isDialogOpen: false,
-  openDialog: () => set({ isDialogOpen: true }),
-  closeDialog: () => set({ isDialogOpen: false }),
-  isSidebarCollapsed: false,
-  toggleSidebar: () =>
-    set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+  register: async (email, firstName, lastName, password) => {
+    set({ isLoading: true });
+    try {
+      await apiClient.register({ email, firstName, lastName, password });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  logout: async () => {
+    set({ isLoading: true });
+    try {
+      await apiClient.logout();
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("accessToken");
+      }
+      set({ user: null, isAuthenticated: false });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  updateUser: async (payload) => {
+    set({ isLoading: true });
+    try {
+      const response = await apiClient.updateProfile(payload);
+      set({ user: response.data?.data ?? response.data });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));

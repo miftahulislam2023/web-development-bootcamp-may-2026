@@ -1,10 +1,12 @@
-// src/app/auth/register/page.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
-import { useAuthStore } from "@/lib/store";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { useAuthStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,18 +17,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
+
+type RegisterFormData = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  confirmPassword: string;
+};
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register: registerUser, login } = useAuthStore();
+  const { register: registerUser } =
+    useAuthStore();
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
+
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting },
-    watch,
-    setError,
-  } = useForm({
+  } = useForm<RegisterFormData>({
     defaultValues: {
       email: "",
       firstName: "",
@@ -35,109 +54,248 @@ export default function RegisterPage() {
       confirmPassword: "",
     },
   });
-  const [generalError, setGeneralError] = useState("");
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (
+    data: RegisterFormData
+  ) => {
     try {
-      setGeneralError("");
+      setLoading(true);
 
-      if (data.password !== data.confirmPassword) {
-        setGeneralError("Passwords do not match");
+      // Required fields check
+      if (
+        !data.email ||
+        !data.firstName ||
+        !data.lastName ||
+        !data.password ||
+        !data.confirmPassword
+      ) {
+        toast.error(
+          "Please fill all required fields"
+        );
         return;
       }
 
-      await registerUser(
-        data.email,
-        data.firstName,
-        data.lastName,
-        data.password,
+      // Password mismatch
+      if (
+        data.password !==
+        data.confirmPassword
+      ) {
+        toast.error(
+          "Passwords do not match"
+        );
+        return;
+      }
+
+      // Password length check
+      if (
+        data.password.length < 6
+      ) {
+        toast.error(
+          "Password must be at least 6 characters"
+        );
+        return;
+      }
+
+      // Register API call
+      const res =
+        await registerUser(
+          data.email,
+          data.firstName,
+          data.lastName,
+          data.password
+        );
+
+      // Success message
+      toast.success(
+        res?.message ||
+          "Account created successfully 🎉"
       );
-      // Auto-login after registration
-      await login(data.email, data.password);
-      router.push("/auth/login");
+
+      // Redirect
+      setTimeout(() => {
+        router.push(
+          "/auth/login"
+        );
+      }, 1200);
     } catch (error: any) {
-      setGeneralError(error.response?.data?.message || "Registration failed");
+      // Backend error message
+      const backendMessage =
+        error?.response?.data
+          ?.error?.message;
+
+      toast.error(
+        backendMessage ||
+          error?.message ||
+          "Registration failed"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Create Account</CardTitle>
-        <CardDescription>Join FinanceApp today</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {generalError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-              {generalError}
-            </div>
-          )}
+        <CardTitle className="text-2xl">
+          Create Account
+        </CardTitle>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="firstName">First Name</Label>
+        <CardDescription>
+          Join FinanceApp today
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <form
+          onSubmit={handleSubmit(
+            onSubmit
+          )}
+          className="space-y-4"
+        >
+          {/* First & Last Name */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>
+                First Name
+              </Label>
+
               <Input
                 placeholder="John"
-                {...register("firstName", {
-                  required: "First name is required",
-                })}
+                {...register(
+                  "firstName"
+                )}
               />
             </div>
-            <div>
-              <Label htmlFor="lastName">Last Name</Label>
+
+            <div className="space-y-2">
+              <Label>
+                Last Name
+              </Label>
+
               <Input
                 placeholder="Doe"
-                {...register("lastName", { required: "Last name is required" })}
+                {...register(
+                  "lastName"
+                )}
               />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="email">Email</Label>
+          {/* Email */}
+          <div className="space-y-2">
+            <Label>Email</Label>
+
             <Input
               type="email"
               placeholder="you@example.com"
-              {...register("email", { required: "Email is required" })}
+              {...register(
+                "email"
+              )}
             />
           </div>
 
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              {...register("password", {
-                required: "Password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters",
-                },
-              })}
-            />
+          {/* Password */}
+          <div className="space-y-2">
+            <Label>
+              Password
+            </Label>
+
+            <div className="relative">
+              <Input
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                className="pr-12"
+                placeholder="••••••••"
+                {...register(
+                  "password"
+                )}
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword(
+                    !showPassword
+                  )
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff
+                    size={18}
+                  />
+                ) : (
+                  <Eye size={18} />
+                )}
+              </button>
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              {...register("confirmPassword", {
-                required: "Please confirm your password",
-              })}
-            />
+          {/* Confirm Password */}
+          <div className="space-y-2">
+            <Label>
+              Confirm Password
+            </Label>
+
+            <div className="relative">
+              <Input
+                type={
+                  showConfirmPassword
+                    ? "text"
+                    : "password"
+                }
+                className="pr-12"
+                placeholder="••••••••"
+                {...register(
+                  "confirmPassword"
+                )}
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowConfirmPassword(
+                    !showConfirmPassword
+                  )
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff
+                    size={18}
+                  />
+                ) : (
+                  <Eye size={18} />
+                )}
+              </button>
+            </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Create account"}
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+          >
+            {loading
+              ? "Creating account..."
+              : "Create account"}
           </Button>
 
-          <div className="text-sm text-center text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/auth/login" className="text-primary hover:underline">
+          {/* Login Link */}
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an
+            account?{" "}
+            <Link
+              href="/auth/login"
+              className="text-primary underline"
+            >
               Sign in
             </Link>
-          </div>
+          </p>
         </form>
       </CardContent>
     </Card>

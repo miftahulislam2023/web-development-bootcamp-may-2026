@@ -1,14 +1,13 @@
-// src/components/cards/KPICard.tsx
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface KPICardProps {
+type KPICardProps = {
   title: string;
   value: string | number;
   change?: number;
   icon?: React.ReactNode;
   trend?: "up" | "down" | "neutral";
-}
+};
 
 export default function KPICard({
   title,
@@ -28,16 +27,18 @@ export default function KPICard({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {change !== undefined && (
+        <div className="text-2xl font-semibold">{value}</div>
+        {change !== undefined ? (
           <div
-            className={`flex items-center gap-1 text-sm mt-2 ${trend === "up" ? "text-red-500" : trend === "down" ? "text-green-500" : "text-muted-foreground"}`}
+            className={
+              "mt-2 flex items-center gap-1 text-sm " +
+              (trend === "up" ? "text-green-500" : "text-red-500")
+            }
           >
-            {trend === "up" && <ArrowUp size={14} />}
-            {trend === "down" && <ArrowDown size={14} />}
+            {trend === "up" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
             <span>{Math.abs(change)}% from last month</span>
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

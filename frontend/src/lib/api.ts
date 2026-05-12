@@ -1,249 +1,115 @@
-// src/lib/api.ts
-import axios, { AxiosInstance, AxiosError } from "axios";
-import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3030";
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3030",
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+});
 
-interface ApiResponse<T = any> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  meta?: {
-    requestId?: string;
-    timestamp?: string;
-    pagination?: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
-  };
-}
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
 
-interface DecodedToken {
-  sub: string;
-  iat: number;
-  exp: number;
-}
-
-class ApiClient {
-  private client: AxiosInstance;
-  private accessToken: string | null = null;
-
-  constructor() {
-    this.client = axios.create({
-      baseURL: API_BASE_URL,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      withCredentials: true, // Send cookies for refresh token
-    });
-
-    // Load token from localStorage on init
-    if (typeof window !== "undefined") {
-      this.accessToken = localStorage.getItem("accessToken");
+if (typeof window !== "undefined") {
+  api.interceptors.request.use((config) => {
+    const token = window.localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  });
 
-    // Add auth interceptor
-    this.client.interceptors.request.use(
-      (config) => {
-        if (this.accessToken) {
-          config.headers.Authorization = `Bearer ${this.accessToken}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error),
-    );
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
 
-    // Add response interceptor for token refresh
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
+      // Don't retry refresh endpoint or if already retried
+      if (
+        originalRequest.url?.includes("/auth/v1/refresh") ||
+        originalRequest._retry
+      ) {
+        return Promise.reject(error);
+      }
+
+      if (
+        error.response?.status === 401 &&
+        originalRequest.headers.Authorization
+      ) {
+        // Only attempt refresh if a token was sent (i.e., token exists but is invalid/expired)
+        if (!isRefreshing) {
+          isRefreshing = true;
           try {
-            const response = await this.client.post("/auth/v1/refresh");
-            const newToken = response.data.data.accessToken;
-            this.setAccessToken(newToken);
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            return this.client(originalRequest);
+            const refreshResponse = await api.post("/auth/v1/refresh");
+            const accessToken = refreshResponse.data?.data?.accessToken;
+            if (accessToken) {
+              window.localStorage.setItem("accessToken", accessToken);
+              refreshPromise = Promise.resolve(accessToken);
+            } else {
+              throw new Error("No access token in refresh response");
+            }
           } catch {
-            // Refresh failed, logout user
-            this.clearTokens();
+            window.localStorage.removeItem("accessToken");
             window.location.href = "/auth/login";
+            refreshPromise = Promise.resolve(null);
+          } finally {
+            isRefreshing = false;
           }
         }
-        return Promise.reject(error);
-      },
-    );
-  }
 
-  setAccessToken(token: string) {
-    this.accessToken = token;
-    localStorage.setItem("accessToken", token);
-  }
+        // Wait for refresh to complete
+        if (refreshPromise) {
+          const token = await refreshPromise;
+          if (token) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          } else {
+            return Promise.reject(error);
+          }
+        }
+      }
 
-  clearTokens() {
-    this.accessToken = null;
-    localStorage.removeItem("accessToken");
-  }
-
-  getAccessToken() {
-    return this.accessToken;
-  }
-
-  isTokenExpired(token: string): boolean {
-    try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      return decoded.exp * 1000 < Date.now();
-    } catch {
-      return true;
-    }
-  }
-
-  // Auth endpoints
-  async register(
-    email: string,
-    firstName: string,
-    lastName: string,
-    password: string,
-  ) {
-    const response = await this.client.post<ApiResponse>("/auth/v1/register", {
-      email,
-      firstName,
-      lastName,
-      password,
-    });
-    return response.data;
-  }
-
-  async login(email: string, password: string) {
-    const response = await this.client.post<ApiResponse>("/auth/v1/login", {
-      email,
-      password,
-    });
-    if (response.data.data?.accessToken) {
-      this.setAccessToken(response.data.data.accessToken);
-    }
-    return response.data;
-  }
-
-  async getProfile() {
-    const response = await this.client.get<ApiResponse>("/auth/v1/me");
-    return response.data;
-  }
-
-  async updateProfile(data: Record<string, any>) {
-    const response = await this.client.patch<ApiResponse>("/auth/v1/me", data);
-    return response.data;
-  }
-
-  async logout() {
-    try {
-      await this.client.post<ApiResponse>("/auth/v1/logout");
-    } finally {
-      this.clearTokens();
-    }
-  }
-
-  // Transaction endpoints
-  async createTransaction(data: Record<string, any>) {
-    const response = await this.client.post<ApiResponse>(
-      "/transactions/v1",
-      data,
-    );
-    return response.data;
-  }
-
-  async getTransactions(
-    page = 1,
-    pageSize = 20,
-    filters?: Record<string, any>,
-  ) {
-    const response = await this.client.get<ApiResponse>("/transactions/v1", {
-      params: { page, pageSize, ...filters },
-    });
-    return response.data;
-  }
-
-  async getTransaction(id: string) {
-    const response = await this.client.get<ApiResponse>(
-      `/transactions/v1/${id}`,
-    );
-    return response.data;
-  }
-
-  async updateTransaction(id: string, data: Record<string, any>) {
-    const response = await this.client.patch<ApiResponse>(
-      `/transactions/v1/${id}`,
-      data,
-    );
-    return response.data;
-  }
-
-  async deleteTransaction(id: string) {
-    const response = await this.client.delete<ApiResponse>(
-      `/transactions/v1/${id}`,
-    );
-    return response.data;
-  }
-
-  async getTransactionSummary(startDate?: string, endDate?: string) {
-    const response = await this.client.get<ApiResponse>(
-      "/transactions/v1/summary",
-      {
-        params: { startDate, endDate },
-      },
-    );
-    return response.data;
-  }
-
-  // Category endpoints
-  async createCategory(data: Record<string, any>) {
-    const response = await this.client.post<ApiResponse>(
-      "/categories/v1",
-      data,
-    );
-    return response.data;
-  }
-
-  async getCategories(type?: string) {
-    const response = await this.client.get<ApiResponse>("/categories/v1", {
-      params: type ? { type } : {},
-    });
-    return response.data;
-  }
-
-  // Budget endpoints
-  async createBudget(data: Record<string, any>) {
-    const response = await this.client.post<ApiResponse>("/budgets/v1", data);
-    return response.data;
-  }
-
-  async getBudgets() {
-    const response = await this.client.get<ApiResponse>("/budgets/v1");
-    return response.data;
-  }
-
-  async getBudget(id: string) {
-    const response = await this.client.get<ApiResponse>(`/budgets/v1/${id}`);
-    return response.data;
-  }
-
-  async updateBudget(id: string, data: Record<string, any>) {
-    const response = await this.client.patch<ApiResponse>(
-      `/budgets/v1/${id}`,
-      data,
-    );
-    return response.data;
-  }
-
-  async deleteBudget(id: string) {
-    const response = await this.client.delete<ApiResponse>(`/budgets/v1/${id}`);
-    return response.data;
-  }
+      return Promise.reject(error);
+    },
+  );
 }
 
-export const apiClient = new ApiClient();
-export type { ApiResponse };
+export const apiClient = {
+  register: (payload: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+  }) => api.post("/auth/v1/register", payload),
+  login: (payload: { email: string; password: string }) =>
+    api.post("/auth/v1/login", payload),
+  getProfile: () => api.get("/auth/v1/me"),
+  updateProfile: (payload: Record<string, unknown>) =>
+    api.patch("/auth/v1/me", payload),
+  logout: () => api.post("/auth/v1/logout"),
+  getTransactions: (params: Record<string, unknown>) =>
+    api.get("/transactions/v1", { params }),
+  createTransaction: (payload: Record<string, unknown>) =>
+    api.post("/transactions/v1", payload),
+  updateTransaction: (id: string, payload: Record<string, unknown>) =>
+    api.patch(`/transactions/v1/${id}`, payload),
+  deleteTransaction: (id: string) => api.delete(`/transactions/v1/${id}`),
+  getBudgets: () => api.get("/budgets/v1"),
+  createBudget: (payload: Record<string, unknown>) =>
+    api.post("/budgets/v1", payload),
+  updateBudget: (id: string, payload: Record<string, unknown>) =>
+    api.patch(`/budgets/v1/${id}`, payload),
+  deleteBudget: (id: string) => api.delete(`/budgets/v1/${id}`),
+  getCategories: (params?: Record<string, unknown>) =>
+    api.get("/categories/v1", { params }),
+  createCategory: (payload: Record<string, unknown>) =>
+    api.post("/categories/v1", payload),
+  updateCategory: (id: string, payload: Record<string, unknown>) =>
+    api.patch(`/categories/v1/${id}`, payload),
+  deleteCategory: (id: string) => api.delete(`/categories/v1/${id}`),
+  getSavingsGoals: () => api.get("/savings-goals/v1"),
+  createSavingsGoal: (payload: Record<string, unknown>) =>
+    api.post("/savings-goals/v1", payload),
+  updateSavingsGoal: (id: string, payload: Record<string, unknown>) =>
+    api.patch(`/savings-goals/v1/${id}`, payload),
+  deleteSavingsGoal: (id: string) => api.delete(`/savings-goals/v1/${id}`),
+};

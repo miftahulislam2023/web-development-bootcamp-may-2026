@@ -1,23 +1,14 @@
-// src/components/charts/ExpenseChart.tsx
 "use client";
 
 import {
-  PieChart,
   Pie,
+  PieChart,
   Cell,
-  ResponsiveContainer,
   Legend,
+  ResponsiveContainer,
   Tooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface ExpenseChartProps {
-  data: Array<{
-    name: string;
-    value: number;
-    color?: string;
-  }>;
-}
 
 const COLORS = [
   "#ef4444",
@@ -30,14 +21,18 @@ const COLORS = [
   "#6366f1",
 ];
 
-export default function ExpenseChart({ data }: ExpenseChartProps) {
+export default function ExpenseChart({
+  data,
+}: {
+  data: Array<{ name: string; value: number; color?: string }>;
+}) {
   const chartData = data.map((item, index) => ({
     ...item,
     color: item.color || COLORS[index % COLORS.length],
   }));
 
   return (
-    <Card className="col-span-1">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Expense Breakdown</CardTitle>
       </CardHeader>
@@ -46,18 +41,15 @@ export default function ExpenseChart({ data }: ExpenseChartProps) {
           <PieChart>
             <Pie
               data={chartData}
+              dataKey="value"
+              nameKey="name"
               cx="50%"
               cy="50%"
-              labelLine={false}
-              label={({ name, percent }) =>
-                `${name} ${(percent * 100).toFixed(0)}%`
-              }
               outerRadius={100}
-              fill="#8884d8"
-              dataKey="value"
+              label
             >
               {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell key={index} fill={entry.color} />
               ))}
             </Pie>
             <Tooltip />

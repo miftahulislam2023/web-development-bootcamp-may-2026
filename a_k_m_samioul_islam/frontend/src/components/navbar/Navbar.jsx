@@ -16,7 +16,7 @@ const Navbar = () => {
     ${isActive ? "text-white bg-white/10" : "text-gray-400"}`;
 
     return (
-        <div className='inter w-full bg-black flex items-center h-25 shadow-2xl sticky top-0 z-50'>
+        <div className='inter w-full bg-black flex items-center h-25 shadow-2xl sticky top-0 z-100'>
             <nav className='w-full max-w-360 flex justify-between items-center mx-auto px-5'>
                 
                 {/* Logo */}

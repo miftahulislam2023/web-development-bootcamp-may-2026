@@ -36,6 +36,7 @@ func main() {
 	mux.HandleFunc("/ws", h.requireAuth(h.handleWS(hub)))
 
 	mux.HandleFunc("POST /signin", h.handleSignin)
+	mux.HandleFunc("POST /signout", h.handleSignout)
 	mux.HandleFunc("GET /me", h.requireAuth(h.handleMe))
 
 	addr := fmt.Sprintf(":%d", cfg.HttpPort)

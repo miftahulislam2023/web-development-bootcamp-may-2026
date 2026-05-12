@@ -4,8 +4,7 @@
   import * as Field from "$lib/components/ui/field/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
   import { goto } from "$app/navigation";
-
-  let base_url = import.meta.env.VITE_SERVER_BASE_URL;
+  import { signin } from "$lib/api/auth";
 
   let username = $state("");
   const handleSubmit = async (e: SubmitEvent) => {
@@ -14,12 +13,7 @@
       return;
     }
 
-    const res = await fetch(`${base_url}/signin`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username }),
-    });
+    const res = await signin(username);
 
     console.log(res);
     if (res.ok) {

@@ -64,6 +64,11 @@ func (h *Handler) handleSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(req.Username) < 1 {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
 	user, err := h.q.GetUserByUsername(r.Context(), req.Username)
 	if err != sql.ErrNoRows && err != nil {
 		log.Println(err)
@@ -97,7 +102,7 @@ func (h *Handler) handleSignin(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *Handler) handlerSignout(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleSignout(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session")
 	h.sessionStore.Delete(cookie.Value)
 

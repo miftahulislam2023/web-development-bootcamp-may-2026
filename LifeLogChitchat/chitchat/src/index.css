@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap");
+
+@import "tailwindcss";
+@plugin "daisyui" ;
+
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  --color-primary: #5C3D99;
+  --color-secondary: #9F7AEA;
+  --color-accent: #1c164c;
+  --color-neutral: #E0D9FF;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  --color-primary: #9F7AEA;
+  --color-secondary: #5C3D99;
+  --color-accent: #E0D9FF;
+  --color-neutral: #2A2438;
+  --color-base-100: #1F1B2E;
+  --color-base-200: #171625;
+  --color-base-300: #13121E;
+}
+
+body {
+  font-family: "Roboto Slab", serif;
+}
+
+
+/* common button class */
+
+.button {
+  position: relative;
+  overflow: hidden;
+  height: 3rem;
+  padding: 0 2rem;
+  border-radius: 1.5rem;
+  /* background: oklch(62% 0.20 10); */
+  background: #efd45c;
+  background-size: 400%;
+  /* color: #fff; */
+  color: black;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  border-radius: inherit;
+  background: linear-gradient(82.3deg, rgba(150,93,233,1) 10.8%, rgba(99,88,238,1) 94.3%);
+  transition: transform 0.475s;
+  z-index: -1;
+}
+
+.button:hover::before {
+  transform: scaleX(1);
+}

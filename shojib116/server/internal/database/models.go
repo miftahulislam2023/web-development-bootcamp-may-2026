@@ -10,11 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type Message struct {
+type Conversation struct {
 	ID        uuid.UUID `json:"id"`
-	Text      string    `json:"text"`
-	SentAt    time.Time `json:"sent_at"`
+	UserAID   uuid.UUID `json:"user_a_id"`
+	UserBID   uuid.UUID `json:"user_b_id"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type Message struct {
+	ID             uuid.UUID `json:"id"`
+	Text           string    `json:"text"`
+	SentAt         time.Time `json:"sent_at"`
+	CreatedAt      time.Time `json:"created_at"`
+	ConversationID uuid.UUID `json:"conversation_id"`
+	SenderID       uuid.UUID `json:"sender_id"`
 }
 
 type User struct {

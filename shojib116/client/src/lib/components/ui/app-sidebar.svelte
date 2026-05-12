@@ -14,7 +14,7 @@
   import { Button } from "$lib/components/ui/button/index";
   import ChatTab from "./chat-tab.svelte";
 
-  let { user, users } = $props();
+  let { user, users, chatList } = $props();
   const handleSignout = () => {
     signout(user.userID);
     goto("/signin");
@@ -38,7 +38,7 @@
     </Button>
   </Sidebar.Header>
   <Sidebar.Content>
-    <ChatTab {user} {users} />
+    <ChatTab {users} {chatList} />
   </Sidebar.Content>
   <Sidebar.Footer>
     <Menubar.Root class="border-0">
@@ -47,7 +47,7 @@
           <div class="flex gap-4 items-center">
             <Avatar.Root>
               <Avatar.Image
-                src="https://github.com/user.png"
+                src={`https://github.com/${user.username}.png`}
                 alt={`@${user.username}`}
               />
               <Avatar.Fallback>CN</Avatar.Fallback>

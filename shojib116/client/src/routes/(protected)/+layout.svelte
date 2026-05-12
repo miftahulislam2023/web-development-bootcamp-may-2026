@@ -12,7 +12,7 @@
 
 <ModeWatcher />
 <Sidebar.Provider>
-  <AppSidebar user={data.user} users={data.users} />
+  <AppSidebar user={data.user} users={data.users} chatList={data.chatList} />
   <main>
     <Sidebar.Trigger />
     {@render children()}

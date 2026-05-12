@@ -13,7 +13,7 @@ import (
 const createMessage = `-- name: CreateMessage :one
 INSERT INTO messages (text, sent_at)
 VALUES ($1, $2)
-RETURNING id, text, sent_at, created_at
+RETURNING id, text, sent_at, created_at, conversation_id, sender_id
 `
 
 type CreateMessageParams struct {
@@ -29,12 +29,14 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 		&i.Text,
 		&i.SentAt,
 		&i.CreatedAt,
+		&i.ConversationID,
+		&i.SenderID,
 	)
 	return i, err
 }
 
 const getAllMessages = `-- name: GetAllMessages :many
-SELECT id, text, sent_at, created_at FROM messages
+SELECT id, text, sent_at, created_at, conversation_id, sender_id FROM messages
 `
 
 func (q *Queries) GetAllMessages(ctx context.Context) ([]Message, error) {
@@ -51,6 +53,8 @@ func (q *Queries) GetAllMessages(ctx context.Context) ([]Message, error) {
 			&i.Text,
 			&i.SentAt,
 			&i.CreatedAt,
+			&i.ConversationID,
+			&i.SenderID,
 		); err != nil {
 			return nil, err
 		}

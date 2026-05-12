@@ -12,8 +12,10 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
 
   const usersRes = await fetch(`${baseUrl}/users`);
   const users = await usersRes.json();
+  console.log("here");
 
-  console.log(users);
+  const chatListRes = await fetch(`${baseUrl}/chatlist`);
+  const chatList = await chatListRes.json();
 
-  return { user, users };
+  return { user, users, chatList };
 };

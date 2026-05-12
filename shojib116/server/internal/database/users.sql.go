@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -25,20 +26,39 @@ func (q *Queries) CreateUser(ctx context.Context, username string) (User, error)
 }
 
 const getAllUsersExceptCurrent = `-- name: GetAllUsersExceptCurrent :many
-SELECT id, username, created_at FROM users
-WHERE id <> $1
+SELECT 
+  users.id, users.username, users.created_at, 
+  EXISTS (
+    SELECT 1 FROM conversations
+    WHERE (conversations.user_a_id = $1 AND conversations.user_b_id = users.id)
+      OR (conversations.user_b_id = $1 AND conversations.user_a_id = users.id)
+  ) AS is_friend
+FROM users
+WHERE users.id <> $1
 `
 
-func (q *Queries) GetAllUsersExceptCurrent(ctx context.Context, id uuid.UUID) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getAllUsersExceptCurrent, id)
+type GetAllUsersExceptCurrentRow struct {
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+	IsFriend  bool      `json:"is_friend"`
+}
+
+func (q *Queries) GetAllUsersExceptCurrent(ctx context.Context, userAID uuid.UUID) ([]GetAllUsersExceptCurrentRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsersExceptCurrent, userAID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []User{}
+	items := []GetAllUsersExceptCurrentRow{}
 	for rows.Next() {
-		var i User
-		if err := rows.Scan(&i.ID, &i.Username, &i.CreatedAt); err != nil {
+		var i GetAllUsersExceptCurrentRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.CreatedAt,
+			&i.IsFriend,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

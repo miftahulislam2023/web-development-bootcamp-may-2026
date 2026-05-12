@@ -17,3 +17,12 @@ export async function signout(userId: string) {
     body: JSON.stringify({ userId }),
   });
 }
+
+export async function addFriend(userId: string) {
+  return fetch(`${base_url}/add-friend`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId }),
+  });
+}

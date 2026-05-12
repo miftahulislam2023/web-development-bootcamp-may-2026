@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/shojib116/chat-app-server/config"
 	"github.com/shojib116/chat-app-server/internal/database"
@@ -128,6 +130,60 @@ func (h *Handler) handleGetUsersExceptCurrent(w http.ResponseWriter, r *http.Req
 	}
 
 	json.NewEncoder(w).Encode(users)
+}
+
+func (h *Handler) handleGetChatList(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("user").(Session)
+
+	conversations, err := h.q.GetConversationsForUser(r.Context(), session.UserID)
+	if err != nil {
+		http.Error(w, "failed to fetch conversations", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(conversations)
+}
+
+func (h *Handler) handleAddFriend(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("user").(Session)
+
+	var req struct {
+		UserID uuid.UUID `json:"userId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	user_a_id, user_b_id := req.UserID, session.UserID
+	if strings.Compare(user_a_id.String(), user_b_id.String()) < 0 {
+		user_a_id, user_b_id = user_b_id, user_a_id
+	}
+
+	conversation, err := h.q.GetConversationByBothUserId(r.Context(), database.GetConversationByBothUserIdParams{
+		UserAID: user_a_id,
+		UserBID: user_b_id,
+	})
+	if err != sql.ErrNoRows && err != nil {
+		log.Println(err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		conversation, err = h.q.CreateConversation(r.Context(), database.CreateConversationParams{
+			UserAID: user_a_id,
+			UserBID: user_b_id,
+		})
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	json.NewEncoder(w).Encode(conversation)
 }
 
 func (h *Handler) requireAuth(next http.HandlerFunc) http.HandlerFunc {

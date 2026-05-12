@@ -9,7 +9,7 @@ import (
 )
 
 type Session struct {
-	UserID   uuid.UUID `json:"userID"`
+	UserID   uuid.UUID `json:"userId"`
 	Username string    `json:"username"`
 }
 

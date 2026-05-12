@@ -58,7 +58,9 @@ const Home = () => {
         {/* Stats cards */}
 
         <div className="w-full flex flex-col items-center gap-10">
-          <p className="text-5xl text-black font-bold text-center">Statistics</p>
+          <p className="text-5xl text-black font-bold text-center">
+            Statistics
+          </p>
           <div className="w-full grid grid-cols-1 md:grid-cols-3 md:gap-30 gap-10">
             <StatsCard title="Active users" value="100+"></StatsCard>
             <StatsCard title="Tracked Monthly" value="10K+"></StatsCard>
@@ -87,6 +89,19 @@ const Home = () => {
               description="Set your budget and track progress live"
             ></FeatureCard>
           </div>
+        </div>
+
+        {/* How to use */}
+        <div className="w-full flex flex-col items-center gap-10 mb-30">
+          <p className="text-5xl text-black font-bold text-center">
+            How to use
+          </p>
+          <ul class="steps steps-vertical lg:steps-horizontal font-bold">
+            <li class="step step-neutral">Sign up</li>
+            <li class="step step-neutral">Log expenses and Incomes</li>
+            <li class="step step-neutral">Set budgets</li>
+            <li class="step step-neutral">Get insights and Track financial activities</li>
+          </ul>
         </div>
       </div>
     </div>

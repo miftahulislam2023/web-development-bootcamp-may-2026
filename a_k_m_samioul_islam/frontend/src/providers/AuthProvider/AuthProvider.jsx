@@ -4,6 +4,8 @@ import { auth } from "../../firebase/firebase.init.js";
 
 export const AuthContext = createContext();
 
+const googleProvider = new GoogleAuthProvider();
+
 const AuthProvider = ({ children }) => {
     const [user, setUser]=useState(null);
     const [loading, setLoading]=useState(true);
@@ -28,12 +30,42 @@ const AuthProvider = ({ children }) => {
         return signOut(auth);
     };
 
+    // Google Authentication
+
+    const signInWithGoogle = async () =>{
+        try {
+            return await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+            if (error.code === "auth/popup-closed-by-user") {
+                setLoading(false);
+                return null;
+            }
+            setLoading(false);
+            throw error;
+        }
+    };
+
+    // Update profile
+
+    const updateUser = (updatedData) => {
+        return updateProfile(auth.currentUser, updatedData);
+    }
+
+    // Password Reset
+
+    const passwordReset = (email) => {
+        return sendPasswordResetEmail(auth, email);
+    };
+
     
 
     const authData={
         register,
         login,
-        logout
+        logout,
+        signInWithGoogle,
+        updateUser,
+        passwordReset
     };
 
     return <AuthContext value={authData}>{children}</AuthContext>

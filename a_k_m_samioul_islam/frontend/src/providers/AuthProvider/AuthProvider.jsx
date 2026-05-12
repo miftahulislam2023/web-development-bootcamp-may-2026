@@ -57,8 +57,6 @@ const AuthProvider = ({ children }) => {
         return sendPasswordResetEmail(auth, email);
     };
 
-    
-
     const authData={
         register,
         login,

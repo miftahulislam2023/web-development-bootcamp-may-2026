@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const axiosFetch = axios.create({
+const axiosSecure = axios.create({
     baseURL: import.meta.env.VITE_SERVER
 });
 
-axiosFetch.interceptors.request.use((config) => {
+axiosSecure.interceptors.request.use((config) => {
     const token = localStorage.getItem("access-token");
 
     if(token)
@@ -13,4 +13,4 @@ axiosFetch.interceptors.request.use((config) => {
     return config;
 });
 
-export default axiosFetch;
+export default axiosSecure;

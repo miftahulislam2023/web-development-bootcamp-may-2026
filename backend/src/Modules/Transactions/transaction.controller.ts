@@ -1,9 +1,11 @@
-// src/Modules/Transactions/transaction.controller.ts
 import { Request, Response } from "express";
 import { BaseController } from "@/core/BaseController";
 import { AppLogger } from "@/core/logging/logger";
+import { CreateTransactionDTO, ListTransactionsQuery } from "./TransactionDTO";
 import { TransactionService } from "./transaction.service";
-import { CreateTransactionDTO, UpdateTransactionDTO } from "./TransactionDTO";
+import jwt from "jsonwebtoken";
+import { config } from "@/core/config";
+import { AuthenticationError } from "@/core/errors/AppError";
 
 export class TransactionController extends BaseController {
   private logger = new AppLogger("TransactionController");
@@ -12,97 +14,92 @@ export class TransactionController extends BaseController {
     super();
   }
 
-  /**
-   * POST /transactions/v1/
-   */
-  public async create(req: Request, res: Response) {
-    const userId = (req as any).userId;
-    const data = req.validatedBody as CreateTransactionDTO;
+  private getUserIdFromRequest(req: Request): string {
+    const auth = req.headers.authorization;
+    if (!auth) throw new AuthenticationError("Missing authorization header");
+    const parts = auth.split(" ");
+    if (parts.length !== 2 || parts[0] !== "Bearer")
+      throw new AuthenticationError("Invalid authorization header");
 
-    const transaction = await this.transactionService.createTransaction(userId, data);
-
-    return this.sendCreatedResponse(req, res, transaction, "Transaction created");
+    try {
+      const payload = jwt.verify(parts[1], config.security.jwt.secret!) as any;
+      return payload.userId;
+    } catch {
+      throw new AuthenticationError("Invalid token");
+    }
   }
 
-  /**
-   * GET /transactions/v1/
-   */
-  public async list(req: Request, res: Response) {
-    const userId = (req as any).userId;
-    const { page = 1, pageSize = 20, type, startDate, endDate, categoryId } = req.query;
+  async create(req: Request, res: Response) {
+    const userId = this.getUserIdFromRequest(req);
+    const data = req.validatedBody as CreateTransactionDTO;
 
-    const result = await this.transactionService.getTransactions(
+    const transaction = await this.transactionService.create(userId, data);
+    return this.sendCreatedResponse(
+      req,
+      res,
+      transaction,
+      "Transaction created",
+    );
+  }
+
+  async list(req: Request, res: Response) {
+    const userId = this.getUserIdFromRequest(req);
+    const query = req.validatedQuery as ListTransactionsQuery;
+
+    const result = await this.transactionService.list(
       userId,
-      Number(page),
-      Number(pageSize),
+      query.page,
+      query.limit,
       {
-        type: type as string,
-        startDate: startDate ? new Date(startDate as string) : undefined,
-        endDate: endDate ? new Date(endDate as string) : undefined,
-        categoryId: categoryId as string,
+        type: query.type,
+        startDate: query.startDate,
+        endDate: query.endDate,
       },
     );
 
     return this.sendPaginatedResponse(
       req,
       res,
-      result.meta,
-      "Transactions retrieved",
+      result.pagination,
+      "Transactions fetched",
       result.data,
     );
   }
 
-  /**
-   * GET /transactions/v1/:id
-   */
-  public async getOne(req: Request, res: Response) {
-    const userId = (req as any).userId;
+  async getById(req: Request, res: Response) {
+    const userId = this.getUserIdFromRequest(req);
     const { id } = req.params;
 
-    const transaction = await this.transactionService.getTransaction(userId, id);
-
-    return this.sendResponse(req, res, "Transaction retrieved", 200, transaction);
+    const transaction = await this.transactionService.getById(userId, id);
+    return this.sendResponse(
+      req,
+      res,
+      "Transaction fetched",
+      undefined,
+      transaction,
+    );
   }
 
-  /**
-   * PATCH /transactions/v1/:id
-   */
-  public async update(req: Request, res: Response) {
-    const userId = (req as any).userId;
+  async update(req: Request, res: Response) {
+    const userId = this.getUserIdFromRequest(req);
     const { id } = req.params;
-    const data = req.validatedBody as UpdateTransactionDTO;
+    const data = req.validatedBody as Partial<CreateTransactionDTO>;
 
-    const transaction = await this.transactionService.updateTransaction(userId, id, data);
-
-    return this.sendResponse(req, res, "Transaction updated", 200, transaction);
+    const transaction = await this.transactionService.update(userId, id, data);
+    return this.sendResponse(
+      req,
+      res,
+      "Transaction updated",
+      undefined,
+      transaction,
+    );
   }
 
-  /**
-   * DELETE /transactions/v1/:id
-   */
-  public async delete(req: Request, res: Response) {
-    const userId = (req as any).userId;
+  async delete(req: Request, res: Response) {
+    const userId = this.getUserIdFromRequest(req);
     const { id } = req.params;
 
-    await this.transactionService.deleteTransaction(userId, id);
-
+    await this.transactionService.delete(userId, id);
     return this.sendNoContentResponse(res);
   }
-
-  /**
-   * GET /transactions/v1/summary
-   */
-  public async getSummary(req: Request, res: Response) {
-    const userId = (req as any).userId;
-    const { startDate, endDate } = req.query;
-
-    const summary = await this.transactionService.getSummary(
-      userId,
-      startDate ? new Date(startDate as string) : undefined,
-      endDate ? new Date(endDate as string) : undefined,
-    );
-
-    return this.sendResponse(req, res, "Summary retrieved", 200, summary);
-  }
 }
-

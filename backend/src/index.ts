@@ -6,10 +6,13 @@ import { config } from "./core/config";
 // Providers (Infrastructure)
 import { PrismaProvider } from "./providers/PrismaProvider";
 import { prisma } from "./lib/prisma";
+
+// Modules (Business Logic)
 import { AuthModule } from "./Modules/Auth/AuthModule";
 import { TransactionModule } from "./Modules/Transactions/TransactionModule";
-import { CategoryModule } from "./Modules/Categories/CategoryModule";
 import { BudgetModule } from "./Modules/Budgets/BudgetModule";
+import { CategoryModule } from "./Modules/Categories/CategoryModule";
+import { SavingsGoalModule } from "./Modules/SavingsGoals/SavingsGoalModule";
 
 // Modules (Business Logic)
 
@@ -28,9 +31,9 @@ async function bootstrap() {
     AppLogger.info("⚙ Registering modules...");
     app.registerModule(new AuthModule());
     app.registerModule(new TransactionModule());
-    app.registerModule(new CategoryModule());
     app.registerModule(new BudgetModule());
-    // app.registerModule(new ProductModule());
+    app.registerModule(new CategoryModule());
+    app.registerModule(new SavingsGoalModule());
     AppLogger.info("✔ All modules registered successfully");
 
     // 4. Spark the server!

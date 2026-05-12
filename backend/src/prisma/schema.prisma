@@ -46,6 +46,8 @@ model User {
   username        String?        @unique
   firstName       String
   lastName        String
+  currency        String         @default("USD")
+  monthlyIncome   Decimal        @default(0)
   displayName     String?
   role            UserRole       @default(user)
   status          AccountStatus  @default(pending_verification)
@@ -64,6 +66,7 @@ model User {
   categories      Category[]
   transactions    Transaction[]
   budgets         Budget[]
+  savingsGoals    SavingsGoal[]
 }
 
 model Session {
@@ -124,6 +127,7 @@ model Transaction {
   type        TransactionType
   amount      Decimal
   currency    String          @default("USD")
+  paymentMethod String        @default("cash")
   date        DateTime
   notes       String?
   createdAt   DateTime        @default(now())
@@ -160,4 +164,21 @@ model Budget {
   @@index([userId])
   @@index([categoryId])
   @@index([period])
+}
+
+model SavingsGoal {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @db.Uuid
+  name          String
+  targetAmount  Decimal
+  currentAmount Decimal   @default(0)
+  currency      String    @default("USD")
+  deadline      DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deadline])
 }

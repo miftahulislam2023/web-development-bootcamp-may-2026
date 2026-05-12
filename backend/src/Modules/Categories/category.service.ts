@@ -1,6 +1,6 @@
-// src/Modules/Categories/category.service.ts
 import { PrismaClient } from "@/prisma/generated/client";
 import { AppLogger } from "@/core/logging/logger";
+import { NotFoundError } from "@/core/errors/AppError";
 import { CreateCategoryDTO } from "./CategoryDTO";
 
 export class CategoryService {
@@ -8,11 +8,8 @@ export class CategoryService {
 
   constructor(private readonly prisma: PrismaClient) {}
 
-  /**
-   * Create a new category
-   */
-  public async createCategory(userId: string, data: CreateCategoryDTO) {
-    this.logger.info("Creating category", { userId });
+  async create(userId: string, data: CreateCategoryDTO) {
+    this.logger.info("Creating category for user", { userId });
 
     const category = await this.prisma.category.create({
       data: {
@@ -27,41 +24,81 @@ export class CategoryService {
     return category;
   }
 
-  /**
-   * Get all categories (global + user-specific)
-   */
-  public async getCategories(userId: string) {
-    this.logger.info("Fetching categories", { userId });
+  async list(userId: string, type?: string) {
+    this.logger.info("Fetching categories for user", { userId, type });
+
+    const where: any = { userId };
+    if (type) where.type = type;
 
     const categories = await this.prisma.category.findMany({
-      where: {
-        OR: [
-          { userId: null }, // Global categories
-          { userId }, // User-specific categories
-        ],
-      },
+      where,
       orderBy: { name: "asc" },
     });
 
     return categories;
   }
 
-  /**
-   * Get categories by type
-   */
-  public async getCategoriesByType(userId: string, type: string) {
+  async listGlobal(type?: string) {
+    this.logger.info("Fetching global categories", { type });
+
+    const where: any = { userId: null };
+    if (type) where.type = type;
+
     const categories = await this.prisma.category.findMany({
-      where: {
-        type,
-        OR: [
-          { userId: null },
-          { userId },
-        ],
-      },
+      where,
       orderBy: { name: "asc" },
     });
 
     return categories;
+  }
+
+  async getById(userId: string, categoryId: string) {
+    const category = await this.prisma.category.findFirst({
+      where: {
+        id: categoryId,
+        OR: [{ userId }, { userId: null }],
+      },
+    });
+
+    if (!category) throw new NotFoundError("Category");
+    return category;
+  }
+
+  async update(
+    userId: string,
+    categoryId: string,
+    data: Partial<CreateCategoryDTO>,
+  ) {
+    this.logger.info("Updating category", { userId, categoryId });
+
+    const existing = await this.prisma.category.findFirst({
+      where: { id: categoryId, userId },
+    });
+
+    if (!existing) throw new NotFoundError("Category");
+
+    const updated = await this.prisma.category.update({
+      where: { id: categoryId },
+      data: {
+        name: data.name,
+        type: data.type,
+        icon: data.icon,
+        color: data.color,
+      },
+    });
+
+    return updated;
+  }
+
+  async delete(userId: string, categoryId: string) {
+    this.logger.info("Deleting category", { userId, categoryId });
+
+    const existing = await this.prisma.category.findFirst({
+      where: { id: categoryId, userId },
+    });
+
+    if (!existing) throw new NotFoundError("Category");
+
+    await this.prisma.category.delete({ where: { id: categoryId } });
   }
 }
-

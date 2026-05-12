@@ -9,64 +9,13 @@ import {
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { config } from "@/core/config";
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
+import { v4 as uuidv4 } from "uuid";
+import { inspect } from "node:util";
 
 export class AuthServices {
   private logger = new AppLogger("AuthServices");
 
   constructor(private readonly prisma: PrismaClient) {}
-
-  /**
-   * Register a new user
-   */
-
-  // public async register(
-  //   email: string,
-  //   firstName: string,
-  //   lastName: string,
-  //   password: string,
-  // ) {
-  //   try {
-  //     console.log("STEP 1");
-
-  //     const existingUser = await this.prisma.user.findUnique({
-  //       where: { email },
-  //     });
-
-  //     console.log("STEP 2", existingUser);
-
-  //     if (existingUser) {
-  //       throw new ConflictError("A user with this email already exists");
-  //     }
-
-  //     console.log("STEP 3");
-
-  //     const passwordHash = await bcrypt.hash(password, 10);
-
-  //     console.log("STEP 4");
-
-  //     const newUser = await this.prisma.user.create({
-  //       data: {
-  //         email,
-  //         firstName,
-  //         lastName,
-  //         password: passwordHash,
-  //         status: "active",
-  //       },
-  //     });
-
-  //     console.log("STEP 5", newUser);
-
-  //     return newUser;
-  //   } catch (err) {
-  //     console.error("REGISTER ERROR:", err);
-  //     throw err;
-  //   }
-  // }
 
   public async register(
     email: string,
@@ -75,23 +24,17 @@ export class AuthServices {
     password: string,
   ) {
     try {
-      console.log("STEP 1");
+      this.logger.info("Attempting to register user", { email });
 
       const existingUser = await this.prisma.user.findUnique({
         where: { email },
       });
-
-      console.log("STEP 2", existingUser);
-
       if (existingUser) {
+        this.logger.warn("Registration failed: User already exists", { email });
         throw new ConflictError("A user with this email already exists");
       }
 
-      console.log("STEP 3");
-
       const passwordHash = await bcrypt.hash(password, 10);
-
-      console.log("STEP 4");
 
       const newUser = await this.prisma.user.create({
         data: {
@@ -99,191 +42,158 @@ export class AuthServices {
           firstName,
           lastName,
           password: passwordHash,
-          status: "active",
         },
       });
 
-      console.log("STEP 5", newUser);
-
+      this.logger.info("User registered successfully", { userId: newUser.id });
       return newUser;
-    } catch (err) {
-      console.error("REGISTER ERROR:", err);
-      throw err;
+    } catch (error) {
+      this.logger.error("Register flow failed", {
+        name: error instanceof Error ? error.name : typeof error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        raw: inspect(error, { depth: 8, breakLength: 120 }),
+      });
+      throw error;
     }
   }
 
-  /**
-   * Login user and return tokens
-   */
-  public async login(email: string, password: string): Promise<AuthTokens> {
-    this.logger.info("Attempting to login user", { email });
-
-    const user = await this.prisma.user.findUnique({
-      where: { email },
+  public generateAccessToken(userId: string) {
+    const token = jwt.sign({ userId }, config.security.jwt.secret!, {
+      expiresIn: config.security.jwt.expiresIn as jwt.SignOptions["expiresIn"],
+      issuer: config.security.jwt.issuer,
     });
+    return token;
+  }
 
-    if (!user) {
-      this.logger.warn("Login failed: User not found", { email });
-      throw new AuthenticationError("Invalid email or password");
-    }
+  public async createSession(userId: string) {
+    const refreshToken = uuidv4();
+    const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      this.logger.warn("Login failed: Invalid password", { email });
-      throw new AuthenticationError("Invalid email or password");
-    }
-
-    // Update last login
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
-
-    // Generate tokens
-    const tokens = this.generateTokens(user.id);
-    // Store refresh token in DB
-    this.logger.info("Creating session record", { userId: user.id });
     await this.prisma.session.create({
       data: {
-        userId: user.id,
-        refreshTokenHash: await bcrypt.hash(tokens.refreshToken, 10),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        userId,
+        refreshTokenHash,
+        expiresAt,
       },
     });
 
-    this.logger.info("User logged in successfully", { userId: user.id });
-
-    return tokens;
+    return { refreshToken, expiresAt };
   }
 
-  /**
-   * Refresh access token
-   */
-  public async refreshToken(
-    refreshToken: string,
-  ): Promise<{ accessToken: string }> {
-    this.logger.info("Attempting to refresh token");
-
-    if (!refreshToken) {
-      throw new AuthenticationError("Refresh token is required");
-    }
-
+  public async login(email: string, password: string) {
     try {
-      const decoded = jwt.verify(refreshToken, config.security.jwt.secret) as {
-        sub: string;
-      };
-      const userId = decoded.sub;
-
-      // Check if session still exists
-      const session = await this.prisma.session.findFirst({
-        where: { userId },
-      });
-
-      if (!session) {
-        throw new AuthenticationError("Session not found");
+      const user = await this.prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        throw new AuthenticationError("Invalid credentials");
       }
 
-      // Verify refresh token hash
-      const isTokenValid = await bcrypt.compare(
-        refreshToken,
+      const matched = await bcrypt.compare(password, user.password);
+      if (!matched) {
+        throw new AuthenticationError("Invalid credentials");
+      }
+
+      const accessToken = this.generateAccessToken(user.id);
+      const { refreshToken, expiresAt } = await this.createSession(user.id);
+
+      // Exclude password
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _, ...userSafe } = user as any;
+
+      return { accessToken, refreshToken, expiresAt, user: userSafe };
+    } catch (error) {
+      this.logger.error("Login flow failed", {
+        name: error instanceof Error ? error.name : typeof error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        raw: inspect(error, { depth: 8, breakLength: 120 }),
+      });
+      throw error;
+    }
+  }
+
+  public async rotateRefreshToken(oldRefreshToken: string) {
+    const now = new Date();
+    const sessions = await this.prisma.session.findMany({
+      where: { expiresAt: { gt: now } },
+    });
+
+    for (const session of sessions) {
+      const ok = await bcrypt.compare(
+        oldRefreshToken,
         session.refreshTokenHash,
       );
-
-      if (!isTokenValid) {
-        throw new AuthenticationError("Invalid refresh token");
+      if (ok) {
+        const newRefreshToken = uuidv4();
+        const newHash = await bcrypt.hash(newRefreshToken, 10);
+        const newExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await this.prisma.session.update({
+          where: { id: session.id },
+          data: { refreshTokenHash: newHash, expiresAt: newExpires },
+        });
+        const accessToken = this.generateAccessToken(session.userId);
+        return {
+          accessToken,
+          refreshToken: newRefreshToken,
+          expiresAt: newExpires,
+        };
       }
+    }
 
-      // Generate new access token
-      const newAccessToken = jwt.sign(
-        { sub: userId },
-        config.auth.accessTokenSecret,
-        { expiresIn: "15m" },
-      );
+    throw new AuthenticationError("Invalid refresh token");
+  }
 
-      this.logger.info("Token refreshed successfully", { userId });
-
-      return { accessToken: newAccessToken };
-    } catch (error) {
-      this.logger.warn("Token refresh failed", { error });
-      throw new AuthenticationError("Failed to refresh token");
+  public async logout(refreshToken?: string) {
+    if (!refreshToken) return;
+    const sessions = await this.prisma.session.findMany();
+    for (const session of sessions) {
+      if (await bcrypt.compare(refreshToken, session.refreshTokenHash)) {
+        await this.prisma.session.delete({ where: { id: session.id } });
+        return;
+      }
     }
   }
 
-  /**
-   * Logout user and revoke session
-   */
-  public async logout(userId: string): Promise<void> {
-    this.logger.info("Attempting to logout user", { userId });
-
-    await this.prisma.session.deleteMany({
-      where: { userId },
-    });
-
-    this.logger.info("User logged out successfully", { userId });
+  public async getUserById(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundError("User");
+    // strip password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userSafe } = user as any;
+    return userSafe;
   }
 
-  /**
-   * Get user profile
-   */
-  public async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
+  public async updateUser(
+    userId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      currency?: string;
+      monthlyIncome?: number;
+    },
+  ) {
+    const existing = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        displayName: true,
-        avatarUrl: true,
-        bio: true,
-        role: true,
-        createdAt: true,
+    });
+    if (!existing) throw new NotFoundError("User");
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        currency: data.currency,
+        monthlyIncome:
+          typeof data.monthlyIncome === "number"
+            ? data.monthlyIncome
+            : undefined,
       },
     });
 
-    if (!user) {
-      throw new NotFoundError("User");
-    }
-
-    return user;
-  }
-
-  /**
-   * Update user profile
-   */
-  public async updateProfile(userId: string, data: Record<string, any>) {
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        displayName: true,
-        avatarUrl: true,
-        bio: true,
-        role: true,
-      },
-    });
-
-    return user;
-  }
-
-  /**
-   * Generate access and refresh tokens
-   */
-  private generateTokens(userId: string): AuthTokens {
-    const accessToken = jwt.sign({ sub: userId }, config.security.jwt.secret, {
-      expiresIn: "15m",
-    });
-
-    const refreshToken = jwt.sign({ sub: userId }, config.security.jwt.secret, {
-      expiresIn: "7d",
-    });
-
-    return { accessToken, refreshToken };
+    // strip password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userSafe } = updated as any;
+    return userSafe;
   }
 }

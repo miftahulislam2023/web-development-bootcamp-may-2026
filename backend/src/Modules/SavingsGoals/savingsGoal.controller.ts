@@ -1,16 +1,16 @@
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import { BaseController } from "@/core/BaseController";
 import { AppLogger } from "@/core/logging/logger";
-import { CreateBudgetDTO } from "./BudgetDTO";
-import { BudgetService } from "./budget.service";
-import jwt from "jsonwebtoken";
-import { config } from "@/core/config";
 import { AuthenticationError } from "@/core/errors/AppError";
+import { config } from "@/core/config";
+import { SavingsGoalService } from "./savingsGoal.service";
+import { CreateSavingsGoalDTO } from "./SavingsGoalDTO";
 
-export class BudgetController extends BaseController {
-  private logger = new AppLogger("BudgetController");
+export class SavingsGoalController extends BaseController {
+  private logger = new AppLogger("SavingsGoalController");
 
-  constructor(private readonly budgetService: BudgetService) {
+  constructor(private readonly savingsGoalService: SavingsGoalService) {
     super();
   }
 
@@ -18,8 +18,9 @@ export class BudgetController extends BaseController {
     const auth = req.headers.authorization;
     if (!auth) throw new AuthenticationError("Missing authorization header");
     const parts = auth.split(" ");
-    if (parts.length !== 2 || parts[0] !== "Bearer")
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
       throw new AuthenticationError("Invalid authorization header");
+    }
 
     try {
       const payload = jwt.verify(parts[1], config.security.jwt.secret!) as any;
@@ -31,41 +32,42 @@ export class BudgetController extends BaseController {
 
   async create(req: Request, res: Response) {
     const userId = this.getUserIdFromRequest(req);
-    const data = req.validatedBody as CreateBudgetDTO;
-
-    const budget = await this.budgetService.create(userId, data);
-    return this.sendCreatedResponse(req, res, budget, "Budget created");
+    const data = req.validatedBody as CreateSavingsGoalDTO;
+    const goal = await this.savingsGoalService.create(userId, data);
+    return this.sendCreatedResponse(req, res, goal, "Savings goal created");
   }
 
   async list(req: Request, res: Response) {
     const userId = this.getUserIdFromRequest(req);
-
-    const budgets = await this.budgetService.list(userId);
-    return this.sendResponse(req, res, "Budgets fetched", undefined, budgets);
+    const goals = await this.savingsGoalService.list(userId);
+    return this.sendResponse(
+      req,
+      res,
+      "Savings goals fetched",
+      undefined,
+      goals,
+    );
   }
 
   async getById(req: Request, res: Response) {
     const userId = this.getUserIdFromRequest(req);
     const { id } = req.params;
-
-    const budget = await this.budgetService.getById(userId, id);
-    return this.sendResponse(req, res, "Budget fetched", undefined, budget);
+    const goal = await this.savingsGoalService.getById(userId, id);
+    return this.sendResponse(req, res, "Savings goal fetched", undefined, goal);
   }
 
   async update(req: Request, res: Response) {
     const userId = this.getUserIdFromRequest(req);
     const { id } = req.params;
-    const data = req.validatedBody as Partial<CreateBudgetDTO>;
-
-    const budget = await this.budgetService.update(userId, id, data);
-    return this.sendResponse(req, res, "Budget updated", undefined, budget);
+    const data = req.validatedBody as Partial<CreateSavingsGoalDTO>;
+    const goal = await this.savingsGoalService.update(userId, id, data);
+    return this.sendResponse(req, res, "Savings goal updated", undefined, goal);
   }
 
   async delete(req: Request, res: Response) {
     const userId = this.getUserIdFromRequest(req);
     const { id } = req.params;
-
-    await this.budgetService.delete(userId, id);
+    await this.savingsGoalService.delete(userId, id);
     return this.sendNoContentResponse(res);
   }
 }

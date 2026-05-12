@@ -1,29 +1,32 @@
-// src/Modules/Transactions/TransactionDTO.ts
 import { z } from "zod";
 
 export const createTransactionSchema = {
   body: z.object({
+    accountId: z.string().uuid().optional(),
+    categoryId: z.string().uuid().optional(),
+    paymentMethod: z.enum(["cash", "card", "bank_transfer", "wallet"]),
     type: z.enum(["income", "expense", "transfer"]),
-    amount: z.number().positive("Amount must be positive"),
+    amount: z.coerce.number().positive("Amount must be positive"),
     currency: z.string().default("USD"),
     date: z
       .string()
-      .or(z.date())
-      .transform((d) => new Date(d)),
-    categoryId: z.string().uuid().optional(),
-    accountId: z.string().uuid().optional(),
-    notes: z.string().max(500).optional(),
+      .datetime()
+      .or(z.string().refine((val) => !isNaN(Date.parse(val)))),
+    notes: z.string().optional(),
   }),
 };
 
-export const updateTransactionSchema = {
-  body: z.object({
+export const listTransactionsSchema = {
+  query: z.object({
+    page: z.string().default("1").transform(Number),
+    limit: z.string().default("20").transform(Number),
     type: z.enum(["income", "expense", "transfer"]).optional(),
-    amount: z.number().positive().optional(),
-    date: z.string().or(z.date()).optional(),
-    notes: z.string().max(500).optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
   }),
 };
 
 export type CreateTransactionDTO = z.infer<typeof createTransactionSchema.body>;
-export type UpdateTransactionDTO = z.infer<typeof updateTransactionSchema.body>;
+export type ListTransactionsQuery = z.infer<
+  typeof listTransactionsSchema.query
+>;

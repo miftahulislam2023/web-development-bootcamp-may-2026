@@ -1,19 +1,15 @@
-// src/Modules/Transactions/transaction.service.ts
 import { PrismaClient } from "@/prisma/generated/client";
 import { AppLogger } from "@/core/logging/logger";
 import { NotFoundError } from "@/core/errors/AppError";
-import { CreateTransactionDTO, UpdateTransactionDTO } from "./TransactionDTO";
+import { CreateTransactionDTO } from "./TransactionDTO";
 
 export class TransactionService {
   private logger = new AppLogger("TransactionService");
 
   constructor(private readonly prisma: PrismaClient) {}
 
-  /**
-   * Create a new transaction
-   */
-  public async createTransaction(userId: string, data: CreateTransactionDTO) {
-    this.logger.info("Creating transaction", { userId });
+  async create(userId: string, data: CreateTransactionDTO) {
+    this.logger.info("Creating transaction for user", { userId });
 
     const transaction = await this.prisma.transaction.create({
       data: {
@@ -21,161 +17,102 @@ export class TransactionService {
         type: data.type,
         amount: data.amount,
         currency: data.currency,
-        date: data.date,
-        categoryId: data.categoryId,
-        accountId: data.accountId,
+        paymentMethod: data.paymentMethod,
+        date: new Date(data.date),
         notes: data.notes,
+        accountId: data.accountId,
+        categoryId: data.categoryId,
       },
-      include: {
-        category: true,
-        account: true,
-      },
+      include: { category: true },
     });
 
     return transaction;
   }
 
-  /**
-   * Get all transactions for a user with pagination and filters
-   */
-  public async getTransactions(
+  async list(
     userId: string,
-    page: number = 1,
-    pageSize: number = 20,
-    filters?: {
-      type?: string;
-      startDate?: Date;
-      endDate?: Date;
-      categoryId?: string;
-    },
+    page: number,
+    limit: number,
+    filters?: { type?: string; startDate?: string; endDate?: string },
   ) {
-    this.logger.info("Fetching transactions", { userId, page, pageSize });
+    this.logger.info("Fetching transactions", { userId, page, limit });
 
-    const offset = (page - 1) * pageSize;
-
-    const whereClause: any = { userId };
-    if (filters?.type) whereClause.type = filters.type;
-    if (filters?.categoryId) whereClause.categoryId = filters.categoryId;
+    const where: any = { userId };
+    if (filters?.type) where.type = filters.type;
     if (filters?.startDate || filters?.endDate) {
-      whereClause.date = {};
-      if (filters.startDate) whereClause.date.gte = filters.startDate;
-      if (filters.endDate) whereClause.date.lte = filters.endDate;
+      where.date = {};
+      if (filters.startDate) where.date.gte = new Date(filters.startDate);
+      if (filters.endDate) where.date.lte = new Date(filters.endDate);
     }
 
-    const [data, total] = await Promise.all([
+    const offset = (page - 1) * limit;
+    const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
-        where: whereClause,
-        include: {
-          category: true,
-          account: true,
-        },
-        orderBy: { date: "desc" },
+        where,
         skip: offset,
-        take: pageSize,
+        take: limit,
+        orderBy: { date: "desc" },
+        include: { category: true },
       }),
-      this.prisma.transaction.count({ where: whereClause }),
+      this.prisma.transaction.count({ where }),
     ]);
 
     return {
-      data,
-      meta: {
+      data: transactions,
+      pagination: {
         page,
-        pageSize,
+        limit,
         total,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrevious: page > 1,
       },
     };
   }
 
-  /**
-   * Get single transaction
-   */
-  public async getTransaction(userId: string, transactionId: string) {
-    const transaction = await this.prisma.transaction.findUnique({
-      where: { id: transactionId },
-      include: {
-        category: true,
-        account: true,
-      },
+  async getById(userId: string, transactionId: string) {
+    const transaction = await this.prisma.transaction.findFirst({
+      where: { id: transactionId, userId },
     });
 
-    if (!transaction || transaction.userId !== userId) {
-      throw new NotFoundError("Transaction");
-    }
-
+    if (!transaction) throw new NotFoundError("Transaction");
     return transaction;
   }
 
-  /**
-   * Update transaction
-   */
-  public async updateTransaction(
+  async update(
     userId: string,
     transactionId: string,
-    data: UpdateTransactionDTO,
+    data: Partial<CreateTransactionDTO>,
   ) {
-    const existing = await this.getTransaction(userId, transactionId);
+    this.logger.info("Updating transaction", { userId, transactionId });
+
+    const existing = await this.getById(userId, transactionId);
+    if (!existing) throw new NotFoundError("Transaction");
 
     const updated = await this.prisma.transaction.update({
       where: { id: transactionId },
-      data,
-      include: {
-        category: true,
-        account: true,
+      data: {
+        type: data.type,
+        amount: data.amount,
+        currency: data.currency,
+        paymentMethod: data.paymentMethod,
+        date: data.date ? new Date(data.date) : undefined,
+        notes: data.notes,
+        accountId: data.accountId,
+        categoryId: data.categoryId,
       },
+      include: { category: true },
     });
 
     return updated;
   }
 
-  /**
-   * Delete transaction
-   */
-  public async deleteTransaction(userId: string, transactionId: string) {
-    await this.getTransaction(userId, transactionId);
+  async delete(userId: string, transactionId: string) {
+    this.logger.info("Deleting transaction", { userId, transactionId });
 
-    await this.prisma.transaction.delete({
-      where: { id: transactionId },
-    });
-  }
+    const existing = await this.getById(userId, transactionId);
+    if (!existing) throw new NotFoundError("Transaction");
 
-  /**
-   * Get summary (income, expense, by category)
-   */
-  public async getSummary(userId: string, startDate?: Date, endDate?: Date) {
-    const whereClause: any = { userId };
-    if (startDate || endDate) {
-      whereClause.date = {};
-      if (startDate) whereClause.date.gte = startDate;
-      if (endDate) whereClause.date.lte = endDate;
-    }
-
-    const transactions = await this.prisma.transaction.findMany({
-      where: whereClause,
-      include: {
-        category: true,
-      },
-    });
-
-    const summary = {
-      totalIncome: 0,
-      totalExpense: 0,
-      byCategory: {} as Record<string, number>,
-    };
-
-    transactions.forEach((t) => {
-      if (t.type === "income") {
-        summary.totalIncome += parseFloat(t.amount.toString());
-      } else if (t.type === "expense") {
-        summary.totalExpense += parseFloat(t.amount.toString());
-      }
-
-      const categoryName = t.category?.name || "Uncategorized";
-      summary.byCategory[categoryName] =
-        (summary.byCategory[categoryName] || 0) +
-        parseFloat(t.amount.toString());
-    });
-
-    return summary;
+    await this.prisma.transaction.delete({ where: { id: transactionId } });
   }
 }

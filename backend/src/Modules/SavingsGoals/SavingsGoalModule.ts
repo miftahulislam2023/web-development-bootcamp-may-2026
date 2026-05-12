@@ -1,55 +1,49 @@
 import { BaseModule } from "@/core/BaseModule";
 import { AppLogger } from "@/core/logging/logger";
-import { BudgetService } from "./budget.service";
-import { BudgetController } from "./budget.controller";
 import { validateRequest } from "@/middleware/validation";
-import { createBudgetSchema } from "./BudgetDTO";
+import { SavingsGoalService } from "./savingsGoal.service";
+import { SavingsGoalController } from "./savingsGoal.controller";
+import { createSavingsGoalSchema } from "./SavingsGoalDTO";
 
-export class BudgetModule extends BaseModule {
-  public name: string = "BudgetModule";
+export class SavingsGoalModule extends BaseModule {
+  public name: string = "SavingsGoalModule";
   public version: string = "1.0.0";
-  public basePath: string = "/budgets/v1/";
+  public basePath: string = "/savings-goals/v1/";
   public dependencies?: string[] | undefined;
 
-  private logger = new AppLogger("BudgetModule");
+  private logger = new AppLogger("SavingsGoalModule");
 
   protected async setupUseCases(): Promise<void> {
     const prisma = this.context.getService("prisma");
-    this.registerService("BudgetService", new BudgetService(prisma));
+    this.registerService("SavingsGoalService", new SavingsGoalService(prisma));
   }
 
   protected async setupControllers(): Promise<void> {
-    const budgetService = this.getService<BudgetService>("BudgetService");
+    const savingsGoalService =
+      this.getService<SavingsGoalService>("SavingsGoalService");
     this.registerController(
-      "BudgetController",
-      new BudgetController(budgetService),
+      "SavingsGoalController",
+      new SavingsGoalController(savingsGoalService),
     );
   }
 
   protected async setupRoutes(): Promise<void> {
-    const controller = this.getController<BudgetController>("BudgetController");
+    const controller = this.getController<SavingsGoalController>(
+      "SavingsGoalController",
+    );
 
-    // GET /budgets/v1
     this.router.get("/", controller.list.bind(controller));
-
-    // POST /budgets/v1
     this.router.post(
       "/",
-      validateRequest(createBudgetSchema),
+      validateRequest(createSavingsGoalSchema),
       controller.create.bind(controller),
     );
-
-    // GET /budgets/v1/:id
     this.router.get("/:id", controller.getById.bind(controller));
-
-    // PATCH /budgets/v1/:id
     this.router.patch(
       "/:id",
-      validateRequest(createBudgetSchema),
+      validateRequest(createSavingsGoalSchema),
       controller.update.bind(controller),
     );
-
-    // DELETE /budgets/v1/:id
     this.router.delete("/:id", controller.delete.bind(controller));
   }
 }

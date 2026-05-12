@@ -7,44 +7,20 @@ export const createUserSchema = {
     firstName: z.string().min(2, "First name is too short"),
     lastName: z.string().min(2, "Last name is too short"),
     password: z.string().min(8, "Password must be at least 8 characters"),
+    // You can make optional fields available too based on your Prisma schema
     username: z.string().optional(),
   }),
 };
 
-export const loginSchema = {
+export const updateUserSchema = {
   body: z.object({
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(1, "Password is required"),
+    firstName: z.string().min(2, "First name is too short").optional(),
+    lastName: z.string().min(2, "Last name is too short").optional(),
+    currency: z.string().min(1, "Currency is required").optional(),
+    monthlyIncome: z.coerce.number().nonnegative().optional(),
   }),
 };
 
-export const refreshTokenSchema = {
-  cookies: z.object({
-    refreshToken: z.string().optional(),
-  }),
-};
-
-export const updateProfileSchema = {
-  body: z.object({
-    firstName: z.string().min(2).optional(),
-    lastName: z.string().min(2).optional(),
-    displayName: z.string().optional(),
-    bio: z.string().max(500).optional(),
-  }),
-};
-
-// Extract the inferred TypeScript types for the validated bodies
+// Extract the inferred TypeScript type for the validated body
 export type CreateUserDTO = z.infer<typeof createUserSchema.body>;
-export type LoginDTO = z.infer<typeof loginSchema.body>;
-export type UpdateProfileDTO = z.infer<typeof updateProfileSchema.body>;
-
-export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-  };
-  accessToken: string;
-}
+export type UpdateUserDTO = z.infer<typeof updateUserSchema.body>;

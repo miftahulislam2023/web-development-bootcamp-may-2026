@@ -53,12 +53,99 @@ export const createExpenseService =
 
 
 export const getExpensesService =
-  async (userId) => {
+  async (
+    userId,
+    query
+  ) => {
 
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      expenseType,
+      month,
+      year,
+    } = query;
+
+
+    // Dynamic Filter
+    const filter = {
+      user: userId,
+    };
+
+
+    // Search By title or note
+   if (search) {
+
+  filter.$or = [
+
+    {
+      title: {
+        $regex: search,
+        $options: "i",
+      },
+    },
+
+    {
+      note: {
+        $regex: search,
+        $options: "i",
+      },
+    },
+
+  ];
+
+}
+
+
+    // Filter By Expense Type
+    if (expenseType) {
+
+      filter.expenseType =
+        expenseType;
+
+    }
+
+
+    // Filter By Month + Year
+    if (month && year) {
+
+      filter.expenseDate = {
+
+        $gte:
+          new Date(
+            year,
+            month - 1,
+            1
+          ),
+
+        $lt:
+          new Date(
+            year,
+            month,
+            1
+          ),
+
+      };
+
+    }
+
+
+    // Pagination
+    const skip =
+      (page - 1) * limit;
+
+
+    // Total Count
+    const totalExpenses =
+      await Expense.countDocuments(
+        filter
+      );
+
+
+    // Get Expenses
     const expenses =
-      await Expense.find({
-        user: userId,
-      })
+      await Expense.find(filter)
 
         .populate(
           "expenseType",
@@ -67,10 +154,28 @@ export const getExpensesService =
 
         .sort({
           createdAt: -1,
-        });
+        })
+
+        .skip(skip)
+
+        .limit(Number(limit));
 
 
-    return expenses;
+    return {
+
+      currentPage:
+        Number(page),
+
+      totalPages:
+        Math.ceil(
+          totalExpenses / limit
+        ),
+
+      totalExpenses,
+
+      expenses,
+
+    };
 
 };
 

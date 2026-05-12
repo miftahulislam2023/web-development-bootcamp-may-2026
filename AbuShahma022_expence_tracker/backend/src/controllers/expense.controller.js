@@ -61,15 +61,27 @@ export const getExpenses =
 
     try {
 
-      const expenses =
+      const result =
         await getExpensesService(
-          req.user.id
+          req.user.id,
+          req.query
         );
 
 
       res.status(200).json({
         success: true,
-        data: expenses,
+
+        currentPage:
+          result.currentPage,
+
+        totalPages:
+          result.totalPages,
+
+        totalExpenses:
+          result.totalExpenses,
+
+        data:
+          result.expenses,
       });
 
     } catch (error) {

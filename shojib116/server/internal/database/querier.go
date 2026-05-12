@@ -6,12 +6,15 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateUser(ctx context.Context, username string) (User, error)
 	GetAllMessages(ctx context.Context) ([]Message, error)
+	GetAllUsersExceptCurrent(ctx context.Context, id uuid.UUID) ([]User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 }
 

@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -20,6 +22,34 @@ func (q *Queries) CreateUser(ctx context.Context, username string) (User, error)
 	var i User
 	err := row.Scan(&i.ID, &i.Username, &i.CreatedAt)
 	return i, err
+}
+
+const getAllUsersExceptCurrent = `-- name: GetAllUsersExceptCurrent :many
+SELECT id, username, created_at FROM users
+WHERE id <> $1
+`
+
+func (q *Queries) GetAllUsersExceptCurrent(ctx context.Context, id uuid.UUID) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsersExceptCurrent, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(&i.ID, &i.Username, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one

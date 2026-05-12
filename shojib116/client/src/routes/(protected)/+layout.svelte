@@ -12,7 +12,7 @@
 
 <ModeWatcher />
 <Sidebar.Provider>
-  <AppSidebar user={data.user} />
+  <AppSidebar user={data.user} users={data.users} />
   <main>
     <Sidebar.Trigger />
     {@render children()}

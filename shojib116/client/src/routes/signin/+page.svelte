@@ -15,7 +15,6 @@
 
     const res = await signin(username);
 
-    console.log(res);
     if (res.ok) {
       return goto("/");
     }

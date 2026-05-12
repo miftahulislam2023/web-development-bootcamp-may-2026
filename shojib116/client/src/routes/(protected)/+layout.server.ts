@@ -9,5 +9,11 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
     throw redirect(303, "/signin");
   }
   const user = await res.json();
-  return { user };
+
+  const usersRes = await fetch(`${baseUrl}/users`);
+  const users = await usersRes.json();
+
+  console.log(users);
+
+  return { user, users };
 };

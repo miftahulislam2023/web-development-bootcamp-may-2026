@@ -13,12 +13,14 @@
 
   conn.onmessage = (e) => {
     const msgs = JSON.parse(e.data);
-    console.log(JSON.parse(e.data));
     messages.push(...msgs);
   };
 
   const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
+    if (msg.trim() === "" || msg.length > 256) {
+      return;
+    }
     conn.send(msg);
     msg = "";
   };

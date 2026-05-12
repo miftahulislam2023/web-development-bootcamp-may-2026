@@ -37,7 +37,9 @@ func main() {
 
 	mux.HandleFunc("POST /signin", h.handleSignin)
 	mux.HandleFunc("POST /signout", h.handleSignout)
+
 	mux.HandleFunc("GET /me", h.requireAuth(h.handleMe))
+	mux.HandleFunc("GET /users", h.requireAuth(h.handleGetUsersExceptCurrent))
 
 	addr := fmt.Sprintf(":%d", cfg.HttpPort)
 	err = http.ListenAndServe(addr, h.handleCORS(mux))

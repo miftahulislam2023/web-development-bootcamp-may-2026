@@ -118,6 +118,18 @@ func (h *Handler) handleMe(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(session)
 }
 
+func (h *Handler) handleGetUsersExceptCurrent(w http.ResponseWriter, r *http.Request) {
+	session := r.Context().Value("user").(Session)
+
+	users, err := h.q.GetAllUsersExceptCurrent(r.Context(), session.UserID)
+	if err != nil {
+		http.Error(w, "failed to fetch users", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(users)
+}
+
 func (h *Handler) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session")

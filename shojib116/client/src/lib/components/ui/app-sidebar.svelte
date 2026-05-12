@@ -11,8 +11,10 @@
   import { signout } from "$lib/api/auth";
   import { goto } from "$app/navigation";
   import { toggleMode } from "mode-watcher";
+  import { Button } from "$lib/components/ui/button/index";
+  import ChatTab from "./chat-tab.svelte";
 
-  let { user } = $props();
+  let { user, users } = $props();
   const handleSignout = () => {
     signout(user.userID);
     goto("/signin");
@@ -20,10 +22,23 @@
 </script>
 
 <Sidebar.Root>
-  <Sidebar.Header />
+  <Sidebar.Header>
+    <Button onclick={toggleMode}>
+      <span class="flex items-center gap-2 dark:hidden">
+        <MoonIcon class="h-4 w-4" />
+        Dark
+      </span>
+
+      <span class="hidden items-center gap-2 dark:flex">
+        <SunIcon class="h-4 w-4" />
+        Light
+      </span>
+
+      <span class="sr-only">Toggle theme</span>
+    </Button>
+  </Sidebar.Header>
   <Sidebar.Content>
-    <Sidebar.Group />
-    <Sidebar.Group />
+    <ChatTab {user} {users} />
   </Sidebar.Content>
   <Sidebar.Footer>
     <Menubar.Root class="border-0">
@@ -42,19 +57,6 @@
           <ChevronsUpDownIcon size={16} />
         </Menubar.Trigger>
         <Menubar.Content>
-          <Menubar.Item onclick={toggleMode}>
-            <span class="flex items-center gap-2 dark:hidden">
-              <MoonIcon class="h-4 w-4" />
-              Dark
-            </span>
-
-            <span class="hidden items-center gap-2 dark:flex">
-              <SunIcon class="h-4 w-4" />
-              Light
-            </span>
-
-            <span class="sr-only">Toggle theme</span>
-          </Menubar.Item>
           <Menubar.Item onclick={handleSignout}>
             <LogOutIcon /> Logout
           </Menubar.Item>

@@ -21,15 +21,15 @@ const Footer = () => {
 
         <nav>
           <div className="grid grid-flow-col gap-4">
-            <a href="https://akm-samioul-islam.vercel.app/" target="_blank"><AiOutlineGlobal className='w-6 h-6' /></a>
-            <a href="https://github.com/Samioul51" target="_blank"><FaGithub className='w-6 h-6' /></a>
-            <a href="https://www.linkedin.com/in/a-k-m-samioul-islam/" target="_blank"><FaLinkedin className='w-6 h-6' /></a>
+            <a className='text-white' href="https://akm-samioul-islam.vercel.app/" target="_blank"><AiOutlineGlobal className='w-6 h-6' /></a>
+            <a className='text-white' href="https://github.com/Samioul51" target="_blank"><FaGithub className='w-6 h-6' /></a>
+            <a className='text-white' href="https://www.linkedin.com/in/a-k-m-samioul-islam/" target="_blank"><FaLinkedin className='w-6 h-6' /></a>
           </div>
         </nav>
 
         {/* Copyright */}
 
-        <p>&copy; {new Date().getFullYear()} A. K. M Samioul Islam - All right reserved</p>
+        <p className='text-white'>&copy; {new Date().getFullYear()} A. K. M Samioul Islam - All right reserved</p>
 
       </footer>
     </div>

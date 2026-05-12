@@ -9,7 +9,7 @@ import router from './src/routes/routes.js';
 const app = express();
 
 app.use(cors({
-    origin: 'http://localhost:3000', // Adjust this to your frontend's URL
+    origin: 'http://localhost:3000', // frontend URL
     credentials: true, // Allow cookies to be sent with requests
 }));
 app.use(helmet());

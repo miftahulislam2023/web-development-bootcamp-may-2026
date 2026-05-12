@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+
+
+.inter {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.lobster {
+  font-family: "Lobster Two", sans-serif;
+  font-style: normal;
+}

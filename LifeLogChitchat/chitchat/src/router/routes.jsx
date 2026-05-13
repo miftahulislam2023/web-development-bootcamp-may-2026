@@ -1,29 +1,45 @@
 import { createBrowserRouter } from "react-router";
-import App from "../App";
+
 import RootLayout from "../layout/RootLayout";
-import chatPage from "../pages/chatPage";
+
 import LoginPage from "../pages/LoginPage";
 import SignUpPage from "../pages/SignUpPage";
+
+import ProtectedRoute from "./ProtectedRoute";
+import AuthRedirectRoute from "./AuthRedirectRoute";
+import ChatPage from "../pages/chatPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <RootLayout></RootLayout>,
-    children:[
-        {
-            index: true,
-            Component: chatPage
-        },
-        {
-            path: '/login',
-            Component: LoginPage
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: (
+          <ProtectedRoute>
+          <ChatPage></ChatPage>
+          </ProtectedRoute>
+        ),
+      },
 
-        },
-        {
-            path: '/signup',
-            Component: SignUpPage
+      {
+        path: "/login",
+        element: (
+          <AuthRedirectRoute>
+            <LoginPage />
+          </AuthRedirectRoute>
+        ),
+      },
 
-        }
-    ]
+      {
+        path: "/signup",
+        element: (
+          <AuthRedirectRoute>
+            <SignUpPage />
+          </AuthRedirectRoute>
+        ),
+      },
+    ],
   },
 ]);

@@ -35,20 +35,20 @@ body {
   overflow: hidden;
   height: 3rem;
   padding: 0 2rem;
-  border-radius: 1.5rem;
-  /* background: oklch(62% 0.20 10); */
+  border-radius: .5rem;
+  
   background: #efd45c;
   background-size: 400%;
-  /* color: #fff; */
+  
   color: black;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: fit-content;
   font-weight: 600;
   z-index: 1;
+  @apply w-full
 }
 
 .button::before {

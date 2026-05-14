@@ -63,48 +63,48 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-//   logout: async () => {
-//     try {
-//       await axiosInstance.post("/auth/logout");
-//       set({ authUser: null });
-//       toast.success("Logged out successfully");
-//       get().disconnectSocket();
-//     } catch (error) {
-//       toast.error("Error logging out");
-//       console.log("Logout error:", error);
-//     }
-//   },
+  logout: async () => {
+    try {
+      await axiosInstance.post("/auth/logout");
+      set({ authUser: null });
+      toast.success("Logged out successfully");
+      get().disconnectSocket();
+    } catch (error) {
+      toast.error("Error logging out");
+      console.log("Logout error:", error);
+    }
+  },
 
-//   updateProfile: async (data) => {
-//     try {
-//       const res = await axiosInstance.put("/auth/update-profile", data);
-//       set({ authUser: res.data });
-//       toast.success("Profile updated successfully");
-//     } catch (error) {
-//       console.log("Error in update profile:", error);
-//       toast.error(error.response.data.message);
-//     }
-//   },
+  updateProfile: async (data) => {
+    try {
+      const res = await axiosInstance.put("/auth/update-profile", data);
+      set({ authUser: res.data });
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.log("Error in update profile:", error);
+      toast.error(error.response.data.message);
+    }
+  },
 
-//   connectSocket: () => {
-//     const { authUser } = get();
-//     if (!authUser || get().socket?.connected) return;
+  connectSocket: () => {
+    const { authUser } = get();
+    if (!authUser || get().socket?.connected) return;
 
-//     const socket = io(BASE_URL, {
-//       withCredentials: true, // this ensures cookies are sent with the connection
-//     });
+    const socket = io(BASE_URL, {
+      withCredentials: true, // this ensures cookies are sent with the connection
+    });
 
-//     socket.connect();
+    socket.connect();
 
-//     set({ socket });
+    set({ socket });
 
-//     // listen for online users event
-//     socket.on("getOnlineUsers", (userIds) => {
-//       set({ onlineUsers: userIds });
-//     });
-//   },
+    // listen for online users event
+    socket.on("getOnlineUsers", (userIds) => {
+      set({ onlineUsers: userIds });
+    });
+  },
 
-//   disconnectSocket: () => {
-//     if (get().socket?.connected) get().socket.disconnect();
-//   },
+  disconnectSocket: () => {
+    if (get().socket?.connected) get().socket.disconnect();
+  },
 }));

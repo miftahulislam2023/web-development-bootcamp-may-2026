@@ -18,6 +18,7 @@ type Querier interface {
 	GetAllUsersExceptCurrent(ctx context.Context, userAID uuid.UUID) ([]GetAllUsersExceptCurrentRow, error)
 	GetConversationByBothUserId(ctx context.Context, arg GetConversationByBothUserIdParams) (Conversation, error)
 	GetConversationsForUser(ctx context.Context, userAID uuid.UUID) ([]GetConversationsForUserRow, error)
+	GetMessagesForAConversation(ctx context.Context, conversationID uuid.UUID) ([]Message, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 }
 

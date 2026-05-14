@@ -41,6 +41,8 @@ func main() {
 	mux.HandleFunc("GET /me", h.requireAuth(h.handleMe))
 	mux.HandleFunc("GET /users", h.requireAuth(h.handleGetUsersExceptCurrent))
 
+	mux.HandleFunc("GET /messages", h.requireAuth(h.handleGetMessages))
+
 	mux.HandleFunc("GET /chatlist", h.requireAuth(h.handleGetChatList))
 
 	mux.HandleFunc("POST /add-friend", h.requireAuth(h.handleAddFriend))

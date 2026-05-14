@@ -4,7 +4,8 @@
   import { UserRoundPlusIcon } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button/index";
   import { addFriend } from "$lib/api/auth";
-  import { invalidateAll } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
+  import { page } from "$app/state";
 
   let { users, chatList } = $props();
 
@@ -14,7 +15,10 @@
       console.log("creating conversation failed");
     }
 
+    const conv = await res.json();
+
     await invalidateAll();
+    goto(`/chats/${conv.id}`);
   };
 </script>
 
@@ -29,17 +33,26 @@
         <li>get some friends buddy</li>
       {:else}
         {#each chatList as chat}
-          <li class="flex justify-between items-center hover:bg-accent p-1">
-            <div class="flex items-center gap-4">
-              <Avatar.Root>
-                <Avatar.Image
-                  src={`https://github.com/${chat.username}.png`}
-                  alt={chat.username}
-                />
-                <Avatar.Fallback>U</Avatar.Fallback>
-              </Avatar.Root>
-              {chat.username}
-            </div>
+          <li>
+            <a
+              href={`/chats/${chat.conversation_id}`}
+              class={`flex justify-between items-center p-2 transition-colors ${
+                page.params.chat_id === chat.conversation_id
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent"
+              }`}
+            >
+              <div class="flex items-center gap-4">
+                <Avatar.Root>
+                  <Avatar.Image
+                    src={`https://github.com/${chat.username}.png`}
+                    alt={chat.username}
+                  />
+                  <Avatar.Fallback>U</Avatar.Fallback>
+                </Avatar.Root>
+                {chat.username}
+              </div>
+            </a>
           </li>
         {/each}
       {/if}

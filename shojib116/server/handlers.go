@@ -33,6 +33,7 @@ func NewHandler(db *sql.DB, cfg *config.Config, ss *SessionStore) *Handler {
 func (h *Handler) handleWS(hub *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		allowedOrigin := hub.cfg.FrontendDomain
+		session := r.Context().Value("user").(Session)
 		var upgrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
@@ -48,7 +49,7 @@ func (h *Handler) handleWS(hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+		client := &Client{hub: hub, conn: conn, user: &session, send: make(chan []byte, 1024)}
 		client.hub.register <- client
 
 		go client.writePump()
@@ -130,6 +131,23 @@ func (h *Handler) handleGetUsersExceptCurrent(w http.ResponseWriter, r *http.Req
 	}
 
 	json.NewEncoder(w).Encode(users)
+}
+
+func (h *Handler) handleGetMessages(w http.ResponseWriter, r *http.Request) {
+	conversationId := r.URL.Query().Get("conversation_id")
+
+	id, err := uuid.Parse(conversationId)
+	if err != nil {
+		return
+	}
+
+	messages, err := h.q.GetMessagesForAConversation(r.Context(), id)
+	if err != nil {
+		http.Error(w, "failed to fetch messages", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(messages)
 }
 
 func (h *Handler) handleGetChatList(w http.ResponseWriter, r *http.Request) {

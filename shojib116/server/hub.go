@@ -7,13 +7,24 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/shojib116/chat-app-server/config"
 	"github.com/shojib116/chat-app-server/internal/database"
 )
 
+type Envelope struct {
+	Type           string    `json:"type"`
+	ConversationID uuid.UUID `json:"conversation_id"`
+	From           uuid.UUID `json:"from"`
+	To             uuid.UUID `json:"to"`
+	Text           string    `json:"text"`
+	SentAt         time.Time `json:"sentAt"`
+}
+
 type Hub struct {
 	clients    map[*Client]bool
-	broadcast  chan []byte
+	users      map[string]*Client
+	broadcast  chan Envelope
 	register   chan *Client
 	unregister chan *Client
 	db         *sql.DB
@@ -23,10 +34,11 @@ type Hub struct {
 
 func newHub(db *sql.DB, cfg *config.Config) *Hub {
 	return &Hub{
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan Envelope),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		users:      make(map[string]*Client),
 		db:         db,
 		queries:    database.New(db),
 		cfg:        cfg,
@@ -38,46 +50,61 @@ func (h *Hub) run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
-			messages, err := h.queries.GetAllMessages(context.Background())
-			if err != nil {
-				log.Printf("Broadcasting error on new client: %v", err)
-				continue
-			}
+			h.users[client.user.UserID.String()] = client
 
-			msg, err := json.Marshal(messages)
-			if err != nil {
-				log.Printf("Broadcasting error on new client: %v", err)
-				continue
-			}
-			client.send <- msg
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
+				delete(h.users, client.user.UserID.String())
 				delete(h.clients, client)
 				close(client.send)
 			}
-		case message := <-h.broadcast:
 
-			msg, err := h.queries.CreateMessage(context.Background(), database.CreateMessageParams{
-				Text:   string(message),
-				SentAt: time.Now(),
-			})
-			if err != nil {
-				log.Printf("Failed to save message: %v", err)
-				continue
-			}
-			marshalledMsg, err := json.Marshal([]database.Message{msg})
-			if err != nil {
-				log.Printf("Broadcasting error: %v", err)
-				continue
-			}
-			for client := range h.clients {
-				select {
-				case client.send <- marshalledMsg:
-				default:
-					close(client.send)
-					delete(h.clients, client)
+		case env := <-h.broadcast:
+			if env.Type == "direct" {
+				msg, err := h.queries.CreateMessage(context.Background(), database.CreateMessageParams{
+					Text:           env.Text,
+					SentAt:         env.SentAt,
+					SenderID:       env.From,
+					ConversationID: env.ConversationID,
+				})
+				if err != nil {
+					log.Printf("Failed to save message, %v", err)
+					continue
+				}
+
+				data, err := json.Marshal([]database.Message{msg})
+				if err != nil {
+					log.Printf("Broadcasting error: %v", err)
+					continue
+				}
+				if recipient, ok := h.users[env.To.String()]; ok {
+					recipient.send <- data
+				}
+				if sender, ok := h.users[env.From.String()]; ok {
+					sender.send <- data
 				}
 			}
+			// 	msg, err := h.queries.CreateMessage(context.Background(), database.CreateMessageParams{
+			// 		Text:   string(message),
+			// 		SentAt: time.Now(),
+			// 	})
+			// 	if err != nil {
+			// 		log.Printf("Failed to save message: %v", err)
+			// 		continue
+			// 	}
+			// 	marshalledMsg, err := json.Marshal([]database.Message{msg})
+			// 	if err != nil {
+			// 		log.Printf("Broadcasting error: %v", err)
+			// 		continue
+			// 	}
+			// 	for client := range h.clients {
+			// 		select {
+			// 		case client.send <- marshalledMsg:
+			// 		default:
+			// 			close(client.send)
+			// 			delete(h.clients, client)
+			// 		}
+			// 	}
 		}
 	}
 }

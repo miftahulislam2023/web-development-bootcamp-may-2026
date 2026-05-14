@@ -8,6 +8,9 @@ import PublicRoute from "../providers/publicRoute/PublicRoute";
 import DashboardLayout from "../layouts/DashboardLayout/DashboardLayout";
 import MyActivity from "../pages/my-activity/MyActivity";
 import PrivateRoute from "../providers/PrivateRoute/PrivateRoute";
+import MyIncomes from "../pages/incomes/MyIncomes";
+import MyExpenses from "../pages/expenses/MyExpenses";
+import MyProfile from "../pages/profile/MyProfile";
 
 export const router=createBrowserRouter([
     {
@@ -48,6 +51,18 @@ export const router=createBrowserRouter([
             {
                 path: "my-activity",
                 element:<MyActivity></MyActivity>
+            },
+            {
+                path: "my-incomes",
+                element: <MyIncomes></MyIncomes>
+            },
+            {
+                path: "my-expenses",
+                element: <MyExpenses></MyExpenses>
+            },
+            {
+                path: "my-profile",
+                element: <MyProfile></MyProfile>
             }
         ]
     },

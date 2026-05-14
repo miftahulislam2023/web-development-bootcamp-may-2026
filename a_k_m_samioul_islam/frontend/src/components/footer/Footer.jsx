@@ -1,6 +1,6 @@
 import { Wallet } from "lucide-react";
 import React from "react";
-import { Link, NavLink } from "react-router";
+import { NavLink } from "react-router";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineGlobal } from "react-icons/ai";
 

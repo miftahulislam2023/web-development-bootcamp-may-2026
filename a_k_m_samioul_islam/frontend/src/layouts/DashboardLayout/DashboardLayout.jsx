@@ -1,10 +1,12 @@
-import React from 'react';
-import { Outlet } from 'react-router';
+import React, { useContext } from 'react';
+import Sidebar from '../../components/sidebar/Sidebar';
+import { AuthContext } from '../../providers/AuthProvider/AuthProvider';
 
 const DashboardLayout = () => {
+    const { userData } = useContext(AuthContext);
     return (
         <>
-            <Outlet></Outlet>
+            <Sidebar userData={userData}></Sidebar>
         </>
     );
 };

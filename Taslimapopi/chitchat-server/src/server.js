@@ -28,6 +28,8 @@ app.use("/api/message", messageRoute);
 
 app.use(express.json());
 
+
+
 server.listen(PORT, () => {
   console.log("hello chitchat 1234");
 });

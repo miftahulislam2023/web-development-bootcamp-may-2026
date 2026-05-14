@@ -4,6 +4,7 @@ import User from "../model/User.js";
 
 
 export const socketAuthMiddleware = async (socket, next) => {
+    const JWT_SECRET = process.env.JWT_SECRET
   try {
     // extract token from http-only cookies
     const token = socket.handshake.headers.cookie
@@ -17,7 +18,7 @@ export const socketAuthMiddleware = async (socket, next) => {
     }
 
     // verify the token
-    const decoded = jwt.verify(token, ENV.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     if (!decoded) {
       console.log("Socket connection rejected: Invalid token");
       return next(new Error("Unauthorized - Invalid Token"));

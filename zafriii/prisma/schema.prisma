@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  username  String   @unique
+  email     String   @unique
+  password  String
+  avatar    String?
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  sentMessages     Message[]      @relation("SentMessages")
+  conversationsA   Conversation[] @relation("UserA")
+  conversationsB   Conversation[] @relation("UserB")
+  blockedBy        Block[]        @relation("Blocker")
+  blockedUsers     Block[]        @relation("Blocked")
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id])
+  blocked User @relation("Blocked", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  userAId   String
+  userBId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userA    User      @relation("UserA", fields: [userAId], references: [id])
+  userB    User      @relation("UserB", fields: [userBId], references: [id])
+  messages Message[]
+
+  @@unique([userAId, userBId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  content        String
+  type           String   @default("text")
+  senderId       String
+  conversationId String
+  reactions      String[] @default([])
+  replyToId      String?
+  isEdited       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}

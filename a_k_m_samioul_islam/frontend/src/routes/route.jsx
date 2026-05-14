@@ -44,6 +44,10 @@ export const router=createBrowserRouter([
             {
                 index:true,
                 element:<MyActivity></MyActivity>
+            },
+            {
+                path: "my-activity",
+                element:<MyActivity></MyActivity>
             }
         ]
     },

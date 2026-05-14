@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { AuthContext } from "../../providers/AuthProvider/AuthProvider";
 import axiosSecure from "../../utils/axios/axioshelper";
+import { handleGoogleLogin } from "../../utils/googleLogin/handleGoogleLogin";
 
 const registerSchema = z.object({
     name: z.string().min(3, "Name must be at least 3 characters"),
@@ -27,7 +28,7 @@ const registerSchema = z.object({
 
 
 const Register = () => {
-  const { registration, setLoading, setUser, updateUser, setUserData } = useContext(AuthContext);
+  const { registration, setLoading, setUser, updateUser, setUserData, signInWithGoogle } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const {
@@ -268,8 +269,7 @@ const Register = () => {
 
           
 
-        <button
-          className="w-full max-w-[500px] h-12 btn bg-white text-black border-[#e5e5e5] mb-10 cursor-pointer"
+        <button  onClick={() => handleGoogleLogin(signInWithGoogle, setUserData, navigate)} className="w-full max-w-125 h-12 btn bg-white text-black border-[#e5e5e5] mb-10 cursor-pointer"
         >
           <svg
             aria-label="Google logo"

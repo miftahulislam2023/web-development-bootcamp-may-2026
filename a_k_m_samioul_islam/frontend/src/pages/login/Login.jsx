@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import Prism from "../../components/prism/Prism";
 import TextType from "../../components/texttype/TextType";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { AuthContext } from "../../providers/AuthProvider/AuthProvider";
 import { toast } from "sonner";
+import { handleGoogleLogin } from "../../utils/googleLogin/handleGoogleLogin";
 
 const loginSchema = z.object({
   email: z.email("Please enter a valid email"),
@@ -14,7 +15,7 @@ const loginSchema = z.object({
 });
 
 const Login = () => {
-  const { login, setLoading } = useContext(AuthContext);
+  const { login, setLoading, signInWithGoogle, setUserData, setUser } = useContext(AuthContext);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,19 +39,19 @@ const Login = () => {
     setLoading(true);
     try {
 
-      await login(data.email, data.password);
+      const res = await login(data.email, data.password);
+      setUser(res.user);
 
       toast.success("Logged in successfully");
 
       reset();
 
-      navigate(location.state ? location.state : "/dashboard");
+      navigate("/dashboard");
     } catch (error) {
       toast.error("Wrong credentials");
-    } finally {
       setLoading(false);
-    }
-  }
+    } 
+  };
 
   return (
     <div className="w-full max-w-full flex inter">
@@ -151,7 +152,7 @@ const Login = () => {
           </button>
         </form>
 
-        <button className="w-full max-w-125 h-12 btn bg-white text-black border-[#e5e5e5] mb-10 cursor-pointer">
+        <button onClick={() => handleGoogleLogin(signInWithGoogle, setUserData, navigate)} className="w-full max-w-125 h-12 btn bg-white text-black border-[#e5e5e5] mb-10 cursor-pointer">
           <svg
             aria-label="Google logo"
             width="16"

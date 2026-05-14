@@ -10,7 +10,7 @@ const PublicRoute = ({children}) => {
         return <Loading></Loading>;
 
     if (user && user.email)
-        return <Navigate to="/"></Navigate>;
+        return <Navigate to="/dashboard" replace />;
     
     return children;
 };

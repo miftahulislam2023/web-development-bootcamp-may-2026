@@ -15,10 +15,6 @@ export const fetchUserData = async (currentUser) => {
             return null;
         }
     } catch (error) {
-        if (error?.response?.status === 403)
-            return null;
-
-        toast.error(error.response?.data?.message || "Failed to fetch user data");
         return null;
     }
 };

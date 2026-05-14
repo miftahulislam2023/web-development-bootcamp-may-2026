@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Loading = () => {
+const Loader = () => {
   return (
     <StyledWrapper>
       <div className="wallet-loader">
@@ -10,9 +10,6 @@ const Loading = () => {
         <div className="bill bill-2" />
         <div className="bill bill-3" />
         <div className="wallet-front">
-          <div className="text">
-            Loading<span className="dot">.</span><span className="dot">.</span><span className="dot">.</span>
-          </div>
         </div>
       </div>
     </StyledWrapper>
@@ -251,4 +248,4 @@ const StyledWrapper = styled.div`
     }
   }`;
 
-export default Loading;
+export default Loader;

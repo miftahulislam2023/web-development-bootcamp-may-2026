@@ -1,11 +1,111 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import TextType from "../../components/texttype/TextType";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import Prism from "../../components/prism/Prism";
+import z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { AuthContext } from "../../providers/AuthProvider/AuthProvider";
+import axiosSecure from "../../utils/axios/axioshelper";
+
+const registerSchema = z.object({
+    name: z.string().min(3, "Name must be at least 3 characters"),
+    email: z.email("Please enter a valid email"),
+    currency: z.string().min(3, "Currency must be at least 3 characters").max(6,  "Currency must be less than or equal 6 characters"),
+    photo: z.any().refine((files) => files?.length === 1, "Photo is required").refine((files) => files?.[0]?.size <= 2 * 1024 * 1024, "Max photo size is 2MB").refine(
+        (files) => ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(files?.[0]?.type),
+        "Only jpg, png or webp allowed"
+      ),
+    password: z.string().min(6, "Password must be at least 6 characters").regex(/[A-Z]/, "Password must contain at least one uppercase letter").regex(/[a-z]/, "Password must contain at least one lowercase letter"),
+    confirmPassword: z.string()
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"]
+  });
+
 
 const Register = () => {
-  const [loading, setLoading] = useState(false);
-  
+  const { registration, setLoading, setUser, updateUser, setUserData } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+  });
+
+  // Register function
+
+  const handleRegister = async (data) => {
+    setLoading(true);
+    try {
+      const { name, email, currency, password, photo } = data;
+      const photoFile = photo[0];
+
+      const formData = new FormData();
+      formData.append("image", photoFile);
+
+      const imgbbKey = import.meta.env.VITE_IMGBB_API_KEY;
+
+      const imageUploadRes = await fetch(
+        `https://api.imgbb.com/1/upload?key=${imgbbKey}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const imageData = await imageUploadRes.json();
+
+      if (!imageData.success) 
+        throw new Error("Image upload failed");
+
+      const photoURL = imageData.data.url;
+
+      const result = await registration(email, password);
+      const user = result.user;
+      const token = await user.getIdToken();
+      localStorage.setItem("access-token", token);
+
+      const payload = {
+        name,
+        email,
+        photoURL,
+        currency
+      }
+
+      const res = await axiosSecure.post("/users", payload);
+
+      setUserData(res.data.data);
+
+      await updateUser({
+        displayName: name,
+        photoURL: photoURL,
+      });
+
+      setUser({
+        ...user,
+        displayName: name,
+        photoURL
+      });
+
+      toast.success("Registered successfully");
+      reset();
+      navigate("/dashboard");
+
+    } catch (error) {
+      // console.error(error);
+      toast.error("Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-full flex inter">
 
@@ -52,7 +152,7 @@ const Register = () => {
           Create Account
         </p>
 
-        <form className="w-full max-w-125 mb-5">
+        <form onSubmit={handleSubmit(handleRegister)} className="w-full max-w-125 mb-5">
 
           {/* Full Name */}
 
@@ -60,11 +160,13 @@ const Register = () => {
             <legend className="fieldset-legend">Full Name</legend>
             <input
               type="text"
-              name="name"
               className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="Your Name"
-              required
+              {...register("name")}
             />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            )}
           </fieldset>
 
           {/* Email Field */}
@@ -73,11 +175,15 @@ const Register = () => {
             <legend className="fieldset-legend">Email</legend>
             <input
               type="email"
-              name="email"
               className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="abc@email.com"
-              required
+              {...register("email")}
             />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.email.message}
+              </p>
+            )}
           </fieldset>
 
           {/* Photo */}
@@ -86,12 +192,33 @@ const Register = () => {
             <legend className="fieldset-legend">Your Photo</legend>
             <input
               type="file"
-              name="photo"
               className="w-full file-input focus:outline-none focus:ring-2 focus:ring-black"
               accept="image/*"
-              required
+              {...register("photo")}
             />
             <label className="label">Max size 2MB</label>
+            {errors.photo && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.photo.message?.toString()}
+              </p>
+            )}
+          </fieldset>
+
+          {/* Currency Field */}
+
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Currency</legend>
+            <input
+              type="text"
+              className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="Your currency"
+              {...register("currency")}
+            />
+            {errors.currency && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.currency.message}
+              </p>
+            )}
           </fieldset>
 
           {/* Password Field */}
@@ -100,15 +227,16 @@ const Register = () => {
             <legend className="fieldset-legend">Password</legend>
             <input
               type="password"
-              name="password"
               className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="••••••"
-              required
+              {...register("password")}
             />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.password.message}
+              </p>
+            )}
           </fieldset>
-          {/* {error && (
-            <p className="text-sm text-red-600 mb-1 text-justify">{error}</p>
-          )} */}
 
           {/* Confirm Password Field */}
 
@@ -116,11 +244,15 @@ const Register = () => {
             <legend className="fieldset-legend">Confirm Password</legend>
             <input
               type="password"
-              name="confirmPassword"
               className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="••••••"
-              required
+              {...register("confirmPassword")}
             />
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </fieldset>
 
           {/* Submit Button */}
@@ -128,9 +260,9 @@ const Register = () => {
           <button
             type="submit"
             className="btn w-full h-12 font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
-            disabled={loading}
+            disabled={isSubmitting}
           >
-            {loading ? <span className="loading loading-dots loading-md"></span> : "Create Account"}
+            {isSubmitting ? <span className="loading loading-dots loading-md"></span> : "Create Account"}
           </button>
         </form>
 

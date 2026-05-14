@@ -1,14 +1,59 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import Prism from "../../components/prism/Prism";
 import TextType from "../../components/texttype/TextType";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
+import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { AuthContext } from "../../providers/AuthProvider/AuthProvider";
+import { toast } from "sonner";
+
+const loginSchema = z.object({
+  email: z.email("Please enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
+});
 
 const Login = () => {
-  const [loading, setLoading] = useState(false);
+  const { login, setLoading } = useContext(AuthContext);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  // Login function
+
+  const handleLogin = async (data) => {
+    setLoading(true);
+    try {
+
+      await login(data.email, data.password);
+
+      toast.success("Logged in successfully");
+
+      reset();
+
+      navigate(location.state ? location.state : "/dashboard");
+    } catch (error) {
+      toast.error("Wrong credentials");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="w-full max-w-full flex inter">
-    
       {/* Interactive Background */}
 
       <div
@@ -40,19 +85,20 @@ const Login = () => {
             />
           </div>
           <p className="w-[70%] text-justify text-gray-600 text-lg">
-            Sign in to continue tracking your expenses and stay on top of your budget goals
+            Sign in to continue tracking your expenses and stay on top of your
+            budget goals
           </p>
         </div>
       </div>
 
-      {/*Sign Up Form*/}
+      {/*Sign In Form*/}
 
       <div className="w-full max-w-full lg:max-w-[50%] min-h-screen flex flex-col items-center justify-center p-10">
         <p className="font-bold text-black text-3xl md:text-5xl mb-5">
           Sign In
         </p>
 
-        <form className="w-full max-w-125 mb-5">
+        <form onSubmit={handleSubmit(handleLogin)} className="w-full max-w-125 mb-5">
 
           {/* Email Field */}
 
@@ -60,11 +106,13 @@ const Login = () => {
             <legend className="fieldset-legend">Email</legend>
             <input
               type="email"
-              name="email"
               className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="abc@email.com"
-              required
+              {...register("email")}
             />
+            {errors.email && (
+            <p className="text-sm text-red-600 mt-1 text-justify">{errors.email.message}</p>
+          )}
           </fieldset>
 
           {/* Password Field */}
@@ -73,34 +121,33 @@ const Login = () => {
             <legend className="fieldset-legend">Password</legend>
             <input
               type="password"
-              name="password"
               className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="••••••"
-              required
+              {...register("password")}
             />
+            {errors.password && (
+            <p className="text-sm text-red-600 mt-1 text-justify">{errors.password.message}</p>
+          )}
           </fieldset>
           <div className="w-full flex justify-end mb-5">
-                <p className="text-sm text-blue-500 font-medium cursor-pointer">Forgot Password?</p>
-            </div>
-          {/* {error && (
-            <p className="text-sm text-red-600 mb-1 text-justify">{error}</p>
-          )} */}
-
+            <p className="text-sm text-blue-500 font-medium cursor-pointer">
+              Forgot Password?
+            </p>
+          </div>
+          
 
           {/* Submit Button */}
 
           <button
             type="submit"
             className="btn w-full h-12 font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
-            disabled={loading}
+            disabled={isSubmitting}
           >
-            {
-                loading ? (
-                <span className="loading loading-dots loading-md"></span>
-                ) : (
-                "Login"
-                )
-            }
+            {isSubmitting ? (
+              <span className="loading loading-dots loading-md"></span>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
 
@@ -132,11 +179,11 @@ const Login = () => {
               ></path>
             </g>
           </svg>
-           Sign In with Google
+          Sign In with Google
         </button>
-        
+
         <div className="text-sm">
-           Don't have an account?{" "}
+          Don't have an account?{" "}
           <Link to="/register" className="text-blue-500 font-medium">
             Register
           </Link>

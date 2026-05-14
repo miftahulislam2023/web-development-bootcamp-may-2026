@@ -15,7 +15,7 @@ const AuthProvider = ({ children }) => {
 
     // Register
 
-    const register= (email, password) => {
+    const registration = (email, password) => {
         return createUserWithEmailAndPassword(auth, email, password);
     };
 
@@ -91,7 +91,7 @@ const AuthProvider = ({ children }) => {
     }, []);
 
     const authData={
-        register,
+        registration,
         login,
         logout,
         signInWithGoogle,

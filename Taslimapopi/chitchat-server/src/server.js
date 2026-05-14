@@ -4,13 +4,13 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
-import authRoute from "./src/routes/auth.route.js";
-import messageRoute from "./src/routes/message.route.js";
+import authRoute from "./routes/auth.route.js";
+import messageRoute from "./routes/message.route.js";
 
 
 
-import {connectDB} from './src/lib/connectDb.js'
-import { app, server } from "./src/lib/socket.js";
+import {connectDB} from './lib/connectDb.js'
+import { app, server } from "./lib/socket.js";
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rgrxfrw.mongodb.net/chitchat-db?appName=Cluster0`;
 
 connectDB(uri)

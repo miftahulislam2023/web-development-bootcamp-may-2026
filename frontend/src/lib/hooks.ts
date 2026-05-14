@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
+import { useToast } from "@/lib/toast";
 
 export const useTransactions = (
   page = 1,
@@ -17,8 +18,67 @@ export const useCreateTransaction = () => {
   return useMutation({
     mutationFn: (payload: Record<string, unknown>) =>
       apiClient.createTransaction(payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+    onError: (error: any) => {
+      const status = error.response?.status;
+      const message = error.response?.data?.error?.message;
+
+      if (status === 401) {
+        // Token is invalid or expired, user needs to login again
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem("accessToken");
+          window.location.href = "/auth/login";
+        }
+      }
+    },
+    onSuccess: async () => {
+      // refresh transactions and budgets
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      await queryClient.invalidateQueries({ queryKey: ["budgets"] });
+
+      // check budgets for limit/threshold breaches and show toast notifications
+      try {
+        type BudgetData = {
+          limitAmount?: number | string;
+          limit_amount?: number | string;
+          spent?: number | string;
+          alertThreshold?: number | string;
+          alert_threshold?: number | string;
+          name?: string;
+        };
+
+        const budgets = queryClient.getQueryData<BudgetData[]>(["budgets"]);
+        if (Array.isArray(budgets) && budgets.length > 0) {
+          budgets.forEach((b) => {
+            const limit = Number(b.limitAmount ?? b.limit_amount ?? 0);
+            const spent = Number(b.spent ?? 0);
+            const threshold = Number(
+              b.alertThreshold ?? b.alert_threshold ?? 0,
+            );
+            const name = String(b.name ?? "Budget");
+
+            if (limit > 0 && spent >= limit) {
+              useToast
+                .getState()
+                .show("info", `Budget \"${name}\" reached its limit.`);
+            } else if (
+              threshold > 0 &&
+              limit > 0 &&
+              spent >= (limit * threshold) / 100
+            ) {
+              useToast
+                .getState()
+                .show(
+                  "info",
+                  `Budget \"${name}\" reached ${threshold}% of its limit.`,
+                );
+            }
+          });
+        }
+      } catch (err) {
+        // swallow errors - don't break normal flow
+        console.error("Budget notification check failed", err);
+      }
+    },
   });
 };
 

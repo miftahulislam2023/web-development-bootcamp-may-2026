@@ -61,10 +61,10 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
   const categories = Array.isArray(data)
     ? data
     : Array.isArray(data?.data)
-    ? data.data
-    : Array.isArray(data?.data?.data)
-    ? data.data.data
-    : [];
+      ? data.data
+      : Array.isArray(data?.data?.data)
+        ? data.data.data
+        : [];
 
   return (
     <Card>
@@ -82,11 +82,17 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
             <Label>Category</Label>
             <Select onValueChange={(value) => setValue("categoryId", value)}>
               <SelectTrigger>
-                <SelectValue placeholder={isLoading ? "Loading..." : "Select or type category"} />
+                <SelectValue
+                  placeholder={
+                    isLoading ? "Loading..." : "Select or type category"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {isLoading ? (
-                  <div className="px-2 py-1 text-sm text-muted-foreground">Loading categories...</div>
+                  <div className="px-2 py-1 text-sm text-muted-foreground">
+                    Loading categories...
+                  </div>
                 ) : categories && categories.length > 0 ? (
                   categories.map((category: { id: string; name: string }) => (
                     <SelectItem key={category.id} value={category.id}>
@@ -95,9 +101,7 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
                   ))
                 ) : null}
                 {/* Always provide an Others fallback option */}
-                <SelectItem value="others">
-                  Others
-                </SelectItem>
+                <SelectItem value="others">Others</SelectItem>
               </SelectContent>
             </Select>
             <input

@@ -120,22 +120,23 @@ model Category {
 }
 
 model Transaction {
-  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String          @db.Uuid
-  accountId   String?         @db.Uuid
-  categoryId  String?         @db.Uuid
-  type        TransactionType
-  amount      Decimal
-  currency    String          @default("USD")
-  paymentMethod String        @default("cash")
-  date        DateTime
-  notes       String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @default(now()) @updatedAt
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String          @db.Uuid
+  accountId     String?         @db.Uuid
+  categoryId    String?         @db.Uuid
+  type          TransactionType
+  amount        Decimal
+  currency      String          @default("USD")
+  paymentMethod String          @default("cash")
+  name          String?
+  date          DateTime
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
 
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account     Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account       Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  category      Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([accountId])

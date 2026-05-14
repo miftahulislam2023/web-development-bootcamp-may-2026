@@ -20,6 +20,7 @@ export class TransactionService {
         paymentMethod: data.paymentMethod,
         date: new Date(data.date),
         notes: data.notes,
+        name: data.name,
         accountId: data.accountId,
         categoryId: data.categoryId,
       },

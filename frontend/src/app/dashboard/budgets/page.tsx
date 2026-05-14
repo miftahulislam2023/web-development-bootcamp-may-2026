@@ -15,11 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import BudgetCard from "@/components/cards/BudgetCard";
 import BudgetForm from "@/components/forms/BudgetForm";
-import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 export default function BudgetsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { data: budgetsData, isLoading } = useBudgets();
   const deleteMutation = useDeleteBudget();
@@ -42,29 +41,26 @@ export default function BudgetsPage() {
               Manage your spending budgets
             </p>
           </div>
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditingId(null)}>
+              <Button>
                 <Plus size={20} />
                 New Budget
               </Button>
             </DialogTrigger>
+
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  {editingId ? "Edit Budget" : "Create Budget"}
-                </DialogTitle>
+                <DialogTitle>Create Budget</DialogTitle>
                 <DialogDescription>
-                  {editingId
-                    ? "Update your budget settings"
-                    : "Set up a new spending budget"}
+                  Set up a new spending budget
                 </DialogDescription>
               </DialogHeader>
+
               <BudgetForm
-                budgetId={editingId || undefined}
                 onSuccess={() => {
                   setIsDialogOpen(false);
-                  setEditingId(null);
                 }}
               />
             </DialogContent>
@@ -91,16 +87,8 @@ export default function BudgetsPage() {
                   period={budget.period === "monthly" ? "Monthly" : "Yearly"}
                   category={budget.category?.name ?? budget.category}
                 />
-                <div className="absolute top-4 right-4 space-x-2 flex">
-                  <button
-                    onClick={() => {
-                      setEditingId(budget.id);
-                      setIsDialogOpen(true);
-                    }}
-                    className="p-2 bg-primary text-primary-foreground rounded-lg hover:opacity-80 transition"
-                  >
-                    <Edit2 size={16} />
-                  </button>
+
+                <div className="absolute top-4 right-4 flex">
                   <button
                     onClick={() => handleDelete(budget.id)}
                     className="p-2 bg-red-500 text-white rounded-lg hover:opacity-80 transition"

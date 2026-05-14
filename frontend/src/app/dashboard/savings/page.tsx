@@ -34,10 +34,10 @@ export default function SavingsGoalsPage() {
   const goals = Array.isArray(data)
     ? data
     : Array.isArray(data?.data)
-    ? data.data
-    : Array.isArray(data?.data?.data)
-    ? data.data.data
-    : [];
+      ? data.data
+      : Array.isArray(data?.data?.data)
+        ? data.data.data
+        : [];
 
   const onSubmit = async (payload: Record<string, unknown>) => {
     await createMutation.mutateAsync(payload);

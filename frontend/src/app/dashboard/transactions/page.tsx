@@ -37,10 +37,16 @@ export default function TransactionsPage() {
     20,
     filters,
   );
+
   const deleteMutation = useDeleteTransaction();
 
   const transactions = transactionsData?.data || [];
   const meta = transactionsData?.meta?.pagination;
+
+  // Show category column only if transactions contain category
+  const showCategory = transactions.some(
+    (t: any) => Boolean(t.category) || Boolean(t.categoryId),
+  );
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this transaction?")) {
@@ -51,6 +57,7 @@ export default function TransactionsPage() {
   return (
     <MainLayout>
       <div className="p-6 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Transactions</h1>
@@ -58,13 +65,16 @@ export default function TransactionsPage() {
               Manage all your financial transactions
             </p>
           </div>
+
+          {/* Add Transaction Dialog */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <Plus size={20} />
+                <Plus size={20} className="mr-2" />
                 New Transaction
               </Button>
             </DialogTrigger>
+
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add Transaction</DialogTitle>
@@ -72,6 +82,7 @@ export default function TransactionsPage() {
                   Create a new transaction entry
                 </DialogDescription>
               </DialogHeader>
+
               <TransactionForm
                 onSuccess={() => {
                   setIsDialogOpen(false);
@@ -86,15 +97,20 @@ export default function TransactionsPage() {
           <CardHeader>
             <CardTitle className="text-base">Filters</CardTitle>
           </CardHeader>
+
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Type Filter */}
               <div>
                 <Label htmlFor="type">Type</Label>
                 <select
-                  className="w-full px-3 py-2 border border-input rounded-md"
+                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
                   value={filters.type || ""}
                   onChange={(e) =>
-                    setFilters({ ...filters, type: e.target.value })
+                    setFilters({
+                      ...filters,
+                      type: e.target.value,
+                    })
                   }
                 >
                   <option value="">All Types</option>
@@ -103,23 +119,33 @@ export default function TransactionsPage() {
                   <option value="transfer">Transfer</option>
                 </select>
               </div>
+
+              {/* Start Date */}
               <div>
                 <Label htmlFor="startDate">Start Date</Label>
                 <Input
                   type="date"
                   value={filters.startDate || ""}
                   onChange={(e) =>
-                    setFilters({ ...filters, startDate: e.target.value })
+                    setFilters({
+                      ...filters,
+                      startDate: e.target.value,
+                    })
                   }
                 />
               </div>
+
+              {/* End Date */}
               <div>
                 <Label htmlFor="endDate">End Date</Label>
                 <Input
                   type="date"
                   value={filters.endDate || ""}
                   onChange={(e) =>
-                    setFilters({ ...filters, endDate: e.target.value })
+                    setFilters({
+                      ...filters,
+                      endDate: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -140,40 +166,72 @@ export default function TransactionsPage() {
               </div>
             ) : (
               <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12"></TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Date & Type</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="w-12"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((transaction: any) => (
-                      <TableRow key={transaction.id}>
-                        <TransactionRow
-                          id={transaction.id}
-                          type={transaction.type}
-                          amount={transaction.amount}
-                          category={transaction.category}
-                          date={transaction.date}
-                          description={transaction.description}
-                        />
-                        <td className="p-4">
-                          <button
-                            onClick={() => handleDelete(transaction.id)}
-                            className="text-red-500 hover:text-red-700"
-                            disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50 border-b border-border">
+                        {showCategory && (
+                          <>
+                            <TableHead className="w-12 border-r border-border text-center">
+                              #
+                            </TableHead>
+                            <TableHead className="border-r border-border">
+                              Category
+                            </TableHead>
+                          </>
+                        )}
+
+                        <TableHead className="border-r border-border">
+                          Date & Type
+                        </TableHead>
+
+                        <TableHead className="border-r border-border">
+                          Amount
+                        </TableHead>
+
+                        <TableHead className="w-16 text-center">
+                          Action
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+
+                    <TableBody>
+                      {transactions.map((transaction: any) => (
+                        <TableRow
+                          key={transaction.id}
+                          className="border-b border-border hover:bg-muted/40 transition-colors"
+                        >
+                          <TransactionRow
+                            id={transaction.id}
+                            type={transaction.type}
+                            amount={transaction.amount}
+                            category={
+                              transaction.category ?? transaction.categoryId
+                            }
+                            date={transaction.date}
+                            description={
+                              transaction.notes ??
+                              transaction.description ??
+                              transaction.name
+                            }
+                            showCategory={showCategory}
+                          />
+
+                          {/* Delete Button */}
+                          <td className="p-4 border-l border-border text-center">
+                            <button
+                              onClick={() => handleDelete(transaction.id)}
+                              className="text-red-500 hover:text-red-700 transition-colors"
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
 
                 {/* Pagination */}
                 {meta && meta.totalPages > 1 && (
@@ -181,6 +239,7 @@ export default function TransactionsPage() {
                     <div className="text-sm text-muted-foreground">
                       Page {meta.page} of {meta.totalPages}
                     </div>
+
                     <div className="space-x-2">
                       <Button
                         variant="outline"
@@ -189,6 +248,7 @@ export default function TransactionsPage() {
                       >
                         Previous
                       </Button>
+
                       <Button
                         variant="outline"
                         onClick={() =>

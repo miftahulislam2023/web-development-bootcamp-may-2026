@@ -14,10 +14,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { User, Lock, Bell } from "lucide-react";
+import { User } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuthStore();
+
   const {
     register,
     handleSubmit,
@@ -28,8 +29,6 @@ export default function SettingsPage() {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
       email: user?.email || "",
-      currency: user?.currency || "USD",
-      monthlyIncome: user?.monthlyIncome || 0,
     },
   });
 
@@ -38,8 +37,6 @@ export default function SettingsPage() {
       await updateUser({
         firstName: data.firstName,
         lastName: data.lastName,
-        currency: data.currency,
-        monthlyIncome: Number(data.monthlyIncome),
       });
       reset(data);
     } catch (error) {
@@ -49,149 +46,74 @@ export default function SettingsPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your account settings</p>
+      <div className="mx-auto px-6 py-10 space-y-8">
+        {/* Header */}
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account information
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Settings */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <User size={20} />
-                <div>
-                  <CardTitle>Profile Information</CardTitle>
-                  <CardDescription>
-                    Update your personal details
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input {...register("firstName")} />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input {...register("lastName")} />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    {...register("email")}
-                    disabled
-                    className="bg-muted cursor-not-allowed"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Email cannot be changed
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="currency">Currency</Label>
-                    <select
-                      className="w-full rounded-md border border-input px-3 py-2 mt-1"
-                      {...register("currency")}
-                    >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="JPY">JPY</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="monthlyIncome">Monthly Income</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      {...register("monthlyIncome")}
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Quick Settings */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Bell size={20} />
-                  <CardTitle className="text-base">Notifications</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4" />
-                  <span className="text-sm">Budget alerts</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4" />
-                  <span className="text-sm">Transaction reminders</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4" />
-                  <span className="text-sm">Weekly summary</span>
-                </label>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Lock size={20} />
-                  <CardTitle className="text-base">Security</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  Change Password
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Preferences</CardTitle>
-            <CardDescription>Customize your app experience</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="currency">Default Currency</Label>
-                <select className="w-full px-3 py-2 border border-input rounded-md mt-1">
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="JPY">JPY (¥)</option>
-                </select>
+        {/* Profile Card */}
+        <Card className="shadow-sm border border-border/60">
+          <CardHeader className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-md bg-muted">
+                <User size={18} />
               </div>
               <div>
-                <Label htmlFor="theme">Theme</Label>
-                <select className="w-full px-3 py-2 border border-input rounded-md mt-1">
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="system">System</option>
-                </select>
+                <CardTitle className="text-lg">Profile Information</CardTitle>
+                <CardDescription>Update your personal details</CardDescription>
               </div>
             </div>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Name Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input
+                    placeholder="Enter first name"
+                    {...register("firstName")}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input
+                    placeholder="Enter last name"
+                    {...register("lastName")}
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <Input
+                  {...register("email")}
+                  disabled
+                  className="bg-muted/50 cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Email address cannot be changed
+                </p>
+              </div>
+
+              {/* Submit */}
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="min-w-[140px]"
+                >
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
       </div>

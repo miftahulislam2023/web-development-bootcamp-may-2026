@@ -4,6 +4,7 @@ export const createTransactionSchema = {
   body: z.object({
     accountId: z.string().uuid().optional(),
     categoryId: z.string().uuid().optional(),
+    name: z.string().optional(),
     paymentMethod: z.enum(["cash", "card", "bank_transfer", "wallet"]),
     type: z.enum(["income", "expense", "transfer"]),
     amount: z.coerce.number().positive("Amount must be positive"),

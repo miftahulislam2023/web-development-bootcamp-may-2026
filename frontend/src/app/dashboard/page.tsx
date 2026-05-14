@@ -81,7 +81,7 @@ export default function DashboardPage() {
         const categoryLabel =
           typeof transaction.category === "string"
             ? transaction.category
-            : transaction.category?.name || "Uncategorized";
+            : transaction.category?.name || "Others";
         byCategory[categoryLabel] =
           (byCategory[categoryLabel] || 0) + Number(transaction.amount);
       });

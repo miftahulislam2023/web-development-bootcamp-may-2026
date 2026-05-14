@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useEffect } from "react";
 import { useCategories, useCreateTransaction } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +33,7 @@ export default function TransactionForm({
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
+      name: "",
       type: "expense",
       amount: "",
       categoryId: "",
@@ -43,18 +43,42 @@ export default function TransactionForm({
     },
   });
 
-  const transactionType = watch("type");
-  const { data, isLoading } = useCategories(transactionType);
+  // Always fetch all categories for the transaction form so user can pick any
+  // category regardless of selected transaction type.
+  const { data, isLoading } = useCategories();
   const createMutation = useCreateTransaction();
+
+  let apiError: string | null = null;
+  if (createMutation.error) {
+    const errorData = createMutation.error as unknown as {
+      response?: { data?: { error?: { message?: string } } };
+    };
+    apiError =
+      errorData?.response?.data?.error?.message ||
+      "Failed to create transaction";
+  }
 
   const onSubmit = async (payload: Record<string, unknown>) => {
     // normalize 'others' selection
     if (payload.categoryId === "others") {
-      // @ts-ignore
       delete payload.categoryId;
     }
-    await createMutation.mutateAsync(payload);
-    onSuccess?.();
+
+    // Convert date to ISO datetime format
+    if (payload.date && typeof payload.date === "string") {
+      // date input gives us YYYY-MM-DD, convert to ISO datetime at midnight
+      payload.date = new Date(payload.date + "T00:00:00Z").toISOString();
+    }
+
+    // Debug log
+    console.log("Transaction payload:", payload);
+
+    try {
+      await createMutation.mutateAsync(payload);
+      onSuccess?.();
+    } catch (error) {
+      console.error("Transaction creation error:", error);
+    }
   };
 
   // Safely extract categories from response - handle both array and nested response
@@ -67,9 +91,25 @@ export default function TransactionForm({
         : [];
 
   return (
-    <Card className="p-0 m-0 border-0 ring-0 shadow-none">
+    <Card>
+      <CardHeader>
+        <CardTitle>New Transaction</CardTitle>
+        <CardDescription>Add income or expense details</CardDescription>
+      </CardHeader>
       <CardContent>
+        {apiError && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+            {apiError}
+          </div>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Transaction Name</Label>
+            <Input
+              placeholder="e.g., Grocery Shopping, Salary Deposit"
+              {...register("name")}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Type</Label>
@@ -92,7 +132,11 @@ export default function TransactionForm({
               <Input
                 type="number"
                 step="0.01"
-                {...register("amount", { required: "Amount is required" })}
+                placeholder="0.00"
+                {...register("amount", {
+                  required: "Amount is required",
+                  valueAsNumber: true,
+                })}
               />
               {errors.amount ? (
                 <p className="text-xs text-red-500">
@@ -102,11 +146,16 @@ export default function TransactionForm({
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
-            <Select onValueChange={(value) => setValue("categoryId", value)}>
+            <Label>Category *</Label>
+            <Select
+              value={watch("categoryId")}
+              onValueChange={(value) => setValue("categoryId", value)}
+            >
               <SelectTrigger>
                 <SelectValue
-                  placeholder={isLoading ? "Loading..." : "Select category"}
+                  placeholder={
+                    isLoading ? "Loading categories..." : "Select a category"
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
@@ -115,12 +164,19 @@ export default function TransactionForm({
                     Loading categories...
                   </div>
                 ) : categories && categories.length > 0 ? (
-                  categories.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
+                  categories.map((category: Record<string, unknown>) => (
+                    <SelectItem
+                      key={String(category.id)}
+                      value={String(category.id)}
+                    >
+                      {String(category.name)}
                     </SelectItem>
                   ))
-                ) : null}
+                ) : (
+                  <div className="px-2 py-1 text-sm text-muted-foreground">
+                    No categories found
+                  </div>
+                )}
                 <SelectItem value="others">Others</SelectItem>
               </SelectContent>
             </Select>
@@ -130,48 +186,49 @@ export default function TransactionForm({
                 required: "Please select a category",
               })}
             />
-            <p className="text-xs text-muted-foreground">
-              Pick a category for this transaction. Choose "Others" if none
-              match.
-            </p>
             {errors.categoryId ? (
               <p className="text-xs text-red-500">
                 {String(errors.categoryId.message)}
               </p>
             ) : null}
           </div>
-          <div className="space-y-2">
-            <Label>Payment Method</Label>
-            <Select
-              value={watch("paymentMethod")}
-              onValueChange={(value) => setValue("paymentMethod", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="card">Card</SelectItem>
-                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                <SelectItem value="wallet">Wallet</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Payment Method</Label>
+              <Select
+                value={watch("paymentMethod")}
+                onValueChange={(value) => setValue("paymentMethod", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="card">Card</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="wallet">Wallet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Date *</Label>
+              <Input
+                type="date"
+                {...register("date", { required: "Date is required" })}
+              />
+              {errors.date ? (
+                <p className="text-xs text-red-500">
+                  {String(errors.date.message)}
+                </p>
+              ) : null}
+            </div>
           </div>
           <div className="space-y-2">
-            <Label>Date</Label>
+            <Label>Notes / Description</Label>
             <Input
-              type="date"
-              {...register("date", { required: "Date is required" })}
+              placeholder="Add any additional details"
+              {...register("notes")}
             />
-            {errors.date ? (
-              <p className="text-xs text-red-500">
-                {String(errors.date.message)}
-              </p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Input placeholder="Optional description" {...register("notes")} />
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save Transaction"}

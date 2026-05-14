@@ -1,4 +1,4 @@
-import { getReceiverSocketId } from "../lib/socket.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 import Message from "../model/Message.js";
 import User from "../model/User.js";
 

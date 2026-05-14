@@ -1,18 +1,23 @@
+import { useEffect } from "react";
+import { RouterProvider } from "react-router";
 
-import './App.css'
+import { router } from "./router/routes";
+import { useAuthStore } from "./store/useAuthStore";
+
+import PageLoader from "./components/PageLoader";
 
 function App() {
- 
+  const { checkAuth, isCheckingAuth } = useAuthStore();
 
-  return (
-    <>
-     
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
-      <div className='text-red-500'>
-        chitchat home
-      </div>
-    </>
-  )
+  if (isCheckingAuth) {
+    return <PageLoader />;
+  }
+
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;

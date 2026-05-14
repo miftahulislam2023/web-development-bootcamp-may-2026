@@ -3,6 +3,7 @@ import { create } from "zustand";
 
 import axiosInstance from "../lib/axios.js";
 import toast from "react-hot-toast";
+import { io } from "socket.io-client";
 
 
 
@@ -57,7 +58,8 @@ export const useAuthStore = create((set, get) => ({
 
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
+      // toast.error(error.response.data.message);
     } finally {
       set({ isLoggingIn: false });
     }

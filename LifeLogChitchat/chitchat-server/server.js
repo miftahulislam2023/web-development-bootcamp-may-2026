@@ -10,11 +10,12 @@ import messageRoute from "./src/routes/message.route.js";
 
 
 import {connectDB} from './src/lib/connectDb.js'
+import { app, server } from "./src/lib/socket.js";
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.rgrxfrw.mongodb.net/chitchat-db?appName=Cluster0`;
 
 connectDB(uri)
 
-const app = express();
+// const app = express();
 const CLIENT_URL = process.env.CLIENT_URL
 
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,6 @@ app.use("/api/message", messageRoute);
 
 app.use(express.json());
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log("hello chitchat 1234");
 });

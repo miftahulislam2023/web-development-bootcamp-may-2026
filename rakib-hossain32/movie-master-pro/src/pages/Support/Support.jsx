@@ -32,7 +32,7 @@ const Support = () => {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
-        {/* ==================== 1. CONTACT CHANNELS (Bento Grid) ==================== */}
+      
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           {/* Card 1: Email Support */}
           <motion.div
@@ -97,7 +97,7 @@ const Support = () => {
           </motion.div>
         </div>
 
-        {/* ==================== 2. FAQ & FORM SECTION ==================== */}
+     
         <div className="grid lg:grid-cols-2 gap-12 mb-20">
           {/* --- Left: FAQ --- */}
           <div>

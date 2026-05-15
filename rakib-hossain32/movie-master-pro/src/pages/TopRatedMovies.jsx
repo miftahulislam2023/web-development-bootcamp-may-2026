@@ -4,14 +4,7 @@ import { Link } from "react-router";
 import { ArrowRight, Trophy } from "lucide-react";
 
 const TopRatedMovies = ({ topRatedMovies: movies, isLoading }) => {
-  // const { movies } = useAuth();
-  // const [topRatedMovies, setTopRatedMovies] = useState([]);
 
-  // useEffect(() => {
-  //   // Sort movies by rating in descending order
-  //   const topRated = [...movies].sort((a, b) => b.rating - a.rating);
-  //   setTopRatedMovies(topRated);
-  // }, [movies]);
 
   if (isLoading) {
     return (

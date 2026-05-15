@@ -1,4 +1,4 @@
-import React from "react";
+
 import { ChevronDown } from "lucide-react";
 
 const FormSelect = ({
@@ -28,7 +28,7 @@ const FormSelect = ({
           className={`w-full ${
             Icon ? "pl-12" : "pl-6"
           } pr-10 py-4 rounded-2xl bg-base-200 border-2 border-transparent focus:border-primary/50 focus:bg-base-100 outline-none transition-all text-base-content font-medium appearance-none cursor-pointer`}
-        >
+        > 
           <option value="" disabled>
             Select {label}
           </option>

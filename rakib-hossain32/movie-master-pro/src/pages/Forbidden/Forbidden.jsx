@@ -12,9 +12,7 @@ const Forbidden = () => {
       <div className="absolute inset-0 pointer-events-none">
         {/* Red Glow for Danger/Warning Vibe */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-red-600/10 rounded-full blur-[150px]" />
-        {/* Cinematic Noise Texture */}
-        {/* <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10" /> */}
-        {/* Grid Pattern */}
+        
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]"></div>
       </div>
 

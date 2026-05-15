@@ -16,12 +16,12 @@ const Blogs = () => {
 
   const categories = ["Trending", "Upcoming", "Top Rated", "Now Playing"];
 
-  // --- Fetch Data from TMDB ---
+
   useEffect(() => {
     const fetchNews = async () => {
       setLoading(true);
       try {
-        let endpoint = "trending/movie/week"; // Default: Trending
+        let endpoint = "trending/movie/week"; 
 
        
         if (activeCategory === "Upcoming") endpoint = "movie/upcoming";
@@ -42,7 +42,7 @@ const Blogs = () => {
             : "No description available for this movie yet. Stay tuned for updates.",
           image: movie.backdrop_path
             ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-            : "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1459&auto=format&fit=crop", // Fallback Image
+            : "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1459&auto=format&fit=crop", 
           category: activeCategory,
           author: "MovieMaster Team", 
           date: movie.release_date || "Coming Soon",
@@ -65,11 +65,7 @@ const Blogs = () => {
   // Loading State
   if (loading) {
     return <LoadingSpinner />;
-    // return (
-    //   <div className="min-h-screen flex items-center justify-center bg-base-100">
-    //     <span className="loading loading-bars loading-lg text-primary"></span>
-    //   </div>
-    // );
+   
   }
 
   const featuredPost = newsData.length > 0 ? newsData[0] : null;
@@ -87,7 +83,7 @@ const Blogs = () => {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
-        {/* ==================== 1. FEATURED HERO ARTICLE ==================== */}
+        
         {featuredPost && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -134,7 +130,7 @@ const Blogs = () => {
           </motion.div>
         )}
 
-        {/* ==================== 2. FILTER & SEARCH ==================== */}
+     
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
           {/* Categories */}
           <div className="flex flex-wrap items-center gap-2">
@@ -167,7 +163,7 @@ const Blogs = () => {
           </div>
         </div>
 
-        {/* ==================== 3. NEWS GRID ==================== */}
+   
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 mb-20">
           <AnimatePresence mode="popLayout">
             {gridPosts.map((post) => (
@@ -227,7 +223,7 @@ const Blogs = () => {
           </AnimatePresence>
         </div>
 
-        {/* ==================== 4. NEWSLETTER CTA ==================== */}
+       
         <div className="relative rounded-[3rem] overflow-hidden bg-gray-900 text-white p-10 md:p-16 text-center">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517604931442-710c8ed4a86c?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
           <div className="relative z-10 max-w-2xl mx-auto space-y-6">

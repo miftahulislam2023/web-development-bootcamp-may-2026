@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router"; // Use 'react-router-dom' if specifically needed, usually it's 'react-router-dom'
+import { Link, useNavigate } from "react-router"; 
 import { motion } from "framer-motion";
 import { Home, ArrowLeft, Film, AlertCircle } from "lucide-react";
 
@@ -8,28 +8,28 @@ const PageNotFound = () => {
 
   return (
     <div className="relative min-h-screen bg-base-100 flex items-center justify-center overflow-hidden">
-      {/* --- Ambient Background Effects --- */}
+     
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-150 h-150 bg-primary/10 rounded-full blur-[150px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-150 h-150 bg-blue-600/5 rounded-full blur-[150px]" />
-        {/* Cinematic Noise Texture */}
+        
         <div className="absolute inset-0 bg-[url('https://grainy-linears.vercel.app/noise.svg')] opacity-5" />
       </div>
 
       <div className="relative z-10 px-6 text-center max-w-3xl mx-auto">
-        {/* --- Animated 404 Visual --- */}
+        
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative inline-block"
         >
-          {/* Main 404 Text */}
+          
           <h1 className="text-[150px] sm:text-[200px] md:text-[250px] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-linear-to-b from-base-content/10 to-base-content/5 select-none">
             404
           </h1>
 
-          {/* Overlay Floating Icon */}
+          
           <motion.div
             animate={{ y: [0, -20, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -41,7 +41,7 @@ const PageNotFound = () => {
           </motion.div>
         </motion.div>
 
-        {/* --- Error Message --- */}
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ const PageNotFound = () => {
             changed, or is temporarily unavailable.
           </p>
 
-          {/* --- Action Buttons --- */}
+          
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <button
               onClick={() => navigate(-1)}

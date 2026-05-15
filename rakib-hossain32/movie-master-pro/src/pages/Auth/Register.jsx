@@ -24,7 +24,7 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState("");
  
 
-  // console.log(location.state)
+
 
   const handleGoogleLogin = () => {
     loginGoogle()
@@ -71,7 +71,7 @@ const Register = () => {
     const photoURL = e.target.photoURL.value;
     const password = e.target.password.value;
 
-    // Password Validation
+    
     if (!/^(?=.*[a-z])(?=.*[A-Z]).{6,}$/.test(password)) {
       setPasswordError(
         "Password must have 1 uppercase, 1 lowercase & 6+ chars."
@@ -98,8 +98,7 @@ const Register = () => {
           navigate(location.state || "/");
         });
 
-      // toast.success(`Welcome aboard, ${name}! Account created.`);
-      // navigate("/");
+     
     } catch (error) {
       console.error(error);
       toast.error(error.message || "Registration failed. Please try again.");

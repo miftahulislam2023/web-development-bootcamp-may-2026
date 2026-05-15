@@ -95,28 +95,12 @@ export default function Footer() {
             <h4 className="font-bold text-lg mb-6 text-primary">Company</h4>
             <ul className="space-y-4">
               <li>
-                {/* <Link
-                  to="/about"
-                  className="text-base-content/70 hover:text-primary transition-colors"
-                >
-                  About Us
-                </Link> */}
-              </li>
-              <li>
                 <Link
                   to="/contact"
                   className="text-base-content/70 hover:text-primary transition-colors"
                 >
                   Contact
                 </Link>
-              </li>
-              <li>
-                {/* <Link
-                  to="/careers"
-                  className="text-base-content/70 hover:text-primary transition-colors"
-                >
-                  Careers
-                </Link> */}
               </li>
             </ul>
           </div>
@@ -157,12 +141,6 @@ export default function Footer() {
           <p className="text-sm text-base-content/50 ">
             © {new Date().getFullYear()} Movie Master Pro. All rights reserved.
           </p>
-          {/* <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            {/* <span className="text-xs font-bold text-green-500 uppercase tracking-wider">
-              System Operational
-            </span> 
-          </div> */}
         </div>
       </div>
     </footer>

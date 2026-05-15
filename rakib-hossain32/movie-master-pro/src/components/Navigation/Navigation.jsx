@@ -117,6 +117,7 @@ export default function Navigation() {
                   <div className="w-px h-5 bg-base-content/10 mx-2"></div>
 
                   <NavItem to="/watchlist" icon={Heart} label="Watchlist" />
+                  <NavItem to="/favorites" icon={Sparkles} label="Favorites" />
                 </>
               )}
             </div>
@@ -135,12 +136,7 @@ export default function Navigation() {
                     className="flex items-center gap-3 pl-1 pr-4 py-1 rounded-full bg-base-200/50 dark:bg-base-300/30 border border-white/10 hover:border-primary/30 transition-all group overflow-hidden relative cursor-pointer"
                   >
                     <div className="relative">
-                            {/* <img
-                              src={currentUser.photoURL}
-                              alt="user"
-                              referrerPolicy="no-referrer"
-                              className="w-10 h-10 rounded-full object-cover ring-2 ring-base-100 group-hover:ring-primary transition-all"
-                            /> */}
+                         
                       <LazyLoadImage
                         src={currentUser.photoURL}
                         alt="user"
@@ -200,11 +196,7 @@ export default function Navigation() {
                         <div className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-primary/10 to-transparent -z-10"></div>
 
                         <div className="p-4 flex items-center gap-4 mb-2">
-                          {/* <img
-                            src={currentUser.photoURL}
-                            className="w-14 h-14 rounded-2xl shadow-md"
-                            alt=""
-                          /> */}
+                        
                           <LazyLoadImage
                             src={currentUser.photoURL}
                             alt="user"
@@ -332,35 +324,23 @@ export default function Navigation() {
                     <>
                       <div className="h-px bg-base-content/5 my-2 mx-6"></div>
 
-                      {/* <MobileItem
-                        to="/my-collection"
-                        icon={Film}
-                        label="My Collection"
-                      /> */}
                       <MobileItem
                         to="/watchlist"
                         icon={Heart}
                         label="Watchlist"
                       />
-                      {/* <MobileItem
-                        to="/add-movie"
-                        icon={Plus}
-                        label="Add Movie"
-                        isNew={true}
-                      /> */}
+                      <MobileItem
+                        to="/favorites"
+                        icon={Sparkles}
+                        label="Favorites"
+                      />
+                  
                     </>
                   )}
 
                   <div className="mt-4 p-4 bg-base-200/30 flex flex-col gap-3 sm:hidden dark:bg-base-300/20 rounded-4xl">
                     {!currentUser && (
-                      // (
-                      // <button
-                      //   onClick={handleLogout}
-                      //   className="w-full flex items-center justify-center gap-3 px-4 py-4 text-lg font-bold text-white rounded-2xl bg-linear-to-r from-primary to-primary/80 shadow-lg shadow-primary/20"
-                      // >
-                      //   <LogOut className="w-6 h-6" /> Log Out
-                      // </button>
-                      // )
+                    
                       <div className="flex flex-col gap-3 sm:hidden">
                         <NavLink
                           to="/signin"

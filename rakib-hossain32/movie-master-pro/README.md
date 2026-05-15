@@ -16,7 +16,7 @@
 
 | Home Page | Movie Details | Dashboard |
 | :---: | :---: | :---: |
-| ![Home](https://placehold.co/280x160?text=Home) | ![Details](https://placehold.co/280x160?text=Movie+Details) | ![Dashboard](https://placehold.co/280x160?text=Dashboard) |
+| ![Home](https://i.ibb.co.com/k2WQNt9c/Screenshot-2026-05-15-213149.png) | ![Details](https://i.ibb.co.com/VPJrRWp/image.png) | ![Dashboard](https://i.ibb.co.com/x8rLYGN5/image.png) |
 
 ---
 

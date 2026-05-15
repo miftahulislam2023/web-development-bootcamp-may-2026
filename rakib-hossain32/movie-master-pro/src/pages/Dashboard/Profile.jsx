@@ -63,8 +63,7 @@ const Profile = () => {
       // 3. Close Edit Mode
       setIsEditing(false);
 
-      // Note: Since user.reload() doesn't always trigger a re-render in React Context immediately,
-      // the local 'formData' state is already showing the new values, so the UI will look updated.
+      
     } catch (error) {
       console.error(error);
       Swal.fire({
@@ -119,7 +118,7 @@ const Profile = () => {
           <div className="relative -mt-20 mb-8 flex flex-col md:flex-row items-end md:items-center gap-6">
             <div className="relative group">
               <div className="w-40 h-40 rounded-[2.5rem] p-1.5 bg-base-100 shadow-xl">
-                {/* Use formData.photoURL here for instant preview */}
+                
                 <LazyLoadImage
                   src={formData.photoURL || "https://i.ibb.co/5GzXkwq/user.png"}
                   alt="Profile"

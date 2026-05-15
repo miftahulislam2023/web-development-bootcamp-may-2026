@@ -6,15 +6,13 @@ import MyCollection from "../pages/MyCollection";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 import MovieDetails from "../components/MovieDetalis/MovieDetails";
-
 import EditMovie from "../components/EditMovie/EditMovie";
 import Watchlist from "../pages/Watchlist";
+import Favorites from "../pages/Favorites";
 import ProtectedRoute from "./ProtectedRoute";
-
 import PageNotFound from "../components/PageNotFound";
 import Features from "../pages/FooterPage/Features.jsx";
 import Privacy from "../pages/FooterPage/Privacy.jsx";
-
 import Contact from "../pages/FooterPage/Contact.jsx";
 import Pricing from "../pages/FooterPage/Pricing.jsx";
 import Terms from "../pages/FooterPage/Terms.jsx";
@@ -36,26 +34,13 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        loader: () =>
-          fetch("https://movies-master-pro-api-server.vercel.app/watchlist"),
+        loader: () => fetch("https://movies-master-pro-api-server.vercel.app/watchlist"),
         Component: Home,
       },
-      {
-        path: "/all-movies",
-        element: <AllMovies />,
-      },
-      {
-        path: "/support",
-        Component: Support,
-      },
-      {
-        path: "/blogs",
-        Component: Blogs,
-      },
-      {
-        path: "/movie-details/:id",
-        Component: MovieDetails,
-      },
+      { path: "/all-movies", element: <AllMovies /> },
+      { path: "/support", Component: Support },
+      { path: "/blogs", Component: Blogs },
+      { path: "/movie-details/:id", Component: MovieDetails },
       {
         path: "/watchlist",
         element: (
@@ -65,35 +50,20 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "/features",
-        Component: Features,
+        path: "/favorites",
+        element: (
+          <ProtectedRoute>
+            <Favorites />
+          </ProtectedRoute>
+        ),
       },
-      {
-        path: "/terms",
-        Component: Terms,
-      },
-      {
-        path: "/privacy",
-        Component: Privacy,
-      },
-
-      {
-        path: "/contact",
-        Component: Contact,
-      },
-      {
-        path: "/pricing",
-        Component: Pricing,
-      },
-      {},
-      {
-        path: "/signin",
-        Component: Login,
-      },
-      {
-        path: "/register",
-        Component: Register,
-      },
+      { path: "/features", Component: Features },
+      { path: "/terms", Component: Terms },
+      { path: "/privacy", Component: Privacy },
+      { path: "/contact", Component: Contact },
+      { path: "/pricing", Component: Pricing },
+      { path: "/signin", Component: Login },
+      { path: "/register", Component: Register },
     ],
   },
   {
@@ -116,9 +86,9 @@ export const router = createBrowserRouter([
         path: "add-movie",
         element: (
           <AdminRoute>
-            <EditMovie isEdit={false}/>
+            <EditMovie isEdit={false} />
           </AdminRoute>
-        ), // Reuse your AddMovie component
+        ),
       },
       {
         path: "my-movies",
@@ -126,7 +96,7 @@ export const router = createBrowserRouter([
           <AdminRoute>
             <MyCollection />
           </AdminRoute>
-        ), // Reuse MyCollection component
+        ),
       },
       {
         path: "edit-movie/:id",
@@ -134,7 +104,7 @@ export const router = createBrowserRouter([
           <AdminRoute>
             <EditMovie isEdit={true} />
           </AdminRoute>
-        ), // Edit route inside dashboard
+        ),
       },
       {
         path: "profile",

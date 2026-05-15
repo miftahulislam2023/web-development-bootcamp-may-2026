@@ -14,7 +14,7 @@ const Login = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
 
-  // console.log(location.state);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -49,7 +49,6 @@ const Login = () => {
   }
 
   const handleGoogleLogin = () => {
-    // const { displayName, email, photoURL } = user || {};
 
     loginGoogle()
       .then((result) => {
@@ -71,33 +70,14 @@ const Login = () => {
         toast.error("Google sign-in failed.");
       });
 
-    // console.log(displayName, email, photoURL);
 
-    // axiosSecure
-    //   .post("/users-create", {
-    //     displayName,
-    //     email,
-    //     photoURL,
-    //   })
-    //   .then(async () => {
-    //     await loginGoogle();
-    //     toast.success("Signed in with Google successfully!");
-    //     navigate(location.state || "/");
-    //   });
-
-    // toast.success("Signed in with Google successfully!");
-    // navigate(location.state || "/");
-
-    // toast.error("Google sign-in failed.");
   };
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col relative overflow-x-hidden my-10">
-      {/* Background Decor */}
       <div className="absolute top-0 right-0 w-150 h-150 bg-primary/10 rounded-full blur-[150px] -z-10" />
       <div className="absolute bottom-0 left-0 w-125 h-125 bg-blue-500/10 rounded-full blur-[150px] -z-10" />
 
-      {/* --- 1. Common Page Header Added --- */}
       <CommonPageHeader
         title="Sign In"
         subtitle="Access your account to manage your watchlist and collection."
@@ -105,9 +85,9 @@ const Login = () => {
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 -mt-8 relative z-10">
         <div className="grid lg:grid-cols-2 w-full max-w-6xl bg-base-100/80 backdrop-blur-2xl border border-base-content/10 rounded-4xl shadow-xl overflow-hidden">
-          {/* --- LEFT: Hero / Banner Section (Visible on LG screens) --- */}
+          
           <div className="hidden lg:flex flex-col justify-between p-12 bg-linear-to-br from-gray-900 via-gray-800 to-black text-white relative">
-            {/* Overlay Image */}
+        
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1470&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
             <div className="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent"></div>
 
@@ -136,7 +116,7 @@ const Login = () => {
             </div>
           </div>
 
-          {/* --- RIGHT: Login Form (Fully Responsive) --- */}
+          
           <div className="p-6 sm:p-10 md:p-14 flex flex-col justify-center w-full">
             <div className="text-center lg:text-left mb-8">
               <h2 className="text-3xl font-black text-base-content mb-2">
@@ -147,7 +127,7 @@ const Login = () => {
               </p>
             </div>
 
-            {/* Demo Buttons */}
+            
             <div className="flex gap-4 mb-6">
               <button
                 onClick={() => handleDemoLogin('user')}
@@ -163,7 +143,7 @@ const Login = () => {
               </button>
             </div>
 
-            {/* Google Button */}
+            
             <button
               onClick={handleGoogleLogin}
               className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border-2 border-base-content/10 hover:bg-base-200 hover:border-base-content/20 transition-all font-bold text-base-content mb-6 active:scale-95 cursor-pointer"
@@ -181,7 +161,7 @@ const Login = () => {
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
-              {/* Email Input */}
+              
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-base-content/60 uppercase tracking-wider ml-1">
                   Email
@@ -201,7 +181,7 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Password Input */}
+            
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center ml-1">
                   <label className="text-xs font-bold text-base-content/60 uppercase tracking-wider">
@@ -245,7 +225,7 @@ const Login = () => {
               </button>
             </form>
 
-            {/* Footer */}
+            
             <p className="text-center mt-8 text-base-content/60 text-sm font-medium">
               Don't have an account?{" "}
               <NavLink

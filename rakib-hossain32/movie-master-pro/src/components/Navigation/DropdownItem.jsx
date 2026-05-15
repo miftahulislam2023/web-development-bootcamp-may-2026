@@ -10,11 +10,6 @@ export function DropdownItem({ icon: Icon, label, onClick }) {
         </div>
         {label}
       </div>
-      {/* {isNew && (
-        <span className="px-2 py-0.5 text-[0.6rem] font-black uppercase bg-primary/10 text-primary rounded-full">
-          New
-        </span>
-      )} */}
     </button>
   );
 }

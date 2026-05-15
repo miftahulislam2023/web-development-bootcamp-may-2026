@@ -26,16 +26,16 @@ const Home = () => {
     },
   });
 
-  const sortedMovies = [...(movies || [])]?.sort(
-    (a, b) => new Date(b.createAt) - new Date(a.createAt)
-  )?.slice(0, 6);
-
-  const splicedMovies = movies?.slice(0, 6);
-  const topRatedMovies = [...(movies || [])]
-    .sort((a, b) => b.rating - a.rating)
+  // Prepare movie lists for different sections
+  const recentMovies = [...(movies || [])]
+    .sort((a, b) => new Date(b.createAt) - new Date(a.createAt))
     .slice(0, 6);
 
-  // console.log(sortedMovies, topRatedMovies,isLoading, splicedMovies);
+  const heroMovies = movies?.slice(0, 6);
+
+  const topMovies = [...(movies || [])]
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 6);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -43,34 +43,22 @@ const Home = () => {
 
   return (
     <div className="overflow-x-hidden">
-      {/* 1. Hero Section */}
-      <Hero splicedMovies={splicedMovies} isLoading={isLoading} />
+      <Hero splicedMovies={heroMovies} isLoading={isLoading} />
 
-      {/* 2. Statistics (Proof of scale) */}
       <Statistics />
 
-      {/* 3. Genre (Exploration) */}
       <GenreSection />
 
-      {/* 4. Featured Collections (Curated Content) */}
       <FeaturedCollections />
 
-      {/* 5. Top Rated (Quality Content) */}
-      <TopRatedMovies topRatedMovies={topRatedMovies} isLoading={isLoading} />
+      <TopRatedMovies topRatedMovies={topMovies} isLoading={isLoading} />
 
-      {/* 6. Membership/Pricing (Value Proposition) */}
-      {/* <Membership /> */}
+      <RecentlyAdded sortedMovies={recentMovies} isLoading={isLoading} />
 
-      {/* 7. Recently Added (Fresh Content) */}
-      <RecentlyAdded sortedMovies={sortedMovies} isLoading={isLoading} />
-
-      {/* 8. Testimonials (Social Proof) */}
       <Testimonials />
 
-      {/* 9. About (Brand Story) */}
       <About />
 
-      {/* 10. Newsletter (Final CTA) */}
       <Newsletter />
     </div>
   );

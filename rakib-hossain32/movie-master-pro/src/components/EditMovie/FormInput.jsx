@@ -7,7 +7,7 @@ const FormInput = ({
   required,
   formData,
   setFormData,
-  icon: Icon, // Icon component pass kora jabe
+  icon: Icon,
   placeholder,
   ...rest
 }) => {

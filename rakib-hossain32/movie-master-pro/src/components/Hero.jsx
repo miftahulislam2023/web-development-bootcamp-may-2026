@@ -67,9 +67,7 @@ export default function Hero({ splicedMovies, isLoading }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* =========================================================
-          MAIN BACKGROUND LAYER (Cinematic Immersion)
-      ========================================================== */}
+     
       <AnimatePresence mode="wait">
         <motion.div
           key={currentMovie._id}
@@ -85,8 +83,7 @@ export default function Hero({ splicedMovies, isLoading }) {
             style={{ backgroundImage: `url(${currentMovie.poster})` }}
           />
 
-          {/* Overlays for Readability & Theme Blending */}
-          {/* 1. Left Dark linear (For Text) */}
+       
           <div className="absolute inset-0 bg-linear-to-r from-black/95 via-black/60 to-transparent" />
 
           {/* 2. Top linear (For Navbar visibility) */}
@@ -98,9 +95,7 @@ export default function Hero({ splicedMovies, isLoading }) {
         </motion.div>
       </AnimatePresence>
 
-      {/* =========================================================
-          CONTENT LAYER
-      ========================================================== */}
+    
       <div className="absolute inset-0 z-10 flex items-center">
         <div className="container mx-auto px-4 sm:px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center h-full pt-16">
           {/* --- LEFT: Main Info (8 Columns) --- */}
@@ -200,18 +195,14 @@ export default function Hero({ splicedMovies, isLoading }) {
             </motion.div>
           </div>
 
-          {/* --- RIGHT: Sidebar Previews (Desktop Only) --- */}
+       
           <div className="hidden lg:flex lg:col-span-4 flex-col gap-4 items-end justify-center z-20 mt-12">
-            {/* Next Movie 1 */}
+        
             <div
               onClick={nextSlide}
               className="relative w-64 h-36 rounded-2xl overflow-hidden cursor-pointer group border-2 border-transparent hover:border-primary transition-all duration-300"
             >
-              {/* <img
-                src={nextMovie1.poster}
-                alt=""
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              /> */}
+             
               <LazyLoadImage
                 src={nextMovie1.poster}
                 effect="blur"
@@ -239,11 +230,7 @@ export default function Hero({ splicedMovies, isLoading }) {
               }}
               className="relative w-64 h-36 rounded-2xl overflow-hidden cursor-pointer group border-2 border-transparent hover:border-primary transition-all duration-300 opacity-60 hover:opacity-100"
             >
-              {/* <img
-                src={nextMovie2.poster}
-                alt=""
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              /> */}
+            
               <LazyLoadImage
                 src={nextMovie2.poster}
                 effect="blur"
@@ -278,9 +265,7 @@ export default function Hero({ splicedMovies, isLoading }) {
         </div>
       </div>
 
-      {/* =========================================================
-          PROGRESS & INDICATORS
-      ========================================================== */}
+      
       <div className="absolute bottom-0 left-0 right-0 z-30">
         {/* Progress Bar Line */}
         <div className="w-full h-1.5 bg-white/10">

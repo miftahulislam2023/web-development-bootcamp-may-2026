@@ -159,15 +159,7 @@ const EditMovie = ({ isEdit }) => {
               {/* Preview Card */}
               <div className="relative aspect-2/3 rounded-2xl overflow-hidden bg-black shadow-2xl group">
                 {formData.poster ? (
-                  // <img
-                  //   src={formData.poster}
-                  //   alt="Preview"
-                  //   className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
-                  //   onError={(e) =>
-                  //     (e.target.src =
-                  //       "https://placehold.co/400x600/1f2937/ffffff?text=No+Poster")
-                  //   }
-                  // />
+                 
                   <LazyLoadImage
                     src={formData.poster}
                     alt="Preview"

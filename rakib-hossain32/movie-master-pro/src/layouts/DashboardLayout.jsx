@@ -78,8 +78,6 @@ const DashboardLayout = () => {
       {/* Background Ambience */}
       <div className="absolute top-0 left-0 w-125 h-125 bg-primary/5 rounded-full blur-[150px] pointer-events-none -z-10" />
 
-      {/* ==================== 1. SIDEBAR (Desktop & Mobile) ==================== */}
-
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
@@ -134,23 +132,6 @@ const DashboardLayout = () => {
                 </div>
               )}
             </NavLink>
-
-            {/* <div className="flex items-center gap-3 overflow-hidden">
-              <div className="shrink-0 w-10 h-10 rounded-xl bg-linear-to-br from-primary to-red-600 flex items-center justify-center text-white shadow-lg shadow-primary/30">
-                <Film size={20} />
-              </div>
-              {!isCollapsed && (
-                <div className="transition-opacity duration-300">
-                  <h1 className="text-xl font-black tracking-tight leading-none whitespace-nowrap">
-                    MovieMaster
-                  </h1>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                    Pro Admin
-                  </p>
-                </div>
-              )}
-            </div> */}
-            {/* Mobile Close Button */}
             <button
               className="lg:hidden"
               onClick={() => setIsMobileOpen(false)}
@@ -178,7 +159,7 @@ const DashboardLayout = () => {
           </nav>
         </div>
 
-        {/* Sidebar Footer (Collapse Toggle) */}
+            
         <div className="hidden lg:flex p-4 border-t border-base-content/5 justify-end">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -193,11 +174,11 @@ const DashboardLayout = () => {
         </div>
       </aside>
 
-      {/* ==================== 2. MAIN AREA ==================== */}
+      
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
-        {/* --- Top Navbar --- */}
+        
         <header className="h-20 sticky top-0 z-30 bg-base-100/80 backdrop-blur-xl border-b border-base-content/5 px-4 md:px-8 flex items-center justify-between">
-          {/* Left: Mobile Toggle & Search */}
+          
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsMobileOpen(true)}
@@ -206,7 +187,7 @@ const DashboardLayout = () => {
               <Menu size={24} />
             </button>
 
-            {/* Global Search Bar */}
+            
             <div className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-full bg-base-200/50 border border-base-content/5 focus-within:border-primary/50 focus-within:bg-base-100 transition-all w-64 lg:w-96">
               <Search size={18} className="text-base-content/40" />
               <input
@@ -245,11 +226,7 @@ const DashboardLayout = () => {
                     Administrator
                   </p>
                 </div>
-                {/* <img
-                  src={user?.photoURL || "https://i.ibb.co/5GzXkwq/user.png"}
-                  alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-base-content/10 object-cover hover:border-primary transition-all"
-                /> */}
+               
                 <LazyLoadImage
                   src={user?.photoURL || "https://i.ibb.co/5GzXkwq/user.png"}
                   alt="Profile"

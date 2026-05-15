@@ -386,7 +386,7 @@ const MyActivity = () => {
 				) : (
 					<>
 						{transactionChartData.length === 0 ? (
-							<div className="w-full h-50 flex justify-center items-center rounded-lg p-5 shadow-lg">
+							<div className="w-full h-full flex justify-center items-center rounded-lg p-5 shadow-lg">
 								<p className="text-md text-black text-center">
 									No transaction data found
 								</p>
@@ -428,7 +428,7 @@ const MyActivity = () => {
 						)}
 
 						{categoryExpenseChartData.length === 0 ? (
-							<div className="w-full h-50 flex justify-center items-center rounded-lg p-5 shadow-lg">
+							<div className="w-full h-full flex justify-center items-center rounded-lg p-5 shadow-lg">
 								<p className="text-md text-black text-center">
 									No expense data found
 								</p>

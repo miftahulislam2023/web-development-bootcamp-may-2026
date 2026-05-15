@@ -3,10 +3,10 @@ import Sidebar from '../../components/sidebar/Sidebar';
 import { AuthContext } from '../../providers/AuthProvider/AuthProvider';
 
 const DashboardLayout = () => {
-    const { userData } = useContext(AuthContext);
+    const { userData, logout } = useContext(AuthContext);
     return (
         <>
-            <Sidebar userData={userData}></Sidebar>
+            <Sidebar userData={userData} logout={logout}></Sidebar>
         </>
     );
 };

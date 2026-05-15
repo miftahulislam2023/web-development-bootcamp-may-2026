@@ -118,6 +118,7 @@ const MyExpenses = () => {
 	};
 
 	const handleDeleteExpense = async () => {
+		setLoading(true);
 		try {
 			await axiosSecure.delete(`/expenses/${selectedExpenseId}`);
 
@@ -132,6 +133,8 @@ const MyExpenses = () => {
 			console.log(error.message);
 
 			toast.error("Expense delete failed");
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -473,8 +476,13 @@ const MyExpenses = () => {
 								type="button"
 								onClick={handleDeleteExpense}
 								className="btn bg-red-500 text-white border-red-500 hover:bg-white hover:text-red-500 transition-colors duration-500"
+								disabled={loading}
 							>
-								Delete
+								{loading ? (
+									<span className="loading loading-dots loading-md"></span>
+								) : (
+									"Delete"
+								)}
 							</button>
 						</div>
 					</div>

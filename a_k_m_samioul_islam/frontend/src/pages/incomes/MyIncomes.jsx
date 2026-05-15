@@ -117,6 +117,7 @@ const MyIncomes = () => {
 	};
 
 	const handleDeleteIncome = async () => {
+		setLoading(true);
 		try {
 			await axiosSecure.delete(`/incomes/${selectedIncomeId}`);
 
@@ -131,6 +132,8 @@ const MyIncomes = () => {
 			console.log(error.message);
 
 			toast.error("Income delete failed");
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -167,7 +170,9 @@ const MyIncomes = () => {
 	};
 
 	const handleUpdateIncome = async (data) => {
-		if (data.amount === selectedIncome.amount && (data.note || "") === (selectedIncome.note || "")
+		if (
+			data.amount === selectedIncome.amount &&
+			(data.note || "") === (selectedIncome.note || "")
 		) {
 			closeIncomeEditModal();
 			toast.error("No changes detected");
@@ -465,8 +470,13 @@ const MyIncomes = () => {
 								type="button"
 								onClick={handleDeleteIncome}
 								className="btn bg-red-500 text-white border-red-500 hover:bg-white hover:text-red-500 transition-colors duration-500"
+								disabled={loading}
 							>
-								Delete
+								{loading ? (
+									<span className="loading loading-dots loading-md"></span>
+								) : (
+									"Delete"
+								)}
 							</button>
 						</div>
 					</div>

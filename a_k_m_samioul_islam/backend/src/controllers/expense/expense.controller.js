@@ -4,7 +4,7 @@ import { createExpenseService, deleteExpenseService, getExpenseDetailsService, g
 
 export const createExpense = async (req, res) => {
     try {
-        const expense = await createExpenseService(req.body);
+        const expense = await createExpenseService(req.body, req.dbUser);
 
         return res.status(201).json({
             success: true,

@@ -213,25 +213,23 @@ const MyActivity = () => {
 
 	// AI insights data fetch
 
-	// useEffect(() => {
+	useEffect(() => {
+		// AI insights fetch function
 
-	//     // AI insights fetch function
+		const fetchAiInsight = async () => {
+			setAiLoading(true);
+			try {
+				const res = await axiosSecure.get("/ai");
+				setAiData(res.data.data);
+			} catch (error) {
+				console.log(error.message);
+			} finally {
+				setAiLoading(false);
+			}
+		};
 
-	//     const fetchAiInsight = async () => {
-	//         setAiLoading(true);
-	//         try {
-	//             const res = await axiosSecure.get("/ai");
-	//             setAiData(res.data.data);
-	//         } catch (error) {
-	//             console.log(error.message);
-	//         } finally {
-	//             setAiLoading(false);
-	//         }
-	//     };
-
-	//     if (userData?.email)
-	//         fetchAiInsight();
-	// },[userData?.email]);
+		if (userData?.email) fetchAiInsight();
+	}, [userData?.email]);
 
 	// Stats card infos
 
@@ -329,12 +327,12 @@ const MyActivity = () => {
 
 	const colors = ["#111827", "#ef4444", "#16a34a", "#f59e0b", "#2563eb"];
 
-	console.log(userData);
-	console.log(currentBudget, budgetHistory);
+	// console.log(userData);
+	// console.log(currentBudget, budgetHistory);
+	console.log(aiData);
 
 	return (
 		<div className="w-full flex flex-col inter">
-			
 			{/* Heading */}
 
 			<div className="flex flex-col items-start gap-2 mb-10">
@@ -375,6 +373,152 @@ const MyActivity = () => {
 								</p>
 							</div>
 						))}
+			</div>
+
+			{/* Charts section */}
+
+			<div className="grid w-full grid-cols-1 gap-5 lg:grid-cols-2 mb-5">
+				{loading ? (
+					<>
+						<CardSkeleton variant="chart" />
+						<CardSkeleton variant="chart" />
+					</>
+				) : (
+					<>
+						{transactionChartData.length === 0 ? (
+							<div className="w-full h-50 flex justify-center items-center rounded-lg p-5 shadow-lg">
+								<p className="text-md text-black text-center">
+									No transaction data found
+								</p>
+							</div>
+						) : (
+							<div className="w-full rounded-lg p-5 shadow-lg">
+								<p className="mb-5 text-xl font-bold text-black">
+									Last 7 Days Transactions
+								</p>
+
+								<div className="h-80 w-full">
+									<ResponsiveContainer
+										width="100%"
+										height="100%"
+									>
+										<BarChart data={transactionChartData}>
+											<CartesianGrid
+												strokeDasharray="3 3"
+												vertical={false}
+											/>
+											<XAxis dataKey="day" />
+											<YAxis />
+											<Tooltip />
+											<Legend />
+											<Bar
+												dataKey="Income"
+												fill="#16a34a"
+												radius={[6, 6, 0, 0]}
+											/>
+											<Bar
+												dataKey="Expense"
+												fill="#ef4444"
+												radius={[6, 6, 0, 0]}
+											/>
+										</BarChart>
+									</ResponsiveContainer>
+								</div>
+							</div>
+						)}
+
+						{categoryExpenseChartData.length === 0 ? (
+							<div className="w-full h-50 flex justify-center items-center rounded-lg p-5 shadow-lg">
+								<p className="text-md text-black text-center">
+									No expense data found
+								</p>
+							</div>
+						) : (
+							<div className="w-full rounded-lg p-5 shadow-lg">
+								<p className="mb-5 text-xl font-bold text-black">
+									Category Wise Expenses
+								</p>
+
+								<div className="h-80 w-full">
+									<ResponsiveContainer
+										width="100%"
+										height="100%"
+									>
+										<PieChart>
+											<Pie
+												data={categoryExpenseChartData}
+												dataKey="amount"
+												nameKey="category"
+												cx="50%"
+												cy="50%"
+												outerRadius={100}
+												label
+											>
+												{categoryExpenseChartData.map(
+													(entry, index) => (
+														<Cell
+															key={entry.category}
+															fill={
+																colors[
+																	index %
+																		colors.length
+																]
+															}
+														/>
+													),
+												)}
+											</Pie>
+
+											<Tooltip />
+											<Legend />
+										</PieChart>
+									</ResponsiveContainer>
+								</div>
+							</div>
+						)}
+					</>
+				)}
+			</div>
+
+			{/* AI */}
+
+			<div className="w-full mb-5">
+				{aiLoading ? (
+					<CardSkeleton variant="ai" />
+				) : (
+					<div className="collapse collapse-arrow bg-white border border-base-300">
+						<input type="checkbox" />
+
+						<div className="collapse-title text-lg font-bold">
+							See what AI is saying about your financial activity
+						</div>
+
+						<div className="collapse-content text-sm">
+							<p className="mb-4 text-gray-600">
+								{aiData?.aiRecommendation?.insight ||
+									"No AI insight available yet."}
+							</p>
+
+							{aiData?.recommendations && (
+								<div className="flex flex-col gap-2">
+									<p className="font-semibold text-black">
+										Recommendations
+									</p>
+
+									<ul className="list-disc space-y-2 pl-5 text-gray-600">
+										{aiData?.recommendations.map(
+											(recommendation, index) => (
+												<li key={index}>
+													{recommendation}
+												</li>
+											),
+										)}
+									</ul>
+								</div>
+							)}
+						</div>
+					</div>
+				)}
 			</div>
 
 			{/* Budget section */}
@@ -483,14 +627,10 @@ const MyActivity = () => {
 										</div>
 
 										<div className="mt-4 flex flex-col gap-2 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
-											<p>
+											<p className="font-semibold text-black">
 												Spent{" "}
 												{formatCurrency(
 													currentBudget.spentAmount,
-												)}{" "}
-												out of{" "}
-												{formatCurrency(
-													currentBudget.amount,
 												)}
 											</p>
 											{Number(
@@ -555,111 +695,6 @@ const MyActivity = () => {
 					</div>
 				</div>
 			)}
-
-			{/* Charts section */}
-
-			<div className="grid w-full grid-cols-1 gap-5 lg:grid-cols-2 mb-5">
-				{loading ? (
-					<>
-						<CardSkeleton variant="chart" />
-						<CardSkeleton variant="chart" />
-					</>
-				) : (
-					<>
-						{transactionChartData.length === 0 ? (
-							<div className="w-full h-50 flex justify-center items-center rounded-lg p-5 shadow-lg">
-								<p className="text-md text-black text-center">
-									No transaction data found
-								</p>
-							</div>
-						) : (
-							<div className="w-full rounded-lg p-5 shadow-lg">
-								<p className="mb-5 text-xl font-bold text-black">
-									Last 7 Days Transactions
-								</p>
-
-								<div className="h-80 w-full">
-									<ResponsiveContainer
-										width="100%"
-										height="100%"
-									>
-										<BarChart data={transactionChartData}>
-											<CartesianGrid
-												strokeDasharray="3 3"
-												vertical={false}
-											/>
-											<XAxis dataKey="day" />
-											<YAxis />
-											<Tooltip />
-											<Legend />
-											<Bar
-												dataKey="Income"
-												fill="#16a34a"
-												radius={[6, 6, 0, 0]}
-											/>
-											<Bar
-												dataKey="Expense"
-												fill="#ef4444"
-												radius={[6, 6, 0, 0]}
-											/>
-										</BarChart>
-									</ResponsiveContainer>
-								</div>
-							</div>
-						)}
-
-						{categoryExpenseChartData.length === 0 ? (
-							<div className="w-full h-50 flex justify-center items-center rounded-lg p-5 shadow-lg">
-								<p className="text-md text-black text-center">
-									No expense data found
-								</p>
-							</div>
-						) : (
-							<div className="w-full rounded-lg p-5 shadow-lg">
-								<p className="mb-5 text-xl font-bold text-black">
-									Category Wise Expenses
-								</p>
-
-								<div className="h-80 w-full">
-									<ResponsiveContainer
-										width="100%"
-										height="100%"
-									>
-										<PieChart>
-											<Pie
-												data={categoryExpenseChartData}
-												dataKey="amount"
-												nameKey="category"
-												cx="50%"
-												cy="50%"
-												outerRadius={100}
-												label
-											>
-												{categoryExpenseChartData.map(
-													(entry, index) => (
-														<Cell
-															key={entry.category}
-															fill={
-																colors[
-																	index %
-																		colors.length
-																]
-															}
-														/>
-													),
-												)}
-											</Pie>
-
-											<Tooltip />
-											<Legend />
-										</PieChart>
-									</ResponsiveContainer>
-								</div>
-							</div>
-						)}
-					</>
-				)}
-			</div>
 
 			{/* Budget set modal */}
 

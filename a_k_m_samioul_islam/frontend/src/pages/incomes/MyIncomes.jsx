@@ -134,6 +134,68 @@ const MyIncomes = () => {
 		}
 	};
 
+	// Edit related
+
+	const incomeEditModalRef = useRef();
+	const [selectedIncome, setSelectedIncome] = useState(null);
+
+	const {
+		register: editRegister,
+		handleSubmit: handleEditSubmit,
+		formState: { errors: editErrors, isSubmitting: isEditSubmitting },
+		reset: editReset,
+	} = useForm({
+		defaultValues: {
+			amount: "",
+			note: "",
+		},
+	});
+
+	const openIncomeEditModal = (income) => {
+		setSelectedIncome(income);
+
+		editReset({
+			amount: income.amount,
+			note: income.note || "",
+		});
+
+		incomeEditModalRef.current?.showModal();
+	};
+
+	const closeIncomeEditModal = () => {
+		incomeEditModalRef.current?.close();
+	};
+
+	const handleUpdateIncome = async (data) => {
+		if (data.amount === selectedIncome.amount && (data.note || "") === (selectedIncome.note || "")
+		) {
+			closeIncomeEditModal();
+			toast.error("No changes detected");
+			return;
+		}
+
+		try {
+			const res = await axiosSecure.patch(
+				`/incomes/${selectedIncome._id}`,
+				data,
+			);
+
+			setIncomes((prev) =>
+				prev.map((income) =>
+					income._id === selectedIncome._id ? res.data.data : income,
+				),
+			);
+
+			closeIncomeEditModal();
+
+			toast.success("Income updated successfully");
+		} catch (error) {
+			console.log(error.message);
+
+			toast.error("Income update failed");
+		}
+	};
+
 	console.log(incomes);
 
 	return (
@@ -208,6 +270,9 @@ const MyIncomes = () => {
 									<button
 										type="button"
 										className="btn btn-sm bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
+										onClick={() =>
+											openIncomeEditModal(income)
+										}
 									>
 										Edit
 									</button>
@@ -245,11 +310,11 @@ const MyIncomes = () => {
 
 			<dialog
 				ref={incomeCreateModalRef}
-				className="modal modal-bottom sm:modal-middle"
+				className="modal modal-bottom sm:modal-middle inter"
 			>
 				<div className="modal-box max-w-xl p-6">
 					<div className="flex items-center justify-between mb-4">
-						<p className="text-xl font-bold graphik">Add Income</p>
+						<p className="text-xl font-bold">Add Income</p>
 
 						<button
 							type="button"
@@ -366,13 +431,11 @@ const MyIncomes = () => {
 
 			<dialog
 				ref={deleteIncomeModalRef}
-				className="modal modal-bottom sm:modal-middle"
+				className="modal modal-bottom sm:modal-middle inter"
 			>
 				<div className="modal-box max-w-md p-6">
 					<div className="flex items-center justify-between mb-4">
-						<p className="text-xl font-bold graphik">
-							Delete Income
-						</p>
+						<p className="text-xl font-bold">Delete Income</p>
 
 						<button
 							type="button"
@@ -407,6 +470,83 @@ const MyIncomes = () => {
 							</button>
 						</div>
 					</div>
+				</div>
+			</dialog>
+
+			{/* Edit Modal */}
+
+			<dialog
+				ref={incomeEditModalRef}
+				className="modal modal-bottom sm:modal-middle inter"
+			>
+				<div className="modal-box max-w-xl p-6">
+					<div className="flex items-center justify-between mb-4">
+						<p className="text-xl font-bold">Edit Income</p>
+
+						<button
+							type="button"
+							className="btn btn-sm btn-circle btn-ghost"
+							onClick={closeIncomeEditModal}
+						>
+							✕
+						</button>
+					</div>
+
+					<form
+						onSubmit={handleEditSubmit(handleUpdateIncome)}
+						className="flex flex-col gap-4"
+					>
+						<div className="flex flex-col gap-1">
+							<label className="text-sm font-semibold text-gray-700">
+								Amount
+							</label>
+
+							<input
+								type="number"
+								step="0.01"
+								className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-black"
+								placeholder="5000"
+								{...editRegister("amount", {
+									valueAsNumber: true,
+								})}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-1">
+							<label className="text-sm font-semibold text-gray-700">
+								Note
+							</label>
+
+							<textarea
+								rows={3}
+								className="textarea textarea-bordered w-full focus:outline-none focus:ring-2 focus:ring-black resize-none"
+								placeholder="Optional note"
+								{...editRegister("note")}
+							></textarea>
+						</div>
+
+						<div className="flex justify-end gap-2">
+							<button
+								type="button"
+								className="btn btn-soft"
+								onClick={closeIncomeEditModal}
+							>
+								Cancel
+							</button>
+
+							<button
+								type="submit"
+								className="w-28 btn bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
+								disabled={isEditSubmitting}
+							>
+								{isEditSubmitting ? (
+									<span className="loading loading-dots loading-md"></span>
+								) : (
+									"Update"
+								)}
+							</button>
+						</div>
+					</form>
 				</div>
 			</dialog>
 		</div>

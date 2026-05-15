@@ -28,7 +28,7 @@ const createBudgetSchema = z
       const start = new Date(data.startDate);
       const now = new Date();
 
-      return start >= now;
+      return start > now;
     },
     {
       message: "Start date cannot be earlier than now",
@@ -276,7 +276,7 @@ const MyActivity = () => {
   ];
 
   console.log(userData);
-  console.log(budgetHistory);
+  console.log(currentBudget, budgetHistory);
 
   return (
     <div className="w-full flex flex-col inter">

@@ -1,156 +1,233 @@
-# 💰 SpendWise v2 — Industry-Level Personal Expense Tracker
 
-A full-stack MERN SaaS application with Google OAuth, budget goals, recurring transactions, analytics, dark mode, CSV/PDF export, and PWA support.
+<div align="center">
 
-## 🚀 Tech Stack
+# 💰 FinanceHub
+### Personal Expense Tracker — Full Stack MERN Application
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, Vite, Tailwind CSS, Recharts |
-| Backend | Node.js, Express 4, MongoDB, Mongoose |
-| Auth | JWT + Google OAuth 2.0 (Passport.js) |
-| Scheduling | node-cron (recurring transactions) |
+<br/>
 
-## 📁 Project Structure
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Express](https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
-```
-spendwise/
-├── server/
-│   └── src/
-│       ├── config/       passport.js, cron.js
-│       ├── controllers/  auth, transaction, budget, recurring, user, export
-│       ├── middleware/   auth.js (JWT protect)
-│       ├── models/       User, Transaction, Budget, Recurring
-│       └── routes/       auth, transaction, budget, recurring, user, export
-│
-└── client/
-    └── src/
-        ├── api/          axios.js
-        ├── components/   Layout, Modal, TransactionModal, StatCard, ...
-        ├── context/      AuthContext (auth + dark mode)
-        ├── pages/        Login, Register, Dashboard, Transactions,
-        │                 Budgets, Recurring, Analytics, Settings
-        └── utils/        helpers.js (formatters, constants)
-```
+<br/>
 
-## ⚙️ Setup
+> **FinanceHub** is an industry-grade personal finance management platform built with the MERN stack.
+> Track income, manage budgets, visualize spending patterns, and automate recurring transactions —
+> all in one beautifully designed, fully responsive application.
 
-### 1 — Install dependencies
+<br/>
 
-```bash
-npm install
-cd server && npm install
-cd ../client && npm install
-```
+---
 
-### 2 — Configure `server/.env`
+### 🌐 Live Demo
+
+| Service | Link |
+|:---:|:---:|
+| 🖥️ **Frontend** | [your-frontend-url.vercel.app](#) |
+| 🔌 **Backend API** | [your-backend-url.render.com](#) |
+| 🗄️ **Database** | MongoDB Atlas |
+
+---
+
+</div>
+
+<br/>
+
+## ✨ Features
+
+<details>
+<summary><b>🔐 Authentication & Security</b></summary>
+<br/>
+
+- 📧 Email & password registration with **email verification**
+- 🔒 Secure login with **JWT tokens** (7-day expiry)
+- 🔑 **Google OAuth 2.0** sign-in via Passport.js
+- 🛡️ Protected routes on both **frontend and backend**
+- 🚪 Logout with full session cleanup
+
+</details>
+
+<details>
+<summary><b>💳 Transaction Management</b></summary>
+<br/>
+
+- ➕ Add **income** and **expense** transactions
+- ✏️ Edit and delete any transaction
+- 🔍 Filter by **category**, **type**, **date range**, and **keyword search**
+- 📄 Pagination — 15 records per page
+- ⬇️ Export filtered transactions to **CSV**
+
+</details>
+
+<details>
+<summary><b>📊 Dashboard</b></summary>
+<br/>
+
+- 💹 Monthly **income**, **expense**, and **net savings** summary cards
+- 📊 Income vs Expense **bar chart** (6-month view)
+- 🥧 Spending by category **donut pie chart**
+- 🕐 **Recent transactions** list
+
+</details>
+
+<details>
+<summary><b>🎯 Budget Goals</b></summary>
+<br/>
+
+- 🎯 Set **per-category** monthly spending limits
+- 📶 Real-time **progress bars**
+- 🚦 Color-coded budget alerts:
+  - 🟢 **Green** — Under 70% · Safe zone
+  - 🟡 **Yellow** — 70–99% · Near limit
+  - 🔴 **Red** — 100%+ · Over budget
+- 📅 Month and year selector
+
+</details>
+
+<details>
+<summary><b>🔄 Recurring Transactions</b></summary>
+<br/>
+
+- 🗓️ Schedule **daily**, **weekly**, or **monthly** transactions
+- ⚙️ Auto-generated via **cron job** (runs at midnight)
+- 🔘 Enable / disable toggle per item
+- 📋 Full CRUD management
+
+</details>
+
+<details>
+<summary><b>📈 Analytics</b></summary>
+<br/>
+
+- 📉 6-month **area chart** — income vs expense cash flow
+- 📈 Monthly savings **line chart**
+- 🥧 Category **pie chart**
+- 📊 Horizontal **bar chart** by category
+- 📋 Category breakdown table with **percentage** analysis
+
+</details>
+
+<details>
+<summary><b>📤 Export & Reports</b></summary>
+<br/>
+
+- 📊 Export transactions to **CSV** (respects active filters)
+- 📄 Generate **monthly financial report** as HTML
+- ⬇️ **One-click PDF download** — no browser dialog — via html2pdf.js
+- 📅 Month & year selector for targeted reports
+
+</details>
+
+<details>
+<summary><b>⚙️ Settings & Preferences</b></summary>
+<br/>
+
+- 👤 Update name, currency preference, monthly budget
+- 🌙 **Dark mode** toggle — persisted to database
+- 🔑 Change password securely
+- ❌ Delete account — cascades all user data
+
+</details>
+
+<details>
+<summary><b>🌟 Bonus Features</b></summary>
+<br/>
+
+- 🌗 **Dark / Light mode** with smooth transition
+- 💱 **Multi-currency** support — USD, EUR, GBP, BDT, INR, and more
+- 📱 Fully **responsive** — mobile, tablet, and desktop
+
+</details>
+
+<br/>
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Purpose |
+|:---:|:---:|:---:|
+| **Frontend** | React 18 + Vite | UI framework & fast builds |
+| **Styling** | Tailwind CSS 3 | Utility-first responsive design |
+| **Charts** | Recharts | Interactive data visualization |
+| **Backend** | Node.js + Express 4 | REST API server |
+| **Database** | MongoDB + Mongoose | NoSQL data storage & modeling |
+| **Auth** | JWT + Passport.js | Token-based authentication |
+| **OAuth** | Google OAuth 2.0 | Social sign-in |
+| **Scheduling** | node-cron | Automated recurring transactions |
+| **PDF Export** | html2pdf.js (CDN) | Client-side PDF generation |
+
+
+
+---
+
+## 🔑 Environment Variables
 
 ```env
+# Server
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/spendwise
-JWT_SECRET=your_strong_secret_here
-SESSION_SECRET=your_session_secret_here
+
+# Database
+MONGO_URI=mongodb://localhost:27017/financehub
+
+# Auth
+JWT_SECRET=your_strong_jwt_secret
+SESSION_SECRET=your_session_secret
+
+# Frontend URL
 CLIENT_URL=http://localhost:5173
 
-# Optional — needed only for Google OAuth
+# Google OAuth (optional)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
 
-### 3 — Google OAuth (optional, 5 min)
+<br/>
 
-1. Go to https://console.cloud.google.com/
-2. Create project → APIs & Services → Credentials → OAuth 2.0 Client ID
-3. Authorized redirect URI: `http://localhost:5000/api/auth/google/callback`
-4. Copy credentials to `server/.env`
+---
 
-> App works fully with email/password without Google credentials.
+<div align="left">
 
-### 4 — Run
+## 🔐 Google OAuth Setup
 
-```bash
-# From project root
-npm run dev
-```
+| Step | Action |
+|:---:|---|
+| 1 | Go to [Google Cloud Console](https://console.cloud.google.com/) |
+| 2 | Create project → **APIs & Services** → **Credentials** |
+| 3 | Click **Create Credentials** → **OAuth 2.0 Client ID** |
+| 4 | Set type to **Web application** |
+| 5 | Add redirect URI: `http://localhost:5000/api/auth/google/callback` |
+| 6 | Copy **Client ID** + **Secret** → paste into `server/.env` |
 
-- Frontend → http://localhost:5173
-- Backend  → http://localhost:5000
+</div>
 
-## ✨ Features
+<br/>
 
-### Authentication
-- Email + password register/login
-- Google OAuth sign-in
-- JWT token auth (7-day expiry)
-- Protected routes (frontend + backend)
+---
 
-### Transactions
-- Add income / expense
-- Edit & delete
-- Filter: category, type, date range, search
-- Pagination (15 per page)
-- CSV export
+<div align="left">
 
-### Dashboard
-- Income / Expense / Savings stat cards
-- Income vs Expense bar chart (6 months)
-- Spending by category donut pie chart
-- Recent transactions list
+## 📄 License
 
-### Budget Goals
-- Set per-category monthly budgets
-- Progress bars with color alerts (🟢🟡🔴)
-- Month/year selector
+This project was developed for **educational**, **personal learning**, and **assignment submission** purposes.
 
-### Recurring Transactions
-- Daily / Weekly / Monthly schedules
-- Auto-generated via cron (midnight daily)
-- Enable/disable toggle
-- Full CRUD
+<br/>
 
-### Analytics
-- 6-month area cash flow chart
-- Monthly savings line chart
-- Category pie chart
-- Horizontal bar chart
-- Category detail table with % breakdown
+━━━━━━━━━━━━━━━━━━━━━━━
 
-### Settings
-- Update name, currency, monthly budget
-- Dark / light mode toggle (persisted)
-- Change password
-- Export monthly PDF report
-- Export all transactions to CSV
-- Delete account (cascades all data)
+### 👨‍💻 Developed By
 
-### PWA
-- Installable on mobile / desktop
-- manifest.json included
+# Tauhidul Islam Pranto
 
-## 🔌 API Reference
+### ⚡ Powered by the MERN Stack
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /api/auth/register | Register |
-| POST | /api/auth/login | Login |
-| GET | /api/auth/me | Current user |
-| GET | /api/auth/google | Google OAuth start |
-| GET | /api/transactions | List (filter + paginate) |
-| POST | /api/transactions | Create |
-| PUT | /api/transactions/:id | Update |
-| DELETE | /api/transactions/:id | Delete |
-| GET | /api/transactions/summary | Dashboard analytics |
-| GET | /api/budgets | List budgets |
-| POST | /api/budgets | Create/update budget |
-| DELETE | /api/budgets/:id | Delete budget |
-| GET | /api/recurring | List recurring |
-| POST | /api/recurring | Create recurring |
-| PUT | /api/recurring/:id | Update recurring |
-| DELETE | /api/recurring/:id | Delete recurring |
-| PATCH | /api/recurring/:id/toggle | Toggle active |
-| GET | /api/user/profile | Get profile |
-| PUT | /api/user/profile | Update profile |
-| PUT | /api/user/password | Change password |
-| DELETE | /api/user/account | Delete account |
-| GET | /api/export/csv | Export CSV |
-| GET | /api/export/summary | Monthly HTML report |
+`MongoDB` • `Express.js` • `React.js` • `Node.js`
+
+<br/>
+
+💡 *Transforming ideas into full-stack experiences.*
+
+</div>

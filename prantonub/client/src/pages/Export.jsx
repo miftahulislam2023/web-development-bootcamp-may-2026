@@ -25,23 +25,30 @@ export default function Export() {
 
   const handleExportReport = async () => {
     setReportLoading(true);
+
+    // Open new tab immediately (must be before await to avoid popup blocker)
+    const newWindow = window.open("", "_blank");
+    if (newWindow) {
+      newWindow.document.write(
+        "<html><body style='font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f3ff'>" +
+          "<p style='color:#4f46e5;font-size:18px'>⏳ Generating your report...</p></body></html>",
+      );
+    }
+
     try {
       const p = `month=${reportMonth}&year=${reportYear}`;
       const response = await api.get(`/export/summary?${p}`, {
         responseType: "text",
       });
 
-      // Create blob from HTML text and trigger direct download
-      const blob = new Blob([response.data], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `FinanceHub-Report-${MONTHS[reportMonth - 1]}-${reportYear}.html`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      // Write the HTML report into the already-open tab
+      if (newWindow) {
+        newWindow.document.open();
+        newWindow.document.write(response.data);
+        newWindow.document.close();
+      }
     } catch (err) {
+      if (newWindow) newWindow.close();
       alert("Failed to generate report. Please try again.");
       console.error(err);
     } finally {
@@ -136,8 +143,7 @@ export default function Export() {
         </button>
 
         <p className="text-xs text-gray-400 text-center">
-          📌 An HTML file will download → open it in browser → PDF saves
-          automatically
+          📌 Report opens in a new tab → click Download PDF to save
         </p>
       </div>
 

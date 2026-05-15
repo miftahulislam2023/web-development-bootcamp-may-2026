@@ -26,8 +26,8 @@
 
 | Service | Link |
 |:---:|:---:|
-| 🖥️ **Frontend** | [your-frontend-url.vercel.app](#) |
-| 🔌 **Backend API** | [your-backend-url.render.com](#) |
+| 🖥️ **Frontend** | [https://financehub-prantonub.vercel.app/](#) |
+| 🔌 **Backend API** | [https://financehub-personal-expence-tracker.onrender.com](#) |
 | 🗄️ **Database** | MongoDB Atlas |
 
 ---

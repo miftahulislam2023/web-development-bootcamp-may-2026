@@ -7,7 +7,7 @@ const router=express.Router();
 
 // Budget creation
 
-router.post("/budget", verifyFirebaseToken, createBudget);
+router.post("/budget", verifyFirebaseToken, loadDbUser, createBudget);
 
 // Current budget fetch
 

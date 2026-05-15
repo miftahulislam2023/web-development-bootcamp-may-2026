@@ -7,7 +7,7 @@ const router=express.Router();
 
 // Expense creation
 
-router.post("/expenses", verifyFirebaseToken,createExpense);
+router.post("/expenses", verifyFirebaseToken, loadDbUser, createExpense);
 
 // Expenses fetch
 

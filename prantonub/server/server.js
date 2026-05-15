@@ -13,13 +13,18 @@ require("./src/config/cron");
 
 const app = express();
 
+// ✅ FIX: Tell Express to trust Render's reverse proxy.
+// Without this, express-rate-limit throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// and crashes every request before it even reaches your routes.
+app.set("trust proxy", 1);
+
 // Security: Add helmet middleware for security headers
 app.use(helmet());
 
 // Rate limiting and CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL, // ← just this, no ===
+    origin: process.env.CLIENT_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -30,7 +35,7 @@ app.use(
 app.use("/api/", apiLimiter);
 
 // Body parsing
-app.use(express.json({ limit: "1mb" })); // Limit payload size
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Session middleware

@@ -267,8 +267,6 @@ const Register = () => {
           </button>
         </form>
 
-          
-
         <button  onClick={() => handleGoogleLogin(signInWithGoogle, setUserData, navigate)} className="w-full max-w-125 h-12 btn bg-white text-black border-[#e5e5e5] mb-10 cursor-pointer"
         >
           <svg

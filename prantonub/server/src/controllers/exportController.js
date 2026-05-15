@@ -1,140 +1,327 @@
-import { useState } from "react";
-import api from "../api/axios";
+// server/src/controllers/exportController.js
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+const Transaction = require("../models/Transaction");
 
-export default function Export() {
-  const now = new Date();
-
-  const [reportMonth, setReportMonth] = useState(now.getMonth() + 1);
-  const [reportYear, setReportYear] = useState(now.getFullYear());
-  const [reportLoading, setReportLoading] = useState(false);
-
-  // ✅ FIXED: open report as a direct URL with token in query param
-  // This way the HTML page loads in a real tab — CDN scripts (html2pdf.js, Tailwind)
-  // can load properly, and the Download PDF button works correctly.
-  const handleExportReport = async () => {
-    setReportLoading(true);
-    try {
-      const token = localStorage.getItem("sw_token");
-      const url = `${import.meta.env.VITE_API_URL || ""}/api/export/summary?month=${reportMonth}&year=${reportYear}&token=${token}`;
-      window.open(url, "_blank");
-    } catch (err) {
-      alert("Failed to generate report. Please try again.");
-      console.error(err);
-    } finally {
-      setReportLoading(false);
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT CSV
+// GET /api/export/csv
+// ─────────────────────────────────────────────────────────────────────────────
+const exportCSV = async (req, res) => {
+  try {
+    const { startDate, endDate, type, category } = req.query;
+    const filter = { user: req.user._id };
+    if (type && type !== "All") filter.type = type;
+    if (category && category !== "All") filter.category = category;
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate);
+      if (endDate) {
+        const e = new Date(endDate);
+        e.setHours(23, 59, 59, 999);
+        filter.date.$lte = e;
+      }
     }
-  };
 
-  const handleExportCSV = async () => {
-    try {
-      const response = await api.get("/export/csv", { responseType: "blob" });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `transactions-${new Date().toISOString().slice(0, 10)}.csv`,
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("CSV export failed. Please try again.");
-      console.error(err);
-    }
-  };
+    const transactions = await Transaction.find(filter).sort("-date");
 
-  // Generate year options (5 years back to current year)
-  const yearOptions = Array.from(
-    { length: 6 },
-    (_, i) => now.getFullYear() - 5 + i,
-  );
+    const headers = ["Date", "Title", "Category", "Type", "Amount", "Note"];
+    const rows = transactions.map((t) => [
+      new Date(t.date).toLocaleDateString(),
+      `"${t.title.replace(/"/g, '""')}"`,
+      t.category,
+      t.type,
+      t.amount.toFixed(2),
+      `"${(t.note || "").replace(/"/g, '""')}"`,
+    ]);
 
-  return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="page-title">Export & Reports</h1>
-        <p className="page-sub">Download and export your financial data</p>
-      </div>
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 
-      {/* Export card */}
-      <div className="card p-6">
-        <div className="mb-5">
-          <h2 className="font-bold text-gray-900 dark:text-white text-lg">
-            Generate Reports
-          </h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Create PDF reports for specific months
-          </p>
-        </div>
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="FinanceHub-export-${Date.now()}.csv"`,
+    );
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 
-        {/* Month & Year Picker */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPORT SUMMARY (Monthly PDF Report)
+// GET /api/export/summary
+// ─────────────────────────────────────────────────────────────────────────────
+const exportSummary = async (req, res) => {
+  try {
+    const now = new Date();
+    const month = Number(req.query.month) || now.getMonth() + 1;
+    const year = Number(req.query.year) || now.getFullYear();
+
+    const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const end = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const transactions = await Transaction.find({
+      user: req.user._id,
+      date: { $gte: start, $lte: end },
+    }).sort("-date");
+
+    const totalIncome = transactions
+      .filter((t) => t.type === "income")
+      .reduce((s, t) => s + t.amount, 0);
+
+    const totalExpense = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((s, t) => s + t.amount, 0);
+
+    const catMap = {};
+    transactions
+      .filter((t) => t.type === "expense")
+      .forEach((t) => {
+        catMap[t.category] = (catMap[t.category] || 0) + t.amount;
+      });
+
+    const MONTHS = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const fileName = `FinanceHub-Report-${MONTHS[month - 1]}-${year}.pdf`;
+    const netSavings = totalIncome - totalExpense;
+    const savingsRate =
+      totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : "0.0";
+    const maxCatAmt = Math.max(...Object.values(catMap), 1);
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinanceHub — ${MONTHS[month - 1]} ${year} Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin-btn { animation: spin 0.7s linear infinite; }
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-10 px-4">
+
+  <!-- Download Button -->
+  <div class="no-print fixed top-5 right-5 z-50">
+    <button
+      id="downloadBtn"
+      onclick="downloadPDF()"
+      class="flex items-center gap-2 bg-violet-700 hover:bg-violet-800 active:scale-95 text-white text-sm font-semibold px-5 py-3 rounded-full shadow-xl transition-all duration-200"
+    >
+      <span id="btnIcon">⬇</span>
+      <span id="btnText">Download PDF</span>
+      <div id="spinner" style="display:none;" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin-btn"></div>
+    </button>
+  </div>
+
+  <!-- Report -->
+  <div id="report" class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+    <!-- Header -->
+    <div class="bg-gradient-to-br from-violet-700 via-violet-600 to-purple-700 px-10 py-10 relative overflow-hidden">
+      <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white opacity-5"></div>
+      <div class="absolute -bottom-20 left-1/3 w-80 h-80 rounded-full bg-white opacity-5"></div>
+      <div class="relative flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center text-white font-black text-xl">F</div>
           <div>
-            <label className="label">Month</label>
-            <select
-              className="input"
-              value={reportMonth}
-              onChange={(e) => setReportMonth(Number(e.target.value))}
-            >
-              {MONTHS.map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">Year</label>
-            <select
-              className="input"
-              value={reportYear}
-              onChange={(e) => setReportYear(Number(e.target.value))}
-            >
-              {yearOptions.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            <p class="text-white font-bold text-lg leading-none">FinanceHub</p>
+            <p class="text-violet-200 text-xs mt-0.5">Personal Finance Tracker</p>
           </div>
         </div>
-
-        <button
-          onClick={handleExportReport}
-          disabled={reportLoading}
-          className="w-full btn-primary justify-center mb-3"
-        >
-          {reportLoading
-            ? "Generating..."
-            : `📄 Generate ${MONTHS[reportMonth - 1]} ${reportYear} PDF Report`}
-        </button>
+        <span class="text-xs font-semibold tracking-widest uppercase text-violet-200 bg-white/10 border border-white/20 px-4 py-1.5 rounded-full">Monthly Report</span>
       </div>
-
-      {/* CSV Export card */}
-      <div className="card p-6">
-        <div className="mb-5">
-          <h2 className="font-bold text-gray-900 dark:text-white text-lg">
-            Export All Data
-          </h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Download all your transactions as CSV
-          </p>
-        </div>
-
-        <button
-          onClick={handleExportCSV}
-          className="w-full btn-secondary justify-center"
-        >
-          📊 Export All Transactions to CSV
-        </button>
+      <div class="relative">
+        <h1 class="text-5xl font-extrabold text-white tracking-tight leading-none mb-2">
+          ${MONTHS[month - 1]} <span class="text-violet-200">${year}</span>
+        </h1>
+        <p class="text-violet-300 text-sm">
+          Generated on ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          &nbsp;·&nbsp; ${transactions.length} transactions
+        </p>
       </div>
     </div>
-  );
-}
+
+    <!-- Body -->
+    <div class="px-10 py-10">
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-3 gap-5 mb-10">
+        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6">
+          <p class="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">Income</p>
+          <p class="text-3xl font-extrabold text-emerald-700">$${totalIncome.toFixed(2)}</p>
+          <p class="text-xs text-emerald-500 mt-1">Total earned this month</p>
+        </div>
+        <div class="bg-red-50 border border-red-100 rounded-2xl p-6">
+          <p class="text-xs font-semibold uppercase tracking-widest text-red-500 mb-3">Expenses</p>
+          <p class="text-3xl font-extrabold text-red-600">$${totalExpense.toFixed(2)}</p>
+          <p class="text-xs text-red-400 mt-1">Total spent this month</p>
+        </div>
+        <div class="bg-violet-50 border border-violet-100 rounded-2xl p-6">
+          <p class="text-xs font-semibold uppercase tracking-widest text-violet-600 mb-3">Net Savings</p>
+          <p class="text-3xl font-extrabold ${netSavings >= 0 ? "text-violet-700" : "text-red-600"}">
+            ${netSavings >= 0 ? "" : "-"}$${Math.abs(netSavings).toFixed(2)}
+          </p>
+          <p class="text-xs text-violet-400 mt-1">Savings rate: ${savingsRate}%</p>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      ${
+        Object.keys(catMap).length > 0
+          ? `
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+          <span class="text-lg">📊</span>
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Spending by Category</h2>
+          <span class="ml-auto text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">${Object.keys(catMap).length} categories</span>
+        </div>
+        <div class="space-y-3">
+          ${Object.entries(catMap)
+            .sort((a, b) => b[1] - a[1])
+            .map(([cat, amt]) => {
+              const pct = ((amt / maxCatAmt) * 100).toFixed(0);
+              const sharePct =
+                totalExpense > 0
+                  ? ((amt / totalExpense) * 100).toFixed(1)
+                  : "0";
+              return `
+          <div class="flex items-center gap-4">
+            <p class="text-sm text-gray-700 font-medium w-32 flex-shrink-0">${cat}</p>
+            <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-violet-500 to-purple-400 rounded-full" style="width:${pct}%"></div>
+            </div>
+            <p class="text-xs text-gray-400 w-10 text-right flex-shrink-0">${sharePct}%</p>
+            <p class="text-sm font-bold text-gray-800 w-20 text-right flex-shrink-0">$${amt.toFixed(2)}</p>
+          </div>`;
+            })
+            .join("")}
+        </div>
+      </div>`
+          : ""
+      }
+
+      <!-- Transactions Table -->
+      <div>
+        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+          <span class="text-lg">📋</span>
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">All Transactions</h2>
+          <span class="ml-auto text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">${transactions.length} records</span>
+        </div>
+
+        ${
+          transactions.length > 0
+            ? `
+        <div class="overflow-hidden rounded-xl border border-gray-100">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Date</th>
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Title</th>
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Category</th>
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Type</th>
+                <th class="text-right text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              ${transactions
+                .map(
+                  (t, i) => `
+              <tr class="${i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}">
+                <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">${new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                <td class="px-4 py-3 text-sm font-medium text-gray-800">${t.title}</td>
+                <td class="px-4 py-3">
+                  <span class="text-xs font-medium bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full">${t.category}</span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="text-xs font-bold px-2.5 py-1 rounded-full ${t.type === "income" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}">
+                    ${t.type}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right text-sm font-bold ${t.type === "income" ? "text-emerald-600" : "text-red-500"}">
+                  ${t.type === "income" ? "+" : "-"}$${t.amount.toFixed(2)}
+                </td>
+              </tr>`,
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>`
+            : `
+        <div class="text-center py-14 text-gray-400">
+          <p class="text-4xl mb-3">📭</p>
+          <p class="text-sm font-medium">No transactions found for this period</p>
+        </div>`
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between">
+        <p class="text-xs text-gray-400"><span class="font-semibold text-gray-500">FinanceHub</span> &nbsp;·&nbsp; Confidential financial report</p>
+        <p class="text-xs text-gray-400">${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function downloadPDF() {
+      const btn     = document.getElementById("downloadBtn");
+      const btnText = document.getElementById("btnText");
+      const btnIcon = document.getElementById("btnIcon");
+      const spinner = document.getElementById("spinner");
+
+      btn.disabled = true;
+      btnText.textContent = "Generating...";
+      btnIcon.style.display = "none";
+      spinner.style.display = "inline-block";
+      btn.style.visibility = "hidden";
+
+      html2pdf()
+        .set({
+          margin:      [8, 8, 8, 8],
+          filename:    "${fileName}",
+          image:       { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF:       { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(document.getElementById("report"))
+        .save()
+        .then(() => {
+          btn.disabled = false;
+          btn.style.visibility = "visible";
+          btnText.textContent = "Download PDF";
+          btnIcon.style.display = "inline";
+          spinner.style.display = "none";
+        });
+    }
+  </script>
+</body>
+</html>`;
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+module.exports = { exportCSV, exportSummary };

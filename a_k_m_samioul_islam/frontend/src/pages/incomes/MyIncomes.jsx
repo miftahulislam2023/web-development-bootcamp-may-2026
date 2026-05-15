@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import Pagination from "@mui/material/Pagination";
+import CardSkeleton from "../../components/cardSkeleton/CardSkeleton";
 
 // Income validation schema
 
@@ -37,12 +38,14 @@ const MyIncomes = () => {
 			note: "",
 		},
 	});
+
 	const { userData } = useContext(AuthContext);
 
 	const [incomes, setIncomes] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [page, setPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
 	const limit = 10;
 
 	useEffect(() => {
@@ -53,11 +56,14 @@ const MyIncomes = () => {
 					params: {
 						page,
 						limit,
-						search: searchTerm,
+						...(searchTerm && { search: searchTerm }),
 					},
 				});
 
+				console.log(res.data.totalPages);
+
 				setIncomes(res.data.data);
+				setTotalPages(res.data.totalPages || 1);
 			} catch (error) {
 				console.log(error.message);
 			} finally {
@@ -66,7 +72,7 @@ const MyIncomes = () => {
 		};
 
 		if (userData?.email) fetchIncomes();
-	}, [userData?.email]);
+	}, [userData?.email, page, searchTerm]);
 
 	// Add income related
 
@@ -95,10 +101,45 @@ const MyIncomes = () => {
 		}
 	};
 
+	// Deletion related
+
+	const deleteIncomeModalRef = useRef();
+	const [selectedIncomeId, setSelectedIncomeId] = useState(null);
+
+	const openDeleteIncomeModal = (id) => {
+		setSelectedIncomeId(id);
+
+		deleteIncomeModalRef.current?.showModal();
+	};
+
+	const closeDeleteIncomeModal = () => {
+		deleteIncomeModalRef.current?.close();
+	};
+
+	const handleDeleteIncome = async () => {
+		try {
+			await axiosSecure.delete(`/incomes/${selectedIncomeId}`);
+
+			setIncomes((prev) =>
+				prev.filter((income) => income._id !== selectedIncomeId),
+			);
+
+			closeDeleteIncomeModal();
+
+			toast.success("Income deleted successfully");
+		} catch (error) {
+			console.log(error.message);
+
+			toast.error("Income delete failed");
+		}
+	};
+
 	console.log(incomes);
 
 	return (
 		<div className="w-full flex flex-col inter">
+			{/* Heading */}
+
 			<div className="flex flex-col items-start gap-2 mb-10">
 				<p className="text-4xl font-bold lobster">My Incomes</p>
 				<p className="text-sm font-medium text-gray-400">
@@ -106,7 +147,9 @@ const MyIncomes = () => {
 				</p>
 			</div>
 
-			<div className="w-full flex justify-between items-center gap-5">
+			{/* Add button and search bar */}
+
+			<div className="w-full flex justify-between items-center gap-5 mb-10">
 				<div className="w-full flex flex-2 items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-black transition-all">
 					<Search className="w-4 h-4 text-gray-400" />
 					<input
@@ -128,58 +171,77 @@ const MyIncomes = () => {
 				</button>
 			</div>
 
+			{/* Incomes */}
+
 			<div className="w-full flex flex-col gap-2">
-				{incomes.map((income) => (
-					<div className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-lg transition-all duration-300 hover:-translate-y-1">
-						<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-							<div className="flex flex-col gap-2">
-								<div>
-									<p className="text-lg font-bold text-black">
-										{income.title}
-									</p>
-									<p className="text-sm font-medium text-gray-400">
-										{income.source}
+				{loading ? (
+					Array.from({ length: 3 }).map((_, i) => (
+						<CardSkeleton key={i} variant="income-expense" />
+					))
+				) : incomes.length === 0 ? (
+					<div className="w-full h-50 flex justify-center items-center rounded-lg p-5 shadow-lg">
+						<p className="text-md text-black text-center">
+							No income found
+						</p>
+					</div>
+				) : (
+					incomes.map((income) => (
+						<div className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-lg transition-all duration-300 hover:-translate-y-1">
+							<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+								<div className="flex flex-col gap-2">
+									<div>
+										<p className="text-lg font-bold text-black">
+											{income.title}
+										</p>
+										<p className="text-sm font-medium text-gray-400">
+											{income.source}
+										</p>
+									</div>
+
+									<p className="text-3xl font-bold text-emerald-600">
+										{income.amount}{" "}
+										{userData?.currency.toUpperCase()}
 									</p>
 								</div>
 
-								<p className="text-3xl font-bold text-emerald-600">
-									{income.amount}{" "}
-									{userData?.currency.toUpperCase()}
-								</p>
-							</div>
+								<div className="flex gap-2">
+									<button
+										type="button"
+										className="btn btn-sm bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
+									>
+										Edit
+									</button>
 
-							<div className="flex gap-2">
-								<button
-									type="button"
-									className="btn btn-sm bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
-								>
-									Edit
-								</button>
-
-								<button
-									type="button"
-									className="btn btn-sm bg-red-500 text-white border-red-500 hover:bg-white hover:text-red-500 transition-colors duration-500"
-								>
-									Delete
-								</button>
+									<button
+										type="button"
+										className="btn btn-sm bg-red-500 text-white border-red-500 hover:bg-white hover:text-red-500 transition-colors duration-500"
+										onClick={() =>
+											openDeleteIncomeModal(income._id)
+										}
+									>
+										Delete
+									</button>
+								</div>
 							</div>
 						</div>
-					</div>
-				))}
+					))
+				)}
 			</div>
 
 			{/* Pagination */}
 
-			<div className="mt-6 flex w-full justify-center">
-				<Pagination
-					count={10}
-					page={page}
-					shape="rounded"
-					onChange={(event, value) => setPage(value)}
-				/>
-			</div>
+			{totalPages >= 1 && (
+				<div className="mt-6 flex w-full justify-center">
+					<Pagination
+						count={totalPages}
+						page={page}
+						shape="rounded"
+						onChange={(event, value) => setPage(value)}
+					/>
+				</div>
+			)}
 
-			{/* Add income */}
+			{/* Add income Modal*/}
 
 			<dialog
 				ref={incomeCreateModalRef}
@@ -297,6 +359,54 @@ const MyIncomes = () => {
 							</button>
 						</div>
 					</form>
+				</div>
+			</dialog>
+
+			{/* Delete Modal */}
+
+			<dialog
+				ref={deleteIncomeModalRef}
+				className="modal modal-bottom sm:modal-middle"
+			>
+				<div className="modal-box max-w-md p-6">
+					<div className="flex items-center justify-between mb-4">
+						<p className="text-xl font-bold graphik">
+							Delete Income
+						</p>
+
+						<button
+							type="button"
+							className="btn btn-sm btn-circle btn-ghost"
+							onClick={closeDeleteIncomeModal}
+						>
+							✕
+						</button>
+					</div>
+
+					<div className="flex flex-col gap-6">
+						<p className="text-sm text-gray-500">
+							Are you sure you want to delete this income? This
+							action cannot be undone.
+						</p>
+
+						<div className="flex justify-end gap-2">
+							<button
+								type="button"
+								className="btn btn-soft"
+								onClick={closeDeleteIncomeModal}
+							>
+								Cancel
+							</button>
+
+							<button
+								type="button"
+								onClick={handleDeleteIncome}
+								className="btn bg-red-500 text-white border-red-500 hover:bg-white hover:text-red-500 transition-colors duration-500"
+							>
+								Delete
+							</button>
+						</div>
+					</div>
 				</div>
 			</dialog>
 		</div>

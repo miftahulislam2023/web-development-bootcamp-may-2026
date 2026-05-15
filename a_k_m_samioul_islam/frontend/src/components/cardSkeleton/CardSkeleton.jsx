@@ -82,6 +82,27 @@ const CardSkeleton = ({ variant = "list", lines = 3, i = 0 }) => {
 			</div>
 		);
 
+	if (variant === "income-expense")
+		return (
+			<div className="w-full rounded-lg border border-gray-100 bg-white p-5 shadow-lg animate-pulse">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+					<div className="flex flex-col gap-3 w-full">
+						<div className="space-y-2">
+							<div className="h-5 w-40 rounded bg-gray-200"></div>
+							<div className="h-4 w-24 rounded bg-gray-200"></div>
+						</div>
+
+						<div className="h-8 w-32 rounded bg-gray-200"></div>
+					</div>
+
+					<div className="flex gap-2">
+						<div className="h-8 w-16 rounded bg-gray-200"></div>
+						<div className="h-8 w-16 rounded bg-gray-200"></div>
+					</div>
+				</div>
+			</div>
+		);
+
 	// For cards inside a container
 
 	return (

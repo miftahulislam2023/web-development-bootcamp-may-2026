@@ -60,12 +60,12 @@ const MyIncomes = () => {
 					},
 				});
 
-				console.log(res.data.totalPages);
+				// console.log(res.data.totalPages);
 
 				setIncomes(res.data.data);
 				setTotalPages(res.data.totalPages || 1);
 			} catch (error) {
-				console.log(error.message);
+				// console.log(error.message);
 			} finally {
 				setLoading(false);
 			}
@@ -96,7 +96,7 @@ const MyIncomes = () => {
 
 			setIncomes((prev) => [res.data.data, ...prev]);
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 			toast.error("Income add failed");
 		}
 	};
@@ -129,7 +129,7 @@ const MyIncomes = () => {
 
 			toast.success("Income deleted successfully");
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 
 			toast.error("Income delete failed");
 		} finally {
@@ -195,13 +195,13 @@ const MyIncomes = () => {
 
 			toast.success("Income updated successfully");
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 
 			toast.error("Income update failed");
 		}
 	};
 
-	console.log(incomes);
+	// console.log(incomes);
 
 	return (
 		<div className="w-full flex flex-col inter">

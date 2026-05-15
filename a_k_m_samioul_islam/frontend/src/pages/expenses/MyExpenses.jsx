@@ -66,7 +66,7 @@ const MyExpenses = () => {
 				setExpenses(res.data.data);
 				setTotalPages(res.data.totalPages || 1);
 			} catch (error) {
-				console.log(error.message);
+				// console.log(error.message);
 			} finally {
 				setLoading(false);
 			}
@@ -97,7 +97,7 @@ const MyExpenses = () => {
 
 			setExpenses((prev) => [res.data.data, ...prev]);
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 			toast.error("Expense add failed");
 		}
 	};
@@ -130,7 +130,7 @@ const MyExpenses = () => {
 
 			toast.success("Expense deleted successfully");
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 
 			toast.error("Expense delete failed");
 		} finally {
@@ -198,7 +198,7 @@ const MyExpenses = () => {
 
 			toast.success("Expense updated successfully");
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 
 			toast.error("Expense update failed");
 		}

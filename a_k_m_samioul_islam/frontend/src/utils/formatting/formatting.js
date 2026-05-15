@@ -8,7 +8,7 @@ export const formatDate = (value) =>
 		day: "2-digit",
 		month: "short",
 		year: "numeric",
-		timeZone: "UTC"
+		timeZone: "Asia/Dhaka"
 	}).format(new Date(value));
 
 export const formatName = (name) => {

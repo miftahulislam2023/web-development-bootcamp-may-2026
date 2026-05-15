@@ -106,7 +106,7 @@ const MyActivity = () => {
 
 			setCurrentBudget(res.data.data);
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 		}
 	};
 
@@ -118,7 +118,7 @@ const MyActivity = () => {
 
 			setBudgetHistory(res.data.data);
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 		}
 	};
 
@@ -130,7 +130,7 @@ const MyActivity = () => {
 			try {
 				await Promise.all([budgetFetch(), budgetHistoryFetch()]);
 			} catch (error) {
-				console.log(error.message);
+				// console.log(error.message);
 			} finally {
 				setLoading(false);
 			}
@@ -152,7 +152,7 @@ const MyActivity = () => {
 			closeBudgetSetModal();
 			toast.success("Budget set successfully");
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 		}
 	};
 
@@ -168,7 +168,7 @@ const MyActivity = () => {
 				setSummary(res.data.data);
 			} catch (error) {
 				// toast.error("Summary fetch failed");
-				console.log(error.message);
+				// console.log(error.message);
 			} finally {
 				setLoading(false);
 			}
@@ -183,7 +183,7 @@ const MyActivity = () => {
 
 				setSummaryExpenses(res.data.data);
 			} catch (error) {
-				console.log(error.message);
+				// console.log(error.message);
 			} finally {
 				setLoading(false);
 			}
@@ -198,7 +198,7 @@ const MyActivity = () => {
 
 				setTransactions(res.data.data);
 			} catch (error) {
-				console.log(error.message);
+				// console.log(error.message);
 			} finally {
 				setLoading(false);
 			}
@@ -222,7 +222,7 @@ const MyActivity = () => {
 				const res = await axiosSecure.get("/ai");
 				setAiData(res.data.data);
 			} catch (error) {
-				console.log(error.message);
+				// console.log(error.message);
 			} finally {
 				setAiLoading(false);
 			}
@@ -329,7 +329,7 @@ const MyActivity = () => {
 
 	// console.log(userData);
 	// console.log(currentBudget, budgetHistory);
-	console.log(aiData, transactions);
+	// console.log(aiData, transactions);
 
 	return (
 		<div className="w-full flex flex-col inter">

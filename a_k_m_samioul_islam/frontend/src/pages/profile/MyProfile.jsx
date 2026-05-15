@@ -149,7 +149,7 @@ const MyProfile = () => {
 
 			toast.success("Profile updated successfully");
 		} catch (error) {
-			console.log(error.message);
+			// console.log(error.message);
 			toast.error("Profile update failed");
 		}
 	};
@@ -166,7 +166,7 @@ const MyProfile = () => {
 			});
 	};
 
-	console.log(userData);
+	// console.log(userData);
 	return (
 		<div className="w-full flex flex-col inter">
 

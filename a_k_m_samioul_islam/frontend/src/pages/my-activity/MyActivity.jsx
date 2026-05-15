@@ -5,6 +5,10 @@ import { toast } from 'sonner';
 import CardSkeleton from '../../components/cardSkeleton/CardSkeleton';
 import { GrMoney } from "react-icons/gr";
 import { TbCreditCardPay, TbCreditCardRefund } from "react-icons/tb";
+import { GiPodiumWinner } from "react-icons/gi";
+import { TiTick } from "react-icons/ti";
+import { AiOutlineStop } from "react-icons/ai";
+import { GrDocumentPerformance } from "react-icons/gr";
 
 const MyActivity = () => {
     const { userData }= useContext(AuthContext);
@@ -162,8 +166,41 @@ const MyActivity = () => {
         },
     ];
 
+    // Budget History stats
+
+    const budgetHistoryStats = [
+        {
+            title: "Total Completed Budgets",
+            info: budgetHistory.totalCompletedBudgets,
+            logo: GiPodiumWinner,
+            iconBg:"bg-orange-100",
+            icon:"text-orange-700"
+        },
+        {
+            title: "Fulfilled Count",
+            info: budgetHistory.fulfilledCount,
+            logo: TiTick,
+            iconBg:"bg-blue-100",
+            icon:"text-blue-700"
+        },
+        {
+            title: "Overspent Count",
+            info: budgetHistory.overspentCount,
+            logo: AiOutlineStop ,
+            iconBg:"bg-green-100",
+            icon:"text-green-700"
+        },
+        {
+            title: "Best Performance",
+            info: budgetHistory.bestPerformance ? budgetHistory.bestPerformance : "None",
+            logo: GrDocumentPerformance,
+            iconBg:"bg-yellow-100",
+            icon:"text-yellow-700"
+        }
+    ];
+
     console.log(userData);
-    console.log(summary, summaryExpenses, currentBudget, budgetHistory, transactions, aiData);
+    console.log(budgetHistory);
 
     return (
         <div className='w-full flex flex-col inter'>
@@ -205,8 +242,45 @@ const MyActivity = () => {
 
             {/* Budget section */}
 
-            <div className='w-full shadow-lg rounded-lg'>
+            <div className='w-full shadow-lg rounded-lg p-5 box-border flex flex-col items-start gap-20'>
+                <div>
+                    {
+                    (!currentBudget || Object.keys(currentBudget).length === 0) ? 
+                    <>Set budget</>:<><div className='flex flex-col gap-2'>
+                    <p className='font-bold text-black text-xl'>Current Budget</p>
+                </div></>
+                    }
+                </div>
 
+                <div className='w-full flex flex-col gap-5'>
+                    <p className='font-bold text-black text-xl'>Budget History</p>
+                    <div className='w-full max-w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-items-center gap-5 mb-5'>
+                {
+                    loading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <CardSkeleton key={i} variant="stat" />
+                        )
+                        )
+                    ) :
+                        (
+                            budgetHistoryStats.map(stat =>
+                                <div key={stat.title} className='w-full min-w-0 p-5 rounded-lg shadow-lg flex flex-col gap-2 box-border border border-gray-100 hover:-translate-y-1 transition-all duration-300'>
+                                    <div className='flex gap-3 items-center'>
+                                        <div className={`w-10 h-10 rounded-xl flex justify-center items-center ${stat.iconBg}`}>
+                                            <stat.logo className={`w-5 h-5 ${stat.icon} shrink-0`} />
+                                        </div>
+                                        
+                                        <p className='text-gray-500 text-sm font-medium min-w-0 break-words'>{stat.title}</p>
+
+                                    </div>
+                                    <p className='text-3xl font-bold'>{stat.info}</p>
+                                </div>
+                            )
+                        )
+                }
+            </div>
+                </div>
+                
             </div>
         </div>
     );

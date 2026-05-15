@@ -5,6 +5,8 @@ const {
   login,
   getMe,
   generateToken,
+  verifyEmail,
+  resendOtp,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 const { authLimiter } = require("../middleware/rateLimiter");
@@ -13,11 +15,16 @@ const isGoogleConfigured = () =>
   process.env.GOOGLE_CLIENT_ID &&
   process.env.GOOGLE_CLIENT_ID !== "your_google_client_id";
 
-// Apply rate limiting to auth endpoints
+// Standard auth
 router.post("/register", authLimiter, register);
 router.post("/login", authLimiter, login);
 router.get("/me", protect, getMe);
 
+// OTP email verification
+router.post("/verify-email", authLimiter, verifyEmail);
+router.post("/resend-otp", authLimiter, resendOtp);
+
+// Google OAuth
 router.get("/google", (req, res, next) => {
   if (!isGoogleConfigured())
     return res.redirect(

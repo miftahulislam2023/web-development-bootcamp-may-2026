@@ -7,7 +7,7 @@ const router=express.Router();
 
 // Income creation
 
-router.post("/incomes", verifyFirebaseToken, createIncome);
+router.post("/incomes", verifyFirebaseToken, loadDbUser, createIncome);
 
 // Incomes fetch
 

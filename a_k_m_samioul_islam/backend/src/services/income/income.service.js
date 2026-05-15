@@ -2,127 +2,141 @@ import { Income } from "../../models/income/income.model.js";
 
 // Income creation
 
-export const createIncomeService = async (incomeData) => {
-    const { title, amount, source, note } = incomeData;
+export const createIncomeService = async (incomeData, dbUser) => {
+	const { title, amount, source, note } = incomeData;
 
-    if (!title || !amount || !source) {
-        const error = new Error("All fields required");
-        error.statusCode = 400;
-        throw error;
-    }
+	if (!title || !amount || !source) {
+		const error = new Error("All fields required");
+		error.statusCode = 400;
+		throw error;
+	}
 
-    const income = await Income.create(incomeData);
+	const income = await Income.create({
+		title,
+		amount,
+		source,
+		note,
+		user: dbUser._id
+	});
 
-    return income;
+	return income;
 };
 
 // Income fetch
 
-export const getIncomeDetailsService=async(id, dbUser)=>{
-    const income= await Income.findById(id).populate("user", "email");
+export const getIncomeDetailsService = async (id, dbUser) => {
+	const income = await Income.findById(id).populate("user", "email");
 
-    if(!income){
-        const error = new Error("Income not found");
-        error.statusCode = 404;
-        throw error;
-    }
+	if (!income) {
+		const error = new Error("Income not found");
+		error.statusCode = 404;
+		throw error;
+	}
 
-    if(dbUser._id.toString()!==income.user._id.toString()){
-        const error = new Error("You can access your own income data only");
-        error.statusCode = 403;
-        throw error;
-    }
+	if (dbUser._id.toString() !== income.user._id.toString()) {
+		const error = new Error("You can access your own income data only");
+		error.statusCode = 403;
+		throw error;
+	}
 
-    return income;
+	return income;
 };
 
 // Income details update
 
-export const updateIncomeDetailsService=async(incomeData, dbUser)=>{
-    const {id,amount,note}=incomeData;
+export const updateIncomeDetailsService = async (incomeData, dbUser) => {
+	const { id, amount, note } = incomeData;
 
-    const income=await Income.findById(id);
+	const income = await Income.findById(id);
 
-    if (!income) {
-        const error = new Error("Income not found");
-        error.statusCode = 404;
-        throw error;
-    }
+	if (!income) {
+		const error = new Error("Income not found");
+		error.statusCode = 404;
+		throw error;
+	}
 
-    if(dbUser._id.toString()!==income.user.toString()){
-        const error = new Error("You can update your own income data only");
-        error.statusCode = 403;
-        throw error;
-    }
+	if (dbUser._id.toString() !== income.user.toString()) {
+		const error = new Error("You can update your own income data only");
+		error.statusCode = 403;
+		throw error;
+	}
 
-    if (!amount && !note) {
-        const error = new Error("At least one field is required to update income");
-        error.statusCode = 400;
-        throw error;
-    }
+	if (!amount && !note) {
+		const error = new Error(
+			"At least one field is required to update income",
+		);
+		error.statusCode = 400;
+		throw error;
+	}
 
-    if(amount)
-        income.amount=amount;
+	if (amount) income.amount = amount;
 
-    if(note)
-        income.note=note;
+	if (note) income.note = note;
 
-    await income.save();
+	await income.save();
 
-    return income;
+	return income;
 };
 
 // Income delete
 
-export const deleteIncomeService=async(id, dbUser)=>{
-    const income=await Income.findById(id);
+export const deleteIncomeService = async (id, dbUser) => {
+	const income = await Income.findById(id);
 
-    if (!income) {
-        const error = new Error("Income not found");
-        error.statusCode = 404;
-        throw error;
-    }
+	if (!income) {
+		const error = new Error("Income not found");
+		error.statusCode = 404;
+		throw error;
+	}
 
-    if(dbUser._id.toString()!==income.user.toString()){
-        const error = new Error("You can delete your own income data only");
-        error.statusCode = 403;
-        throw error;
-    }
+	if (dbUser._id.toString() !== income.user.toString()) {
+		const error = new Error("You can delete your own income data only");
+		error.statusCode = 403;
+		throw error;
+	}
 
-    await income.deleteOne();
+	await income.deleteOne();
 
-    return income;
-}
+	return income;
+};
 
 // Users incomes
 
-export const getIncomesService=async({ dbUser, page=1, limit=10, source, search, startDate, endDate })=>{
-    const query={
-        user:dbUser._id
-    }
+export const getIncomesService = async ({
+	dbUser,
+	page = 1,
+	limit = 10,
+	source,
+	search,
+	startDate,
+	endDate,
+}) => {
+	const query = {
+		user: dbUser._id,
+	};
 
-    if(source)
-        query.source=source;
+	if (source) query.source = source;
 
-    if(search)
-        query.title={
-            $regex:search,
-            $options:"i"
-        };
+	if (search)
+		query.title = {
+			$regex: search,
+			$options: "i",
+		};
 
-    if(startDate || endDate){
-        query.createdAt={};
+	if (startDate || endDate) {
+		query.createdAt = {};
 
-        if(startDate)
-            query.createdAt.$gte=new Date(startDate);
+		if (startDate) query.createdAt.$gte = new Date(startDate);
 
-        if(endDate)
-            query.createdAt.$lte=new Date(endDate)
-    }
+		if (endDate) query.createdAt.$lte = new Date(endDate);
+	}
 
-    const skip=(page-1)*limit;
+	const skip = (page - 1) * limit;
 
-    const incomes= await Income.find(query).sort({createdAt:-1}).skip(skip).limit(Number(limit));
+	const incomes = await Income.find(query)
+		.sort({ createdAt: -1 })
+		.skip(skip)
+		.limit(Number(limit));
 
-    return incomes;
-}
+	return incomes;
+};

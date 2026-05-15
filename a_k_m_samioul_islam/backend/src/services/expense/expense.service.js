@@ -2,7 +2,7 @@ import { Expense } from "../../models/expense/expense.model.js";
 
 // Expense creation
 
-export const createExpenseService = async (expenseData) => {
+export const createExpenseService = async (expenseData, dbUser) => {
     const { title, amount, category, note } = expenseData;
 
     if (!title || !amount || !category) {
@@ -11,7 +11,13 @@ export const createExpenseService = async (expenseData) => {
         throw error;
     }
 
-    const expense = await Expense.create(expenseData);
+    const expense = await Expense.create({
+		title,
+		amount,
+		category,
+		note,
+		user: dbUser._id
+	});
 
     return expense;
 };

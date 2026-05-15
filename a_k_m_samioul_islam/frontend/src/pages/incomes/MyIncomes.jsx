@@ -7,6 +7,7 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import Pagination from "@mui/material/Pagination";
 
 // Income validation schema
 
@@ -41,12 +42,20 @@ const MyIncomes = () => {
 	const [incomes, setIncomes] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [page, setPage] = useState(1);
+	const limit = 10;
 
 	useEffect(() => {
 		const fetchIncomes = async () => {
 			setLoading(true);
 			try {
-				const res = await axiosSecure.get("/incomes");
+				const res = await axiosSecure.get("/incomes", {
+					params: {
+						page,
+						limit,
+						search: searchTerm,
+					},
+				});
 
 				setIncomes(res.data.data);
 			} catch (error) {
@@ -54,9 +63,9 @@ const MyIncomes = () => {
 			} finally {
 				setLoading(false);
 			}
-
-			if (userData?.email) fetchIncomes();
 		};
+
+		if (userData?.email) fetchIncomes();
 	}, [userData?.email]);
 
 	// Add income related
@@ -103,8 +112,11 @@ const MyIncomes = () => {
 					<input
 						type="text"
 						value={searchTerm}
-						onChange={(e) => setSearchTerm(e.target.value)}
-						placeholder="Search"
+						onChange={(e) => {
+							setSearchTerm(e.target.value);
+							setPage(1);
+						}}
+						placeholder="Search income"
 						className="w-full outline-none text-sm text-gray-700 placeholder-gray-400"
 					/>
 				</div>
@@ -131,7 +143,8 @@ const MyIncomes = () => {
 								</div>
 
 								<p className="text-3xl font-bold text-emerald-600">
-									{income.amount}
+									{income.amount}{" "}
+									{userData?.currency.toUpperCase()}
 								</p>
 							</div>
 
@@ -153,6 +166,17 @@ const MyIncomes = () => {
 						</div>
 					</div>
 				))}
+			</div>
+
+			{/* Pagination */}
+
+			<div className="mt-6 flex w-full justify-center">
+				<Pagination
+					count={10}
+					page={page}
+					shape="rounded"
+					onChange={(event, value) => setPage(value)}
+				/>
 			</div>
 
 			{/* Add income */}

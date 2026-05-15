@@ -11,12 +11,21 @@ interface Expense {
   date: string
 }
 
+interface Income {
+  id: string
+  amount: number
+  source: string
+  date: string
+}
+
 export default function MonthlyStatsPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [incomes, setIncomes] = useState<Income[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchExpenses()
+    fetchIncomes()
   }, [])
 
   const fetchExpenses = async () => {
@@ -31,6 +40,21 @@ export default function MonthlyStatsPage() {
       }
     } catch (err) {
       setExpenses([])
+    }
+  }
+
+  const fetchIncomes = async () => {
+    try {
+      const response = await fetch('/api/incomes')
+      const data = await response.json()
+      
+      if (Array.isArray(data)) {
+        setIncomes(data)
+      } else {
+        setIncomes([])
+      }
+    } catch (err) {
+      setIncomes([])
     } finally {
       setLoading(false)
     }
@@ -53,14 +77,14 @@ export default function MonthlyStatsPage() {
           marginBottom: '32px'
         }}>
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'white' }}>
-            Monthly Expense Overview
+            Monthly Financial Overview
           </h1>
           <p style={{ color: 'rgba(255, 255, 255, 0.9)', marginTop: '4px' }}>
-            Track your spending patterns throughout the year
+            Track your income, expenses, and savings throughout the year
           </p>
         </div>
         
-        <MonthlyStats expenses={expenses} />
+        <MonthlyStats expenses={expenses} incomes={incomes} />
       </div>
     </div>
   )

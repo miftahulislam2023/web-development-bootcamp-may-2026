@@ -7,6 +7,7 @@ export function proxy(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register'
   const isProtectedPage = request.nextUrl.pathname === '/' || 
                           request.nextUrl.pathname === '/expenses' || 
+                          request.nextUrl.pathname === '/incomes' ||
                           request.nextUrl.pathname === '/monthly-stats'
   
   if (!token && isProtectedPage) {
@@ -21,5 +22,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/expenses', '/monthly-stats', '/login', '/register']
+  matcher: ['/', '/expenses', '/incomes', '/monthly-stats', '/login', '/register']
 }

@@ -9,7 +9,7 @@ export default function Header() {
 
   return (
     <header style={{
-      background: 'linear-gradient(135deg, #6721d0 0%, #8146e0 100%)',
+      background: 'linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%)',
       boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
       position: 'sticky',
       top: 0,
@@ -69,6 +69,22 @@ export default function Header() {
             </button>
           </Link>
           
+          <Link href="/incomes">
+            <button style={{
+              padding: '8px 20px',
+              backgroundColor: pathname === '/incomes' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+              color: 'white',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '500',
+              fontSize: '14px',
+              transition: 'all 0.2s'
+            }}>
+              Incomes
+            </button>
+          </Link>
+          
           <Link href="/expenses">
             <button style={{
               padding: '8px 20px',
@@ -81,7 +97,7 @@ export default function Header() {
               fontSize: '14px',
               transition: 'all 0.2s'
             }}>
-              Manage Expenses
+              Expenses
             </button>
           </Link>
           

@@ -11,29 +11,28 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const { id } = await params
     const body = await request.json()
-    const { amount, description, category, date } = body
+    const { amount, source, date } = body
     
-    const expense = await prisma.expense.updateMany({
+    const income = await prisma.income.updateMany({
       where: {
         id: id,
         userId: session.userId
       },
       data: {
         amount: parseFloat(amount),
-        description,
-        category,
+        source,
         date: new Date(date)
       }
     })
     
-    if (expense.count === 0) {
-      return NextResponse.json({ error: 'Expense not found' }, { status: 404 })
+    if (income.count === 0) {
+      return NextResponse.json({ error: 'Income not found' }, { status: 404 })
     }
     
-    return NextResponse.json({ message: 'Expense updated successfully' })
+    return NextResponse.json({ message: 'Income updated successfully' })
   } catch (error) {
     console.error('Update error:', error)
-    return NextResponse.json({ error: 'Failed to update expense' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update income' }, { status: 500 })
   }
 }
 
@@ -46,15 +45,15 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     const { id } = await params
     
-    const expense = await prisma.expense.delete({
+    const income = await prisma.income.delete({
       where: {
         id: id
       }
     })
     
-    return NextResponse.json({ message: 'Expense deleted successfully' })
+    return NextResponse.json({ message: 'Income deleted successfully' })
   } catch (error) {
     console.error('Delete error:', error)
-    return NextResponse.json({ error: 'Failed to delete expense' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete income' }, { status: 500 })
   }
 }

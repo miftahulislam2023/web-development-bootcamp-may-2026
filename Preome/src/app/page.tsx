@@ -12,14 +12,23 @@ interface Expense {
   date: string
 }
 
+interface Income {
+  id: string
+  amount: number
+  source: string
+  date: string
+}
+
 export default function HomePage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [incomes, setIncomes] = useState<Income[]>([])
   const [userName, setUserName] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchUser()
     fetchExpenses()
+    fetchIncomes()
   }, [])
 
   const fetchUser = async () => {
@@ -42,6 +51,21 @@ export default function HomePage() {
       }
     } catch (err) {
       setExpenses([])
+    }
+  }
+
+  const fetchIncomes = async () => {
+    try {
+      const response = await fetch('/api/incomes')
+      const data = await response.json()
+      
+      if (Array.isArray(data)) {
+        setIncomes(data)
+      } else {
+        setIncomes([])
+      }
+    } catch (err) {
+      setIncomes([])
     } finally {
       setLoading(false)
     }
@@ -67,11 +91,11 @@ export default function HomePage() {
             Welcome back, {userName}!
           </h1>
           <p style={{ color: 'rgba(255, 255, 255, 0.9)', marginTop: '4px' }}>
-            Track and manage your expenses
+            Track your income, expenses, and savings
           </p>
         </div>
         
-        <Dashboard expenses={expenses} />
+        <Dashboard expenses={expenses} incomes={incomes} />
         
         <div style={{ marginTop: '32px' }}>
           <h2 style={{ fontSize: '20px', fontWeight: '600', color: 'white', marginBottom: '16px' }}>Recent Expenses</h2>

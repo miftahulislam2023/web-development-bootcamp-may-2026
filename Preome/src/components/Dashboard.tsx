@@ -10,13 +10,24 @@ interface Expense {
   date: string
 }
 
-interface DashboardProps {
-  expenses: Expense[]
+interface Income {
+  id: string
+  amount: number
+  source: string
+  date: string
 }
 
-export default function Dashboard({ expenses }: DashboardProps) {
+interface DashboardProps {
+  expenses: Expense[]
+  incomes: Income[]
+}
+
+export default function Dashboard({ expenses, incomes }: DashboardProps) {
+  const [filterType, setFilterType] = useState('month')
   const [selectedMonth, setSelectedMonth] = useState('')
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -26,30 +37,60 @@ export default function Dashboard({ expenses }: DashboardProps) {
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - 2 + i).toString())
 
   const filteredExpenses = useMemo(() => {
-    if (!selectedMonth) return expenses
-    return expenses.filter(expense => {
-      const expenseDate = new Date(expense.date)
-      const expenseMonth = months[expenseDate.getMonth()]
-      const expenseYear = expenseDate.getFullYear().toString()
-      return expenseMonth === selectedMonth && expenseYear === selectedYear
-    })
-  }, [expenses, selectedMonth, selectedYear, months])
+    if (filterType === 'month') {
+      if (!selectedMonth) return expenses
+      return expenses.filter(expense => {
+        const expenseDate = new Date(expense.date)
+        const expenseMonth = months[expenseDate.getMonth()]
+        const expenseYear = expenseDate.getFullYear().toString()
+        return expenseMonth === selectedMonth && expenseYear === selectedYear
+      })
+    } else {
+      if (!startDate || !endDate) return expenses
+      return expenses.filter(expense => {
+        const expenseDate = new Date(expense.date)
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        return expenseDate >= start && expenseDate <= end
+      })
+    }
+  }, [expenses, filterType, selectedMonth, selectedYear, startDate, endDate, months])
+
+  const filteredIncomes = useMemo(() => {
+    if (filterType === 'month') {
+      if (!selectedMonth) return incomes
+      return incomes.filter(income => {
+        const incomeDate = new Date(income.date)
+        const incomeMonth = months[incomeDate.getMonth()]
+        const incomeYear = incomeDate.getFullYear().toString()
+        return incomeMonth === selectedMonth && incomeYear === selectedYear
+      })
+    } else {
+      if (!startDate || !endDate) return incomes
+      return incomes.filter(income => {
+        const incomeDate = new Date(income.date)
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        return incomeDate >= start && incomeDate <= end
+      })
+    }
+  }, [incomes, filterType, selectedMonth, selectedYear, startDate, endDate, months])
 
   const totalExpenses = useMemo(() => {
     return filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
   }, [filteredExpenses])
 
+  const totalIncome = useMemo(() => {
+    return filteredIncomes.reduce((sum, income) => sum + income.amount, 0)
+  }, [filteredIncomes])
+
+  const remainingBalance = useMemo(() => {
+    return totalIncome - totalExpenses
+  }, [totalIncome, totalExpenses])
+
   const averageExpense = useMemo(() => {
     return filteredExpenses.length > 0 ? totalExpenses / filteredExpenses.length : 0
   }, [filteredExpenses, totalExpenses])
-
-  const categoryTotals = useMemo(() => {
-    const categories: Record<string, number> = {}
-    filteredExpenses.forEach(expense => {
-      categories[expense.category] = (categories[expense.category] || 0) + expense.amount
-    })
-    return categories
-  }, [filteredExpenses])
 
   return (
     <div>
@@ -63,52 +104,116 @@ export default function Dashboard({ expenses }: DashboardProps) {
         <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600', color: '#1a1f36' }}>
           Dashboard Filter
         </h3>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '150px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151', fontSize: '14px' }}>
-              Month
+        
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="radio"
+                value="month"
+                checked={filterType === 'month'}
+                onChange={(e) => setFilterType(e.target.value)}
+              />
+              <span style={{ fontSize: '14px', color: '#374151' }}>Monthly Filter</span>
             </label>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px',
-                backgroundColor: 'white'
-              }}
-            >
-              <option value="">All Months</option>
-              {months.map(month => (
-                <option key={month} value={month}>{month}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div style={{ flex: 1, minWidth: '150px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151', fontSize: '14px' }}>
-              Year
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="radio"
+                value="dateRange"
+                checked={filterType === 'dateRange'}
+                onChange={(e) => setFilterType(e.target.value)}
+              />
+              <span style={{ fontSize: '14px', color: '#374151' }}>Date Range</span>
             </label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px',
-                backgroundColor: 'white'
-              }}
-            >
-              {years.map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
           </div>
         </div>
+        
+        {filterType === 'month' ? (
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '150px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151', fontSize: '14px' }}>
+                Month
+              </label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">All Months</option>
+                {months.map(month => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div style={{ flex: 1, minWidth: '150px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151', fontSize: '14px' }}>
+                Year
+              </label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: 'white'
+                }}
+              >
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151', fontSize: '14px' }}>
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+            
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151', fontSize: '14px' }}>
+                End Date
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{
@@ -124,9 +229,23 @@ export default function Dashboard({ expenses }: DashboardProps) {
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
           <h3 style={{ color: '#6b7280', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
-            Total Expenses {selectedMonth && `(${selectedMonth})`}
+            Total Income
           </h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1a1f36' }}>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981' }}>
+            ৳{totalIncome.toFixed(2)}
+          </p>
+        </div>
+        
+        <div style={{
+          background: 'white',
+          padding: '24px',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <h3 style={{ color: '#6b7280', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
+            Total Expenses
+          </h3>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#ef4444' }}>
             ৳{totalExpenses.toFixed(2)}
           </p>
         </div>
@@ -138,24 +257,14 @@ export default function Dashboard({ expenses }: DashboardProps) {
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
           <h3 style={{ color: '#6b7280', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
-            Average Expense {selectedMonth && `(${selectedMonth})`}
+            Remaining Balance
           </h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1a1f36' }}>
-            ৳{averageExpense.toFixed(2)}
-          </p>
-        </div>
-        
-        <div style={{
-          background: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ color: '#6b7280', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
-            Transactions {selectedMonth && `(${selectedMonth})`}
-          </h3>
-          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1a1f36' }}>
-            {filteredExpenses.length}
+          <p style={{ 
+            fontSize: '32px', 
+            fontWeight: 'bold', 
+            color: remainingBalance >= 0 ? '#4f46e5' : '#ef4444'
+          }}>
+            ৳{remainingBalance.toFixed(2)}
           </p>
         </div>
 
@@ -165,25 +274,12 @@ export default function Dashboard({ expenses }: DashboardProps) {
           borderRadius: '12px',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
-          <h3 style={{ color: '#6b7280', fontSize: '14px', fontWeight: '500', marginBottom: '16px' }}>
-            Category Breakdown {selectedMonth && `(${selectedMonth})`}
+          <h3 style={{ color: '#6b7280', fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
+            Average Expense
           </h3>
-          <div>
-            {Object.entries(categoryTotals).map(([category, total]) => (
-              <div key={category} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '12px',
-                fontSize: '14px'
-              }}>
-                <span style={{ color: '#4b5563' }}>{category}</span>
-                <span style={{ fontWeight: '600', color: '#1f2937' }}>৳{total.toFixed(2)}</span>
-              </div>
-            ))}
-            {Object.keys(categoryTotals).length === 0 && (
-              <p style={{ color: '#9ca3af', textAlign: 'center' }}>No expenses for this period</p>
-            )}
-          </div>
+          <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1a1f36' }}>
+            ৳{averageExpense.toFixed(2)}
+          </p>
         </div>
       </div>
     </div>

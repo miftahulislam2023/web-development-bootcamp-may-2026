@@ -12,6 +12,10 @@ export const createBudgetService=async({amount, startDate, endDate, dbUser})=>{
 
     const start=new Date(startDate);
     const end=new Date(endDate);
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
     const now=new Date()
 
     if(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())){
@@ -51,12 +55,13 @@ export const createBudgetService=async({amount, startDate, endDate, dbUser})=>{
 // Current budget
 
 export const getCurrentBudgetService=async(dbUser)=>{
-    const now= new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const budget=await Budget.findOne({
         user:dbUser._id,
-        startDate:{$lte:now},
-        endDate:{$gte:now}
+        startDate:{$lte:today},
+        endDate:{$gte:today}
     });
 
     if(!budget){
@@ -65,13 +70,19 @@ export const getCurrentBudgetService=async(dbUser)=>{
         throw error;
     }
 
+    const budgetStartDate = new Date(budget.startDate);
+    budgetStartDate.setHours(0, 0, 0, 0);
+
+    const budgetEndDate = new Date(budget.endDate);
+    budgetEndDate.setHours(23, 59, 59, 999);
+
     const spentData= await Expense.aggregate([
         {
             $match:{
                 user:dbUser._id,
                 createdAt:{
-                    $gte:budget.startDate,
-                    $lte: budget.endDate
+                    $gte: budgetStartDate,
+                    $lte: budgetEndDate
                 }
             }
         },

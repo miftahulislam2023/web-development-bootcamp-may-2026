@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* 🌞 LIGHT THEME */
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+
+  --color-base-100: #FFFFFF;   /* Background */
+  --color-base-200: #F3F4F6;   /* Surface / Card */
+  --color-base-300: #E5E7EB;
+
+  --color-primary: #D90429;    /* Brand / Button */
+  --color-secondary: #8D99AE;
+  --color-accent: #D90429;
+
+  --color-neutral: #2B2D42;
+
+  --color-info: #8D99AE;
+  --color-success: #2EC4B6;
+  --color-warning: #FCA311;
+  --color-error: #D90429;
+
+  --color-base-content: #2B2D42; /* Main Text */
+}
+
+/* 🌙 DARK THEME */
+@plugin "daisyui/theme" {
+  name: "dark";
+
+  --color-base-100: #0B0C10;   /* Background */
+  --color-base-200: #1F2833;   /* Surface / Card */
+  --color-base-300: #2C3440;
+
+  --color-primary: #EF233C;    /* Brand / Button */
+  --color-secondary: #C5C6C7;
+  --color-accent: #EF233C;
+
+  --color-neutral: #EDF2F4;
+
+  --color-info: #C5C6C7;
+  --color-success: #2EC4B6;
+  --color-warning: #FCA311;
+  --color-error: #EF233C;
+
+  --color-base-content: #EDF2F4; /* Main Text */
+}
+
+/* 🌐 Global Font */
+* {
+  font-family: "Poppins", sans-serif;
+}
+
+/* 🎬 Custom Shadow */
+@layer components {
+  .cinema-shadow-lg {
+    box-shadow: 0 15px 35px rgba(217, 4, 41, 0.4);
+  }
+}

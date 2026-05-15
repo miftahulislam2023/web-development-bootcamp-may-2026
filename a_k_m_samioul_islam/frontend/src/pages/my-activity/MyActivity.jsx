@@ -12,6 +12,7 @@ import { GrDocumentPerformance } from "react-icons/gr";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { formatCurrency, formatDate } from "../../utils/formatting/formatting.js";
 
 // Form validation
 
@@ -277,6 +278,21 @@ const MyActivity = () => {
     },
   ];
 
+  const spentPercentage = currentBudget?.amount
+    ? Math.min(
+        (Number(currentBudget.spentAmount || 0) / Number(currentBudget.amount)) *
+          100,
+        100
+      )
+    : 0;
+
+  const budgetStatusClass =
+    currentBudget?.status === "active"
+      ? "bg-emerald-100 text-emerald-700"
+      : currentBudget?.status === "exceeded"
+      ? "bg-red-100 text-red-700"
+      : "bg-gray-100 text-gray-700";
+
   console.log(userData);
   console.log(currentBudget, budgetHistory);
 
@@ -322,7 +338,7 @@ const MyActivity = () => {
       {/* Budget section */}
 
       <div className="w-full shadow-lg rounded-lg p-5 box-border flex flex-col items-start gap-10">
-        <div>
+        <div className="w-full">
           {!currentBudget || Object.keys(currentBudget).length === 0 ? (
             <>
               <button
@@ -335,8 +351,94 @@ const MyActivity = () => {
             </>
           ) : (
             <>
-              <div className="flex flex-col gap-2">
-                <p className="font-bold text-black text-xl">Current Budget</p>
+
+              {/* Current budget */}
+
+              <div className="w-full flex flex-col gap-5">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="flex flex-col gap-2">
+                    <p className="font-bold text-black text-xl">
+                      Current Budget
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(currentBudget.startDate)} -{" "}
+                      {formatDate(currentBudget.endDate)}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`w-fit rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${budgetStatusClass}`}
+                  >
+                    {currentBudget.status}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="rounded-3xl border-2 border-black bg-black p-5 text-white transition-colors duration-500 hover:bg-white hover:text-black">
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/70 hover:text-black/70">
+                      Budget Amount
+                    </p>
+                    <p className="mt-3 text-3xl font-bold">
+                      {formatCurrency(currentBudget.amount, userData?.currency)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Spent
+                    </p>
+                    <p className="mt-3 text-3xl font-bold text-red-500">
+                      {formatCurrency(currentBudget.spentAmount)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Remaining
+                    </p>
+                    <p className="mt-3 text-3xl font-bold text-emerald-600">
+                      {formatCurrency(currentBudget.remainingAmount)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-gray-700">
+                      Budget usage
+                    </p>
+                    <p className="text-sm font-bold text-black">
+                      {spentPercentage.toFixed(0)}%
+                    </p>
+                  </div>
+
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        spentPercentage >= 100 ? "bg-red-500" : "bg-black"
+                      }`}
+                      style={{ width: `${spentPercentage}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-2 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
+                    <p>
+                      Spent {formatCurrency(currentBudget.spentAmount)} out of{" "}
+                      {formatCurrency(currentBudget.amount)}
+                    </p>
+                    {Number(currentBudget.exceededAmount) > 0 ? (
+                      <p className="font-semibold text-red-500">
+                        Exceeded by{" "}
+                        {formatCurrency(currentBudget.exceededAmount)}
+                      </p>
+                    ) : (
+                      <p className="font-semibold text-emerald-600">
+                        {formatCurrency(currentBudget.remainingAmount)} left to
+                        spend
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </>
           )}

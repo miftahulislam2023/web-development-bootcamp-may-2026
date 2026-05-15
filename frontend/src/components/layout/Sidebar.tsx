@@ -13,7 +13,12 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { logout } = useAuthStore();
 
@@ -27,7 +32,9 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-border bg-background sticky top-0">
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-background transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+    >
       <div className="p-6">
         <h1 className="text-2xl font-bold text-primary">FinanceApp</h1>
         <p className="text-sm text-muted-foreground">
@@ -42,6 +49,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={
                 "flex items-center gap-3 rounded-lg px-4 py-2 transition " +
                 (active

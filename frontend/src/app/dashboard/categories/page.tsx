@@ -61,11 +61,13 @@ export default function CategoriesPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-8">
+      <div className="space-y-8 p-4 sm:p-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Categories
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Create and manage your income, expense, and transfer categories.
           </p>
         </div>
@@ -82,7 +84,7 @@ export default function CategoriesPage() {
           <CardContent>
             <form
               onSubmit={handleSubmit(onSubmit)}
-              className="grid grid-cols-1 md:grid-cols-3 gap-5"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
             >
               {/* Category Name */}
               <div className="space-y-2">
@@ -152,33 +154,35 @@ export default function CategoriesPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                {categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className="rounded-2xl border bg-background p-5 hover:shadow-md transition-all duration-200"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-base">
-                          {category.name}
-                        </h3>
+                {categories.map(
+                  (category: { id: string; name: string; type: string }) => (
+                    <div
+                      key={category.id}
+                      className="rounded-2xl border bg-background p-5 hover:shadow-md transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-base">
+                            {category.name}
+                          </h3>
 
-                        <span className="inline-flex mt-2 rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-muted-foreground">
-                          {category.type}
-                        </span>
+                          <span className="inline-flex mt-2 rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-muted-foreground">
+                            {category.type}
+                          </span>
+                        </div>
+
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => deleteMutation.mutate(category.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
-
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => deleteMutation.mutate(category.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             )}
           </CardContent>

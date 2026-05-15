@@ -33,18 +33,18 @@ export default function BudgetsPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Budgets</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold">Budgets</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your spending budgets
             </p>
           </div>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus size={20} />
                 New Budget
               </Button>
@@ -53,7 +53,7 @@ export default function BudgetsPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create Budget</DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="pb-4">
                   Set up a new spending budget
                 </DialogDescription>
               </DialogHeader>

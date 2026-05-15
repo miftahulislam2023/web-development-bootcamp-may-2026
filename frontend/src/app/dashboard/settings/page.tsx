@@ -46,7 +46,7 @@ export default function SettingsPage() {
 
   return (
     <MainLayout>
-      <div className="mx-auto px-6 py-10 space-y-8">
+      <div className="mx-auto space-y-8 p-4 sm:p-6 lg:p-10">
         {/* Header */}
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>

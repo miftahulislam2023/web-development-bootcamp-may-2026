@@ -22,13 +22,7 @@ type Transaction = {
   id: string;
   type: "income" | "expense" | "transfer";
   amount: string | number;
-  category:
-    | string
-    | {
-        name?: string;
-      }
-    | null
-    | undefined;
+  category?: string | { name?: string } | null;
   date: string;
   description?: string;
 };
@@ -36,13 +30,7 @@ type Transaction = {
 type Budget = {
   id: string;
   name: string;
-  category?:
-    | string
-    | {
-        name?: string;
-      }
-    | null
-    | undefined;
+  category?: string | { name?: string } | null;
   spent?: number;
   limitAmount: number;
 };
@@ -51,46 +39,46 @@ export default function DashboardPage() {
   const { data: transactionsData } = useTransactions(1, 10);
   const { data: budgetsData } = useBudgets();
 
-  // Calculate summary
   const summary = useMemo(() => {
     if (!transactionsData?.data) return { income: 0, expense: 0, balance: 0 };
 
     const transactions = transactionsData.data as Transaction[];
-    const income = transactions
-      .filter((transaction) => transaction.type === "income")
-      .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
-    const expense = transactions
-      .filter((transaction) => transaction.type === "expense")
-      .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
-    return {
-      income,
-      expense,
-      balance: income - expense,
-    };
+    const income = transactions
+      .filter((t) => t.type === "income")
+      .reduce((s, t) => s + Number(t.amount), 0);
+
+    const expense = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((s, t) => s + Number(t.amount), 0);
+
+    return { income, expense, balance: income - expense };
   }, [transactionsData]);
 
-  // Prepare chart data
   const expenseChartData = useMemo(() => {
     if (!transactionsData?.data) return [];
 
-    const byCategory: Record<string, number> = {};
+    const map: Record<string, number> = {};
+
     (transactionsData.data as Transaction[])
-      .filter((transaction) => transaction.type === "expense")
-      .forEach((transaction) => {
-        const categoryLabel =
-          typeof transaction.category === "string"
-            ? transaction.category
-            : transaction.category?.name || "Others";
-        byCategory[categoryLabel] =
-          (byCategory[categoryLabel] || 0) + Number(transaction.amount);
+      .filter((t) => t.type === "expense")
+      .forEach((t) => {
+        const key =
+          typeof t.category === "string"
+            ? t.category
+            : t.category?.name || "Others";
+
+        map[key] = (map[key] || 0) + Number(t.amount);
       });
 
-    return Object.entries(byCategory).map(([name, value]) => ({ name, value }));
+    return Object.entries(map).map(([name, value]) => ({
+      name,
+      value,
+    }));
   }, [transactionsData]);
 
   const trendChartData = useMemo(() => {
-    const sampleValues = [
+    const sample = [
       { income: 4200, expense: 2100 },
       { income: 4600, expense: 2600 },
       { income: 4800, expense: 2300 },
@@ -99,16 +87,14 @@ export default function DashboardPage() {
       { income: 5600, expense: 2700 },
     ];
 
-    const data: Array<{ date: string; income: number; expense: number }> = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = subMonths(new Date(), i);
-      data.push({
-        date: format(date, "MMM dd"),
-        income: sampleValues[5 - i].income,
-        expense: sampleValues[5 - i].expense,
-      });
-    }
-    return data;
+    return Array.from({ length: 6 }).map((_, i) => {
+      const date = subMonths(new Date(), 5 - i);
+      return {
+        date: format(date, "MMM yy"),
+        income: sample[i].income,
+        expense: sample[i].expense,
+      };
+    });
   }, []);
 
   const budgets = (budgetsData?.data ?? budgetsData ?? []) as Budget[];
@@ -118,101 +104,186 @@ export default function DashboardPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard
-            title="Total Balance"
-            value={`$${summary.balance.toFixed(2)}`}
-            icon={<Wallet className="text-blue-500" size={20} />}
-          />
-          <KPICard
-            title="Total Income"
-            value={`$${summary.income.toFixed(2)}`}
-            icon={<TrendingUp className="text-green-500" size={20} />}
-            change={12}
-            trend="down"
-          />
-          <KPICard
-            title="Total Expense"
-            value={`$${summary.expense.toFixed(2)}`}
-            icon={<AlertCircle className="text-red-500" size={20} />}
-            change={8}
-            trend="up"
-          />
-          <KPICard
-            title="Active Budgets"
-            value={budgets.length}
-            icon={<PieChart className="text-purple-500" size={20} />}
-          />
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/10">
+        <div className="mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
+          {/* Header */}
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
+              Financial Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Overview of income, expenses, and budget performance
+            </p>
+          </div>
 
-        <div className="grid grid-cols-3 gap-6">
-          {/* Charts */}
-          <ExpenseChart data={expenseChartData} />
-          <TrendChart data={trendChartData} />
+          {/* KPI GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <KPICard
+              title="Total Balance"
+              value={`$${summary.balance.toFixed(2)}`}
+              icon={<Wallet className="text-blue-500" size={18} />}
+            />
+            <KPICard
+              title="Income"
+              value={`$${summary.income.toFixed(2)}`}
+              icon={<TrendingUp className="text-green-500" size={18} />}
+              change={12}
+              trend="up"
+            />
+            <KPICard
+              title="Expenses"
+              value={`$${summary.expense.toFixed(2)}`}
+              icon={<AlertCircle className="text-red-500" size={18} />}
+              change={8}
+              trend="down"
+            />
+            <KPICard
+              title="Active Budgets"
+              value={budgets.length}
+              icon={<PieChart className="text-purple-500" size={18} />}
+            />
+          </div>
 
-          {/* Top Budget */}
-          <Card className="col-span-1">
-            <CardHeader>
-              <CardTitle className="text-base">Top Budgets</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {budgets.slice(0, 3).map((budget) => (
-                <div
-                  key={budget.id}
-                  className="flex items-center justify-between"
-                >
-                  <span className="text-sm">
-                    {typeof budget.category === "string"
-                      ? budget.category
-                      : budget.category?.name || budget.name}
-                  </span>
-                  <div className="w-24 bg-muted rounded-full h-2 overflow-hidden">
-                    <div
-                      className="h-full bg-primary"
-                      style={{
-                        width: `${((budget.spent || 0) / budget.limitAmount) * 100}%`,
-                      }}
-                    />
+          {/* CHARTS SECTION */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+            {/* Expense Chart */}
+            <Card className="lg:col-span-2 shadow-sm border-muted/40">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Expense Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <ExpenseChart data={expenseChartData} />
+              </CardContent>
+            </Card>
+
+            {/* Budget Card */}
+            <Card className="shadow-sm border-muted/40">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Budget Usage
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {budgets.slice(0, 4).map((b) => (
+                  <div key={b.id} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground truncate">
+                        {typeof b.category === "string"
+                          ? b.category
+                          : b.category?.name || b.name}
+                      </span>
+
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round(((b.spent || 0) / b.limitAmount) * 100)}%
+                      </span>
+                    </div>
+
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary to-indigo-500"
+                        style={{
+                          width: `${Math.min(
+                            ((b.spent || 0) / b.limitAmount) * 100,
+                            100,
+                          )}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* TREND + RECENT */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+            {/* Trend */}
+            <Card className="lg:col-span-2 shadow-sm border-muted/40">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Income vs Expense Trend
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="overflow-x-auto">
+                <TrendChart data={trendChartData} />
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card className="shadow-sm border-muted/40">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                {transactions.slice(0, 5).map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex justify-between items-center text-sm"
+                  >
+                    <span className="text-muted-foreground truncate max-w-[140px]">
+                      {typeof t.category === "string"
+                        ? t.category
+                        : t.category?.name || "Other"}
+                    </span>
+
+                    <span
+                      className={
+                        t.type === "expense" ? "text-red-500" : "text-green-500"
+                      }
+                    >
+                      ${Number(t.amount).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* TABLE */}
+          <Card className="shadow-sm border-muted/40 overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-base font-medium">
+                Recent Transactions
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="overflow-x-auto">
+              <div className="min-w-[600px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead></TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {transactions.slice(0, 5).map((t) => (
+                      <TransactionRow
+                        key={t.id}
+                        id={t.id}
+                        type={t.type}
+                        amount={Number(t.amount)}
+                        category={t.category}
+                        date={t.date}
+                        description={t.description}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Recent Transactions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent Transactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12"></TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Date & Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.slice(0, 5).map((transaction) => (
-                  <TransactionRow
-                    key={transaction.id}
-                    id={transaction.id}
-                    type={transaction.type}
-                    amount={Number(transaction.amount)}
-                    category={transaction.category}
-                    date={transaction.date}
-                    description={transaction.description}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
       </div>
     </MainLayout>
   );

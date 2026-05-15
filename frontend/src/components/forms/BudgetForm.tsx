@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { useCategories, useCreateBudget } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// compute stable defaults once at module load to avoid impure calls during render
+// stable defaults
 const DEFAULT_START = new Date().toISOString().slice(0, 10);
 const DEFAULT_END = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   .toISOString()
@@ -31,6 +31,7 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -43,21 +44,26 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
       endDate: DEFAULT_END,
     },
   });
-  const { data, isLoading } = useCategories("expense");
 
+  const { data, isLoading } = useCategories();
   const createMutation = useCreateBudget();
 
   const onSubmit = async (payload: Record<string, unknown>) => {
-    // coerce numeric fields and normalize payload for backend
     const normalized: Record<string, unknown> = { ...payload };
-    if (normalized.limitAmount)
+
+    if (typeof normalized.limitAmount === "string" && normalized.limitAmount) {
       normalized.limitAmount = Number(normalized.limitAmount);
-    if (normalized.categoryId === "others") delete normalized.categoryId;
-    onSuccess?.();
+    }
+
+    if (normalized.categoryId === "others") {
+      delete normalized.categoryId;
+    }
+
     await createMutation.mutateAsync(normalized);
+    onSuccess?.();
   };
 
-  // Safely extract categories from response - handle both array and nested response
+  // safer category parsing
   const categories = Array.isArray(data)
     ? data
     : Array.isArray(data?.data)
@@ -66,81 +72,90 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
         ? data.data.data
         : [];
 
+  const period = useWatch({
+    control,
+    name: "period",
+  });
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>New Budget</CardTitle>
-        <CardDescription>Track spending against a limit</CardDescription>
-      </CardHeader>
+    <Card className="p-2 ring-0 m-0 shadow-none">
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* NAME */}
           <div className="space-y-2">
             <Label>Name</Label>
             <Input {...register("name", { required: true })} />
           </div>
+
+          {/* CATEGORY */}
           <div className="space-y-2">
             <Label>Category</Label>
-            <Select onValueChange={(value) => setValue("categoryId", value)}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isLoading ? "Loading..." : "Select or type category"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoading ? (
-                  <div className="px-2 py-1 text-sm text-muted-foreground">
-                    Loading categories...
-                  </div>
-                ) : categories && categories.length > 0 ? (
-                  categories.map((category: { id: string; name: string }) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))
-                ) : null}
-                {/* Always provide an Others fallback option */}
-                <SelectItem value="others">Others</SelectItem>
-              </SelectContent>
-            </Select>
-            <input
-              type="hidden"
-              {...register("categoryId", {
-                required: "Please select a category",
-              })}
+
+            <Controller
+              name="categoryId"
+              control={control}
+              rules={{ required: "Please select a category" }}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full z-50">
+                    <SelectValue
+                      placeholder={isLoading ? "Loading..." : "Select category"}
+                    />
+                  </SelectTrigger>
+
+                  <SelectContent className="z-50">
+                    {isLoading ? (
+                      <div className="px-2 py-2 text-sm text-muted-foreground">
+                        Loading categories...
+                      </div>
+                    ) : categories.length > 0 ? (
+                      categories.map(
+                        (category: { id: string; name: string }) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ),
+                      )
+                    ) : null}
+
+                    <SelectItem value="others">Others</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             />
-            <p className="text-xs text-muted-foreground">
-              Choose a category for this budget. Select &quot;Others&quot; if
-              none match.
-            </p>
-            {errors.categoryId ? (
+
+            {errors.categoryId && (
               <p className="text-xs text-red-500">
                 {String(errors.categoryId.message)}
               </p>
-            ) : null}
+            )}
           </div>
+
+          {/* AMOUNT + PERIOD */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Limit Amount</Label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="0.00"
                 {...register("limitAmount", {
                   required: "Limit amount is required",
-                  min: { value: 0.01, message: "Limit must be greater than 0" },
+                  min: { value: 0.01, message: "Must be greater than 0" },
                 })}
               />
-              {errors.limitAmount ? (
+              {errors.limitAmount && (
                 <p className="text-xs text-red-500">
                   {String(errors.limitAmount.message)}
                 </p>
-              ) : null}
+              )}
             </div>
+
             <div className="space-y-2">
               <Label>Period</Label>
-              <Select onValueChange={(value) => setValue("period", value)}>
+              <Select
+                value={period}
+                onValueChange={(value) => setValue("period", value)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -151,6 +166,8 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
               </Select>
             </div>
           </div>
+
+          {/* DATES */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Start Date</Label>
@@ -160,25 +177,20 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
                   required: "Start date is required",
                 })}
               />
-              {errors.startDate ? (
-                <p className="text-xs text-red-500">
-                  {String(errors.startDate.message)}
-                </p>
-              ) : null}
             </div>
+
             <div className="space-y-2">
               <Label>End Date</Label>
               <Input
                 type="date"
-                {...register("endDate", { required: "End date is required" })}
+                {...register("endDate", {
+                  required: "End date is required",
+                })}
               />
-              {errors.endDate ? (
-                <p className="text-xs text-red-500">
-                  {String(errors.endDate.message)}
-                </p>
-              ) : null}
             </div>
           </div>
+
+          {/* ALERT */}
           <div className="space-y-2">
             <Label>Alert Threshold (%)</Label>
             <Input
@@ -188,6 +200,8 @@ export default function BudgetForm({ onSuccess }: { onSuccess?: () => void }) {
               {...register("alertThreshold")}
             />
           </div>
+
+          {/* SUBMIT */}
           <Button
             type="submit"
             className="w-full"

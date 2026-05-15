@@ -56,12 +56,12 @@ export default function TransactionsPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-4 sm:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Transactions</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold">Transactions</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage all your financial transactions
             </p>
           </div>
@@ -69,7 +69,7 @@ export default function TransactionsPage() {
           {/* Add Transaction Dialog */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus size={20} className="mr-2" />
                 New Transaction
               </Button>
@@ -78,7 +78,7 @@ export default function TransactionsPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add Transaction</DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="pb-4">
                   Create a new transaction entry
                 </DialogDescription>
               </DialogHeader>

@@ -45,9 +45,9 @@ export default function SavingsGoalsPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-4 sm:p-6">
         <div>
-          <h1 className="text-3xl font-bold">Savings Goals</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Savings Goals</h1>
           <p className="text-muted-foreground">
             Track personal savings targets and deadlines.
           </p>
@@ -118,45 +118,54 @@ export default function SavingsGoalsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {goals.map((goal) => {
-                  const target = Number(goal.targetAmount);
-                  const current = Number(goal.currentAmount);
-                  const progress = target > 0 ? (current / target) * 100 : 0;
-                  return (
-                    <div
-                      key={goal.id}
-                      className="rounded-xl border p-4 space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium">{goal.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Deadline:{" "}
-                            {new Date(goal.deadline).toLocaleDateString()}
-                          </p>
+                {goals.map(
+                  (goal: {
+                    id: string;
+                    name: string;
+                    targetAmount: number | string;
+                    currentAmount: number | string;
+                    deadline: string;
+                    currency?: string;
+                  }) => {
+                    const target = Number(goal.targetAmount);
+                    const current = Number(goal.currentAmount);
+                    const progress = target > 0 ? (current / target) * 100 : 0;
+                    return (
+                      <div
+                        key={goal.id}
+                        className="rounded-xl border p-4 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{goal.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Deadline:{" "}
+                              {new Date(goal.deadline).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => deleteMutation.mutate(goal.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            Delete
+                          </Button>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => deleteMutation.mutate(goal.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          Delete
-                        </Button>
+                        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full bg-primary"
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {goal.currency || "$"}
+                          {current.toFixed(2)} of {goal.currency || "$"}
+                          {target.toFixed(2)} saved
+                        </p>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full bg-primary"
-                          style={{ width: `${Math.min(progress, 100)}%` }}
-                        />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {goal.currency || "$"}
-                        {current.toFixed(2)} of {goal.currency || "$"}
-                        {target.toFixed(2)} saved
-                      </p>
-                    </div>
-                  );
-                })}
+                    );
+                  },
+                )}
               </div>
             )}
           </CardContent>

@@ -91,11 +91,7 @@ export default function TransactionForm({
         : [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>New Transaction</CardTitle>
-        <CardDescription>Add income or expense details</CardDescription>
-      </CardHeader>
+    <Card className="p-2 ring-0 m-0 shadow-none">
       <CardContent>
         {apiError && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">

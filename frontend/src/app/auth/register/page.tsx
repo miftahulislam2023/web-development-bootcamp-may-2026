@@ -28,24 +28,15 @@ type RegisterFormData = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register: registerUser } =
-    useAuthStore();
+  const { register: registerUser } = useAuthStore();
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [
-    showConfirmPassword,
-    setShowConfirmPassword,
-  ] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-  } = useForm<RegisterFormData>({
+  const { register, handleSubmit } = useForm<RegisterFormData>({
     defaultValues: {
       email: "",
       firstName: "",
@@ -55,9 +46,7 @@ export default function RegisterPage() {
     },
   });
 
-  const onSubmit = async (
-    data: RegisterFormData
-  ) => {
+  const onSubmit = async (data: RegisterFormData) => {
     try {
       setLoading(true);
 
@@ -69,65 +58,42 @@ export default function RegisterPage() {
         !data.password ||
         !data.confirmPassword
       ) {
-        toast.error(
-          "Please fill all required fields"
-        );
+        toast.error("Please fill all required fields");
         return;
       }
 
       // Password mismatch
-      if (
-        data.password !==
-        data.confirmPassword
-      ) {
-        toast.error(
-          "Passwords do not match"
-        );
+      if (data.password !== data.confirmPassword) {
+        toast.error("Passwords do not match");
         return;
       }
 
       // Password length check
-      if (
-        data.password.length < 6
-      ) {
-        toast.error(
-          "Password must be at least 6 characters"
-        );
+      if (data.password.length < 6) {
+        toast.error("Password must be at least 6 characters");
         return;
       }
 
       // Register API call
-      const res =
-        await registerUser(
-          data.email,
-          data.firstName,
-          data.lastName,
-          data.password
-        );
+      await registerUser(
+        data.email,
+        data.firstName,
+        data.lastName,
+        data.password,
+      );
 
       // Success message
-      toast.success(
-        res?.message ||
-          "Account created successfully 🎉"
-      );
+      toast.success("Account created successfully 🎉");
 
       // Redirect
       setTimeout(() => {
-        router.push(
-          "/auth/login"
-        );
+        router.push("/auth/login");
       }, 1200);
     } catch (error: any) {
       // Backend error message
-      const backendMessage =
-        error?.response?.data
-          ?.error?.message;
+      const backendMessage = error?.response?.data?.error?.message;
 
-      toast.error(
-        backendMessage ||
-          error?.message ||
-          "Registration failed"
-      );
+      toast.error(backendMessage || error?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -136,48 +102,25 @@ export default function RegisterPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">
-          Create Account
-        </CardTitle>
+        <CardTitle className="text-2xl">Create Account</CardTitle>
 
-        <CardDescription>
-          Join FinanceApp today
-        </CardDescription>
+        <CardDescription>Join FinanceApp today</CardDescription>
       </CardHeader>
 
       <CardContent>
-        <form
-          onSubmit={handleSubmit(
-            onSubmit
-          )}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* First & Last Name */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>
-                First Name
-              </Label>
+              <Label>First Name</Label>
 
-              <Input
-                placeholder="John"
-                {...register(
-                  "firstName"
-                )}
-              />
+              <Input placeholder="John" {...register("firstName")} />
             </div>
 
             <div className="space-y-2">
-              <Label>
-                Last Name
-              </Label>
+              <Label>Last Name</Label>
 
-              <Input
-                placeholder="Doe"
-                {...register(
-                  "lastName"
-                )}
-              />
+              <Input placeholder="Doe" {...register("lastName")} />
             </div>
           </div>
 
@@ -188,111 +131,63 @@ export default function RegisterPage() {
             <Input
               type="email"
               placeholder="you@example.com"
-              {...register(
-                "email"
-              )}
+              {...register("email")}
             />
           </div>
 
           {/* Password */}
           <div className="space-y-2">
-            <Label>
-              Password
-            </Label>
+            <Label>Password</Label>
 
             <div className="relative">
               <Input
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
+                type={showPassword ? "text" : "password"}
                 className="pr-12"
                 placeholder="••••••••"
-                {...register(
-                  "password"
-                )}
+                {...register("password")}
               />
 
               <button
                 type="button"
-                onClick={() =>
-                  setShowPassword(
-                    !showPassword
-                  )
-                }
+                onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showPassword ? (
-                  <EyeOff
-                    size={18}
-                  />
-                ) : (
-                  <Eye size={18} />
-                )}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
           {/* Confirm Password */}
           <div className="space-y-2">
-            <Label>
-              Confirm Password
-            </Label>
+            <Label>Confirm Password</Label>
 
             <div className="relative">
               <Input
-                type={
-                  showConfirmPassword
-                    ? "text"
-                    : "password"
-                }
+                type={showConfirmPassword ? "text" : "password"}
                 className="pr-12"
                 placeholder="••••••••"
-                {...register(
-                  "confirmPassword"
-                )}
+                {...register("confirmPassword")}
               />
 
               <button
                 type="button"
-                onClick={() =>
-                  setShowConfirmPassword(
-                    !showConfirmPassword
-                  )
-                }
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {showConfirmPassword ? (
-                  <EyeOff
-                    size={18}
-                  />
-                ) : (
-                  <Eye size={18} />
-                )}
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
           {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading
-              ? "Creating account..."
-              : "Create account"}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Creating account..." : "Create account"}
           </Button>
 
           {/* Login Link */}
           <p className="text-center text-sm text-muted-foreground">
-            Already have an
-            account?{" "}
-            <Link
-              href="/auth/login"
-              className="text-primary underline"
-            >
+            Already have an account?{" "}
+            <Link href="/auth/login" className="text-primary underline">
               Sign in
             </Link>
           </p>

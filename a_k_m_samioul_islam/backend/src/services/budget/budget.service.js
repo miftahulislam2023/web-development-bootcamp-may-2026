@@ -12,6 +12,10 @@ export const createBudgetService=async({amount, startDate, endDate, dbUser})=>{
 
     const start=new Date(startDate);
     const end=new Date(endDate);
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
     const now=new Date()
 
     if(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())){

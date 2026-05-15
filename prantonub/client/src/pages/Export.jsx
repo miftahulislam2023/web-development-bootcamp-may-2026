@@ -25,16 +25,38 @@ export default function Export() {
 
   const handleExportReport = async () => {
     setReportLoading(true);
+
+    // ✅ FIX 1: Open the window BEFORE the await.
+    // Browsers only allow window.open() in direct response to a user gesture.
+    // After an `await`, the call is no longer synchronous and gets blocked as a popup.
+    const newWindow = window.open("", "_blank");
+
+    // Show a loading message in the new tab while the request runs
+    if (newWindow) {
+      newWindow.document.write(
+        "<html><body style='font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f3ff'>" +
+          "<p style='color:#4f46e5;font-size:18px'>⏳ Generating your report...</p></body></html>",
+      );
+    }
+
     try {
       const p = `month=${reportMonth}&year=${reportYear}`;
       const response = await api.get(`/export/summary?${p}`, {
         responseType: "blob",
       });
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: "text/html" }),
-      );
-      window.open(url, "_blank");
+
+      // ✅ FIX 2: Convert blob to text, then write into the already-open window.
+      // The old code created an object URL but window.open() was called after await (popup blocked).
+      const htmlText = await response.data.text();
+
+      if (newWindow) {
+        newWindow.document.open();
+        newWindow.document.write(htmlText);
+        newWindow.document.close();
+      }
     } catch (err) {
+      // Close the blank tab if the request failed
+      if (newWindow) newWindow.close();
       alert("Failed to generate report. Please try again.");
       console.error(err);
     } finally {
@@ -124,7 +146,7 @@ export default function Export() {
           className="w-full btn-primary justify-center mb-3"
         >
           {reportLoading
-            ? "Generating..."
+            ? "⏳ Generating... (may take a moment)"
             : `📄 Generate ${MONTHS[reportMonth - 1]} ${reportYear} PDF Report`}
         </button>
       </div>

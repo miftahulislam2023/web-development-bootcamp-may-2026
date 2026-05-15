@@ -6,6 +6,7 @@ import CustomError from "../../utils/customError.js";
 import OTPModel from "../../models/otpModel.js";
 
 import EmailUtility from "../../utils/sendEmail.js";
+import bcrypt from "bcryptjs";
 
 
 // Register Service
@@ -33,12 +34,15 @@ export const registerService = async (
 );
   }
 
+   const hashedPassword =
+    await bcrypt.hash(password, 10);
+
 
   // Create User
   const user = await User.create({
     name,
     email,
-    password,
+    password: hashedPassword,
     image,
   });
 
@@ -77,11 +81,19 @@ throw new CustomError(
   }
 
 
-  // Password Check
-  if (password !== user.password) {
+  
+ // Compare Password
+  const isPasswordMatched =
+    await bcrypt.compare(
+      password,
+      user.password
+    );
 
-    throw new Error(
-      "Invalid email or password"
+      if (!isPasswordMatched) {
+
+    throw new CustomError(
+      "Invalid email or password",
+      401
     );
 
   }
@@ -290,12 +302,15 @@ export const resetPasswordService =
 
     }
 
+     const hashedPassword =
+      await bcrypt.hash(password, 10);
+
 
     // Update Password
     await User.findOneAndUpdate(
       { email },
       {
-        password,
+        password: hashedPassword,
       }
     );
 

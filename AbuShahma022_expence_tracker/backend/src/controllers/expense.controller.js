@@ -10,7 +10,8 @@ import {
   deleteExpenseService,
   getExpenseSummaryService,
   getCategorySummaryService,
-  getMonthlySummaryService
+  getMonthlySummaryService,
+  getSingleExpenseService
 } from "../services/expense/expense.service.js";
 
 
@@ -235,6 +236,35 @@ export const getMonthlySummary =
       res.status(200).json({
         success: true,
         data: summary,
+      });
+
+    } catch (error) {
+
+      next(error);
+
+    }
+
+};
+
+export const getSingleExpense =
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const expense =
+        await getSingleExpenseService(
+          req.params.id,
+          req.user.id
+        );
+
+
+      res.status(200).json({
+        success: true,
+        data: expense,
       });
 
     } catch (error) {

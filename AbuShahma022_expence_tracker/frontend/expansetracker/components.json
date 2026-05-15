@@ -23,6 +23,7 @@
   },
   "registries": {
     "@tailark": "https://tailark.com/r/{name}.json",
-    "@motion-primitives": "https://motion-primitives.com/c/{name}.json"
+    "@motion-primitives": "https://motion-primitives.com/c/{name}.json",
+     "@ss-components": "https://shadcnstudio.com/r/components/{name}.json"
   }
 }

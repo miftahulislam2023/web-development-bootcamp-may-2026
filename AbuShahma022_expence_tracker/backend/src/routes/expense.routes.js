@@ -9,7 +9,8 @@ import {
   deleteExpense,
   getExpenseSummary,
   getCategorySummary,
-  getMonthlySummary
+  getMonthlySummary,
+  getSingleExpense
 } from "../controllers/expense.controller.js";
 
 const router = express.Router();
@@ -44,6 +45,12 @@ router.get(
   "/monthly-summary",
   authMiddleware,
   getMonthlySummary
+);
+
+router.get(
+  "/:id",
+  authMiddleware,
+  getSingleExpense
 );
 
 

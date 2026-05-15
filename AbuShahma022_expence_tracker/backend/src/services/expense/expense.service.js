@@ -492,3 +492,38 @@ export const getMonthlySummaryService =
     return monthlySummary;
 
 };
+
+export const getSingleExpenseService =
+  async (
+    expenseId,
+    userId
+  ) => {
+
+    const expense =
+      await Expense.findOne({
+
+        _id: expenseId,
+
+        user: userId,
+
+      })
+
+        .populate(
+          "expenseType",
+          "name"
+        );
+
+
+    if (!expense) {
+
+      throw new CustomError(
+        "Expense not found",
+        404
+      );
+
+    }
+
+
+    return expense;
+
+};

@@ -3,13 +3,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import ratelimit from 'express-rate-limit';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import router from './src/routes/routes.js';
 
 const app = express();
 
 app.use(cors({
-    origin: 'http://localhost:3000', // frontend URL
+    origin: process.env.FRONTEND_URL, // frontend URL
     credentials: true, // Allow cookies to be sent with requests
 }));
 app.use(helmet());

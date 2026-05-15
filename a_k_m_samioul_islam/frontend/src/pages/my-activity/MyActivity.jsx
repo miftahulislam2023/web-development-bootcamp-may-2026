@@ -329,7 +329,7 @@ const MyActivity = () => {
 
 	// console.log(userData);
 	// console.log(currentBudget, budgetHistory);
-	console.log(aiData);
+	console.log(aiData, transactions);
 
 	return (
 		<div className="w-full flex flex-col inter">
@@ -412,12 +412,12 @@ const MyActivity = () => {
 											<Tooltip />
 											<Legend />
 											<Bar
-												dataKey="Income"
+												dataKey="income"
 												fill="#16a34a"
 												radius={[6, 6, 0, 0]}
 											/>
 											<Bar
-												dataKey="Expense"
+												dataKey="expense"
 												fill="#ef4444"
 												radius={[6, 6, 0, 0]}
 											/>
@@ -486,27 +486,27 @@ const MyActivity = () => {
 				{aiLoading ? (
 					<CardSkeleton variant="ai" />
 				) : (
-					<div className="collapse collapse-arrow bg-white border border-base-300">
+					<div className="collapse collapse-arrow bg-[#f8fafc] border border-[#e2e8f0] hover:border-black transition-all duration-300">
 						<input type="checkbox" />
 
-						<div className="collapse-title text-lg font-bold">
-							See what AI is saying about your financial activity
+						<div className="collapse-title text-lg font-semibold text-black">
+							SEE WHAT AI IS SAYING ABOUT YOUR FINANCIAL ACTIVITIES
 						</div>
 
-						<div className="collapse-content text-sm">
-							<p className="mb-4 text-gray-600">
+						<div className="collapse-content text-sm text-gray-700">
+							<p className="mb-4">
 								{aiData?.aiRecommendation?.insight ||
 									"No AI insight available yet."}
 							</p>
 
-							{aiData?.recommendations && (
+							{aiData?.aiRecommendation?.recommendations && (
 								<div className="flex flex-col gap-2">
 									<p className="font-semibold text-black">
 										Recommendations
 									</p>
 
-									<ul className="list-disc space-y-2 pl-5 text-gray-600">
-										{aiData?.recommendations.map(
+									<ul className="list-disc space-y-2 pl-5">
+										{aiData?.aiRecommendation?.recommendations.map(
 											(recommendation, index) => (
 												<li key={index}>
 													{recommendation}

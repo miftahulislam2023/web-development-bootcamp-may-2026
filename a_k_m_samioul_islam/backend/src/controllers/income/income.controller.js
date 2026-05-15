@@ -4,7 +4,7 @@ import { createIncomeService, deleteIncomeService, getIncomeDetailsService, getI
 
 export const createIncome = async (req, res) => {
     try {
-        const income = await createIncomeService(req.body);
+        const income = await createIncomeService(req.body, req.dbUser);
 
         return res.status(201).json({
             success: true,

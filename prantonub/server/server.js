@@ -7,7 +7,6 @@ const session = require("express-session");
 const passport = require("./src/config/passport");
 const { errorHandler } = require("./src/middleware/errorHandler");
 const { apiLimiter } = require("./src/middleware/rateLimiter");
-require("dotenv").config();
 
 // Import cron job
 require("./src/config/cron");
@@ -31,8 +30,8 @@ app.use(
 app.use("/api/", apiLimiter);
 
 // Body parsing
-app.use(express.json({ limit: "10kb" })); // Limit payload size
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: "1mb" })); // Limit payload size
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Session middleware
 app.use(
@@ -60,6 +59,7 @@ app.use("/api/recurring", require("./src/routes/recurring"));
 app.use("/api/notifications", require("./src/routes/notification"));
 app.use("/api/user", require("./src/routes/user"));
 app.use("/api/export", require("./src/routes/export"));
+app.use("/api/ai", require("./src/routes/ai"));
 
 // Health check endpoint
 app.get("/", (_req, res) =>

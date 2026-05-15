@@ -3,11 +3,12 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import NotificationBell from "./NotificationBell";
+import AIChatButton from "./ai/AIChatButton";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: "📊", exact: true },
   { to: "/transactions", label: "Transactions", icon: "💳" },
-  { to: "/budgets", label: "Budgets", icon: "🎯" },
+  { to: "/budgets", label: "Budgets", icon: "🎯" }, 
   { to: "/recurring", label: "Recurring", icon: "🔄" },
   { to: "/analytics", label: "Analytics", icon: "📈" },
   { to: "/notifications", label: "Notifications", icon: "🔔" },
@@ -194,6 +195,7 @@ export default function Layout() {
             <Outlet />
           </div>
         </main>
+      <AIChatButton />
       </div>
     </div>
   );

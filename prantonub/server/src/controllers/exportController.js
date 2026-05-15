@@ -31,7 +31,7 @@ const exportCSV = async (req, res) => {
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="spendwise-export-${Date.now()}.csv"`,
+      `attachment; filename="FinanceHub-export-${Date.now()}.csv"`,
     );
     res.send(csv);
   } catch (err) {
@@ -45,7 +45,6 @@ const exportSummary = async (req, res) => {
     const month = Number(req.query.month) || now.getMonth() + 1;
     const year = Number(req.query.year) || now.getFullYear();
 
-    // ✅ FIXED: correct start and end for any selected month
     const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
     const end = new Date(year, month, 0, 23, 59, 59, 999);
 
@@ -82,133 +81,252 @@ const exportSummary = async (req, res) => {
       "November",
       "December",
     ];
-    const fileName = `SpendWise-Report-${MONTHS[month - 1]}-${year}.pdf`;
+    const fileName = `FinanceHub-Report-${MONTHS[month - 1]}-${year}.pdf`;
+    const netSavings = totalIncome - totalExpense;
+    const savingsRate =
+      totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : "0.0";
+    const maxCatAmt = Math.max(...Object.values(catMap), 1);
 
     const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>SpendWise Report - ${MONTHS[month - 1]} ${year}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinanceHub — ${MONTHS[month - 1]} ${year} Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: { DEFAULT: '#7c3aed', light: '#ede9fe', dark: '#5b21b6' }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; color: #1f2937; background: #f3f4f6; padding: 40px 20px; }
-    .page { max-width: 820px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
-    .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-icon { width: 42px; height: 42px; background: #7c3aed; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 20px; }
-    .logo-name { font-size: 20px; font-weight: 800; color: #111827; }
-    .logo-sub  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
-    .btn-download {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: #7c3aed; color: white; border: none;
-      border-radius: 10px; padding: 11px 22px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-download:hover { background: #6d28d9; }
-    .btn-download:disabled { background: #a78bfa; cursor: not-allowed; }
-    .spinner {
-      width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
+    body { font-family: 'Inter', sans-serif; }
+    .spinner { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .report-title { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 4px; }
-    .report-sub   { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
-    .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 32px; }
-    .card { background: #f9fafb; border-radius: 12px; padding: 18px 20px; border: 1px solid #e5e7eb; }
-    .card-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-    .card-value { font-size: 26px; font-weight: 800; }
-    .income  { color: #059669; }
-    .expense { color: #dc2626; }
-    .savings { color: #7c3aed; }
-    .section-title { font-size: 15px; font-weight: 700; color: #374151; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #f3f4f6; }
-    .cat-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-    .cat-row:last-child { border-bottom: none; }
-    table { width: 100%; border-collapse: collapse; }
-    thead tr { background: #7c3aed; }
-    th { color: white; padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-    td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f3f4f6; color: #374151; }
-    tr:nth-child(even) td { background: #fafafa; }
-    .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .badge-income  { background: #d1fae5; color: #065f46; }
-    .badge-expense { background: #fee2e2; color: #991b1b; }
-    .amount-income  { color: #059669; font-weight: 700; }
-    .amount-expense { color: #dc2626; font-weight: 700; }
-    .footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #9ca3af; text-align: center; }
+    .animate-spin-btn { animation: spin 0.7s linear infinite; }
+    .cat-bar { transition: width 0.6s ease; }
+    @media print { .no-print { display: none !important; } }
   </style>
 </head>
-<body>
-  <div class="page" id="report">
+<body class="bg-gray-100 min-h-screen py-10 px-4">
 
-    <div class="topbar">
-      <div class="logo">
-        <div class="logo-icon">S</div>
-        <div>
-          <div class="logo-name">SpendWise</div>
-          <div class="logo-sub">Personal Expense Tracker</div>
+  <!-- Floating Download Button -->
+  <div class="no-print fixed top-5 right-5 z-50">
+    <button
+      id="downloadBtn"
+      onclick="downloadPDF()"
+      class="flex items-center gap-2 bg-violet-700 hover:bg-violet-800 active:scale-95 text-white text-sm font-semibold px-5 py-3 rounded-full shadow-xl transition-all duration-200"
+    >
+      <span id="btnIcon" class="text-base">⬇</span>
+      <span id="btnText">Download PDF</span>
+      <div id="spinner" class="spinner w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin-btn"></div>
+    </button>
+  </div>
+
+  <!-- Report Page -->
+  <div id="report" class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+    <!-- ── Hero Header ── -->
+    <div class="bg-gradient-to-br from-violet-700 via-violet-600 to-purple-700 px-10 py-10 relative overflow-hidden">
+      <!-- Decorative circles -->
+      <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white opacity-5"></div>
+      <div class="absolute -bottom-20 left-1/3 w-80 h-80 rounded-full bg-white opacity-5"></div>
+
+      <!-- Top row -->
+      <div class="relative flex items-center justify-between mb-8">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center text-white font-black text-xl">F</div>
+          <div>
+            <p class="text-white font-bold text-lg leading-none">FinanceHub</p>
+            <p class="text-violet-200 text-xs mt-0.5">Personal Finance Tracker</p>
+          </div>
+        </div>
+        <!-- Badge -->
+        <span class="text-xs font-semibold tracking-widest uppercase text-violet-200 bg-white/10 border border-white/20 px-4 py-1.5 rounded-full">
+          Monthly Report
+        </span>
+      </div>
+
+      <!-- Title -->
+      <div class="relative">
+        <h1 class="text-5xl font-extrabold text-white tracking-tight leading-none mb-2">
+          ${MONTHS[month - 1]} <span class="text-violet-200">${year}</span>
+        </h1>
+        <p class="text-violet-300 text-sm">
+          Generated on ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          &nbsp;·&nbsp; ${transactions.length} transactions
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Body ── -->
+    <div class="px-10 py-10">
+
+      <!-- ── Summary Cards ── -->
+      <div class="grid grid-cols-3 gap-5 mb-10">
+
+        <!-- Income -->
+        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-sm">↑</div>
+            <p class="text-xs font-semibold uppercase tracking-widest text-emerald-600">Income</p>
+          </div>
+          <p class="text-3xl font-extrabold text-emerald-700 tracking-tight">$${totalIncome.toFixed(2)}</p>
+          <p class="text-xs text-emerald-500 mt-1">Total earned this month</p>
+        </div>
+
+        <!-- Expenses -->
+        <div class="bg-red-50 border border-red-100 rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-red-500 text-sm">↓</div>
+            <p class="text-xs font-semibold uppercase tracking-widest text-red-500">Expenses</p>
+          </div>
+          <p class="text-3xl font-extrabold text-red-600 tracking-tight">$${totalExpense.toFixed(2)}</p>
+          <p class="text-xs text-red-400 mt-1">Total spent this month</p>
+        </div>
+
+        <!-- Savings -->
+        <div class="bg-violet-50 border border-violet-100 rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center text-violet-600 text-sm">◆</div>
+            <p class="text-xs font-semibold uppercase tracking-widest text-violet-600">Net Savings</p>
+          </div>
+          <p class="text-3xl font-extrabold tracking-tight ${netSavings >= 0 ? "text-violet-700" : "text-red-600"}">
+            ${netSavings >= 0 ? "" : "−"}$${Math.abs(netSavings).toFixed(2)}
+          </p>
+          <p class="text-xs text-violet-400 mt-1">Savings rate: ${savingsRate}%</p>
         </div>
       </div>
-      <button class="btn-download" id="downloadBtn" onclick="downloadPDF()">
-        <span id="btnIcon">⬇️</span>
-        <span id="btnText">Download PDF</span>
-        <div class="spinner" id="spinner"></div>
-      </button>
+
+      <!-- ── Savings Rate Bar ── -->
+      ${
+        totalIncome > 0
+          ? `
+      <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5 mb-10">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm font-semibold text-gray-700">💰 Savings Rate</p>
+          <p class="text-sm font-bold ${netSavings >= 0 ? "text-violet-600" : "text-red-500"}">${savingsRate}%</p>
+        </div>
+        <div class="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+          <div class="h-full rounded-full ${netSavings >= 0 ? "bg-gradient-to-r from-violet-500 to-purple-400" : "bg-red-400"}"
+               style="width: ${Math.min(Math.abs(parseFloat(savingsRate)), 100)}%"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">
+          You saved $${Math.abs(netSavings).toFixed(2)} out of $${totalIncome.toFixed(2)} earned
+        </p>
+      </div>`
+          : ""
+      }
+
+      <!-- ── Category Breakdown ── -->
+      ${
+        Object.keys(catMap).length > 0
+          ? `
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+          <div class="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center text-sm">📊</div>
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Spending by Category</h2>
+          <span class="ml-auto text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">${Object.keys(catMap).length} categories</span>
+        </div>
+
+        <div class="space-y-3">
+          ${Object.entries(catMap)
+            .sort((a, b) => b[1] - a[1])
+            .map(([cat, amt]) => {
+              const pct = ((amt / maxCatAmt) * 100).toFixed(0);
+              const sharePct =
+                totalExpense > 0
+                  ? ((amt / totalExpense) * 100).toFixed(1)
+                  : "0";
+              return `
+          <div class="flex items-center gap-4">
+            <p class="text-sm text-gray-700 font-medium capitalize w-28 flex-shrink-0">${cat}</p>
+            <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-violet-500 to-purple-400 rounded-full cat-bar" style="width:${pct}%"></div>
+            </div>
+            <p class="text-xs text-gray-400 w-10 text-right flex-shrink-0">${sharePct}%</p>
+            <p class="text-sm font-bold text-gray-800 w-20 text-right flex-shrink-0">$${amt.toFixed(2)}</p>
+          </div>`;
+            })
+            .join("")}
+        </div>
+      </div>`
+          : ""
+      }
+
+      <!-- ── Transactions Table ── -->
+      <div>
+        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+          <div class="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center text-sm">📋</div>
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">All Transactions</h2>
+          <span class="ml-auto text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">${transactions.length} records</span>
+        </div>
+
+        ${
+          transactions.length > 0
+            ? `
+        <div class="overflow-hidden rounded-xl border border-gray-100">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Date</th>
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Title</th>
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Category</th>
+                <th class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Type</th>
+                <th class="text-right text-xs font-semibold uppercase tracking-wider text-gray-400 px-4 py-3">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              ${transactions
+                .map(
+                  (t, i) => `
+              <tr class="${i % 2 === 0 ? "bg-white" : "bg-gray-50/50"} hover:bg-violet-50/30 transition-colors">
+                <td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">${new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                <td class="px-4 py-3 text-sm font-medium text-gray-800">${t.title}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-block text-xs font-medium bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full capitalize">${t.category}</span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-full ${t.type === "income" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}">
+                    ${t.type}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right text-sm font-bold ${t.type === "income" ? "text-emerald-600" : "text-red-500"}">
+                  ${t.type === "income" ? "+" : "−"}$${t.amount.toFixed(2)}
+                </td>
+              </tr>`,
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>`
+            : `
+        <div class="text-center py-14 text-gray-400">
+          <p class="text-4xl mb-3">📭</p>
+          <p class="text-sm font-medium">No transactions found for this period</p>
+        </div>`
+        }
+      </div>
+
+      <!-- ── Footer ── -->
+      <div class="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between">
+        <p class="text-xs text-gray-400">
+          <span class="font-semibold text-gray-500">FinanceHub</span> &nbsp;·&nbsp; Confidential financial report
+        </p>
+        <p class="text-xs text-gray-400">${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+      </div>
+
     </div>
-
-    <p class="report-title">Monthly Financial Report</p>
-    <p class="report-sub">${MONTHS[month - 1]} ${year} &nbsp;·&nbsp; Generated on ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-
-    <div class="cards">
-      <div class="card"><div class="card-label">Total Income</div><div class="card-value income">$${totalIncome.toFixed(2)}</div></div>
-      <div class="card"><div class="card-label">Total Expenses</div><div class="card-value expense">$${totalExpense.toFixed(2)}</div></div>
-      <div class="card"><div class="card-label">Net Savings</div><div class="card-value savings">$${(totalIncome - totalExpense).toFixed(2)}</div></div>
-    </div>
-
-    ${
-      Object.keys(catMap).length > 0
-        ? `
-    <p class="section-title">📊 Spending by Category</p>
-    ${Object.entries(catMap)
-      .sort((a, b) => b[1] - a[1])
-      .map(
-        ([cat, amt]) => `
-      <div class="cat-row"><span>${cat}</span><strong>$${amt.toFixed(2)}</strong></div>
-    `,
-      )
-      .join("")}`
-        : ""
-    }
-
-    <p class="section-title">📋 All Transactions (${transactions.length})</p>
-    ${
-      transactions.length > 0
-        ? `
-    <table>
-      <thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Type</th><th>Amount</th></tr></thead>
-      <tbody>
-        ${transactions
-          .map(
-            (t) => `
-        <tr>
-          <td>${new Date(t.date).toLocaleDateString()}</td>
-          <td>${t.title}</td>
-          <td>${t.category}</td>
-          <td><span class="badge badge-${t.type}">${t.type}</span></td>
-          <td class="amount-${t.type}">${t.type === "income" ? "+" : "−"}$${t.amount.toFixed(2)}</td>
-        </tr>`,
-          )
-          .join("")}
-      </tbody>
-    </table>`
-        : `<p style="color:#9ca3af;font-size:13px;padding:20px 0">No transactions found for this period.</p>`
-    }
-
-    <div class="footer">Generated by SpendWise &nbsp;·&nbsp; ${new Date().toLocaleDateString()} &nbsp;·&nbsp; Confidential</div>
   </div>
 
   <script>
@@ -222,7 +340,6 @@ const exportSummary = async (req, res) => {
       btnText.textContent = "Generating...";
       btnIcon.style.display = "none";
       spinner.style.display = "inline-block";
-
       btn.style.visibility = "hidden";
 
       html2pdf()

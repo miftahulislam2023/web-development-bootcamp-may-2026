@@ -19,7 +19,7 @@ app.use(helmet());
 // Rate limiting and CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL === "https://financehub-prantonub.vercel.app",
+    origin: process.env.CLIENT_URL, // ← just this, no ===
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

@@ -96,7 +96,7 @@ https://personal-expense-tracker-7be3.onrender.com
 - Custom tooltips show exact values in BDT currency
 
 ### 6. Data Filtering System
-- **Month/Year Filter**: Select specific month and year
+- **Month and Year Filter**: Select specific month and year
 - **Date Range Filter**: Custom start and end dates
 - **Real-time Updates**: All components update when filters change
 

@@ -3,8 +3,7 @@
 A full-stack personal expense tracking application built with Next.js 15, featuring user authentication, income/expense management, monthly statistics, and interactive charts.
 
 ## Live Demo
-
-[Add your deployed URL here]
+https://personal-expense-tracker-7be3.onrender.com
 
 ## Tech Stack
 

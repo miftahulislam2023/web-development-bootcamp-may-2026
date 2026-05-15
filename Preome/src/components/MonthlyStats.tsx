@@ -46,11 +46,7 @@ interface MonthlyStatsProps {
 }
 
 export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
-  const [filterType, setFilterType] = useState('month')
-  const [selectedMonth, setSelectedMonth] = useState('')
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
   const [chartType, setChartType] = useState('bar')
 
   const months = [
@@ -60,51 +56,10 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - 2 + i))
 
-  const filteredExpenses = useMemo(() => {
-    if (filterType === 'month') {
-      if (!selectedMonth) return expenses
-      const monthIndex = months.indexOf(selectedMonth)
-      return expenses.filter(expense => {
-        const expenseDate = new Date(expense.date)
-        return expenseDate.getMonth() === monthIndex && expenseDate.getFullYear() === selectedYear
-      })
-    } else {
-      if (!startDate || !endDate) return expenses
-      return expenses.filter(expense => {
-        const expenseDate = new Date(expense.date)
-        const start = new Date(startDate)
-        const end = new Date(endDate)
-        return expenseDate >= start && expenseDate <= end
-      })
-    }
-  }, [expenses, filterType, selectedMonth, selectedYear, startDate, endDate, months])
-
-  const filteredIncomes = useMemo(() => {
-    if (filterType === 'month') {
-      if (!selectedMonth) return incomes
-      const monthIndex = months.indexOf(selectedMonth)
-      return incomes.filter(income => {
-        const incomeDate = new Date(income.date)
-        return incomeDate.getMonth() === monthIndex && incomeDate.getFullYear() === selectedYear
-      })
-    } else {
-      if (!startDate || !endDate) return incomes
-      return incomes.filter(income => {
-        const incomeDate = new Date(income.date)
-        const start = new Date(startDate)
-        const end = new Date(endDate)
-        return incomeDate >= start && incomeDate <= end
-      })
-    }
-  }, [incomes, filterType, selectedMonth, selectedYear, startDate, endDate, months])
-
   const monthlyExpenses = months.map((month, index) => {
     const monthExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date)
-      if (filterType === 'month' && selectedMonth) {
-        return expenseDate.getMonth() === index && expenseDate.getFullYear() === selectedYear
-      }
-      return expenseDate.getMonth() === index
+      return expenseDate.getMonth() === index && expenseDate.getFullYear() === selectedYear
     })
     const total = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
     return {
@@ -117,10 +72,7 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
   const monthlyIncomes = months.map((month, index) => {
     const monthIncomes = incomes.filter(income => {
       const incomeDate = new Date(income.date)
-      if (filterType === 'month' && selectedMonth) {
-        return incomeDate.getMonth() === index && incomeDate.getFullYear() === selectedYear
-      }
-      return incomeDate.getMonth() === index
+      return incomeDate.getMonth() === index && incomeDate.getFullYear() === selectedYear
     })
     const total = monthIncomes.reduce((sum, inc) => sum + inc.amount, 0)
     return {
@@ -302,52 +254,6 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
     },
   }
 
-  const getSelectedPeriodText = () => {
-    if (filterType === 'month') {
-      if (selectedMonth) {
-        return `${selectedMonth} ${selectedYear}`
-      }
-      return 'Select a month to view data'
-    } else {
-      if (startDate && endDate) {
-        return `${startDate} to ${endDate}`
-      }
-      return 'Select date range to view data'
-    }
-  }
-
-  const getTotalIncomeForPeriod = () => {
-    if (filterType === 'month' && selectedMonth) {
-      return filteredIncomes.reduce((sum, inc) => sum + inc.amount, 0)
-    }
-    return totalYearlyIncome
-  }
-
-  const getTotalExpensesForPeriod = () => {
-    if (filterType === 'month' && selectedMonth) {
-      return filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-    }
-    return totalYearlyExpense
-  }
-
-  const getTotalSavingsForPeriod = () => {
-    return getTotalIncomeForPeriod() - getTotalExpensesForPeriod()
-  }
-
-  const getAverageIncomeForPeriod = () => {
-    if (filterType === 'month' && selectedMonth) {
-      return filteredIncomes.length > 0 ? getTotalIncomeForPeriod() / filteredIncomes.length : 0
-    }
-    return averageMonthlyIncome
-  }
-
-  const getAverageExpenseForPeriod = () => {
-    if (filterType === 'month' && selectedMonth) {
-      return filteredExpenses.length > 0 ? getTotalExpensesForPeriod() / filteredExpenses.length : 0
-    }
-    return averageMonthlyExpense
-  }
-
   return (
     <div style={{
       backgroundColor: 'white',
@@ -369,117 +275,29 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
             Monthly Financial Overview
           </h3>
           <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
-            {getSelectedPeriodText()}
+            Year: {selectedYear}
           </p>
         </div>
         
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div>
-            <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>Filter by:</label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px',
-                backgroundColor: 'white'
-              }}
-            >
-              <option value="month">Month</option>
-              <option value="dateRange">Date Range</option>
-            </select>
-          </div>
-          
-          {filterType === 'month' ? (
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div>
-                <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>Select Month:</label>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    backgroundColor: 'white',
-                    minWidth: '140px'
-                  }}
-                >
-                  <option value="">Choose a month</option>
-                  {months.map(month => (
-                    <option key={month} value={month}>{month}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>Year:</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    backgroundColor: 'white'
-                  }}
-                >
-                  {years.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div>
-                <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>From:</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>To:</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-            </div>
-          )}
+        <div>
+          <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>Select Year:</label>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}
+          >
+            {years.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
         </div>
       </div>
-
-      {filterType === 'month' && !selectedMonth && (
-        <div style={{
-          backgroundColor: '#fef3c7',
-          color: '#92400e',
-          padding: '12px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          textAlign: 'center'
-        }}>
-          Please select a month to view your financial data
-        </div>
-      )}
 
       <div style={{
         display: 'flex',
@@ -521,26 +339,10 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
       </div>
       
       <div style={{ marginBottom: '32px', minHeight: '400px' }}>
-        {filterType === 'month' && !selectedMonth ? (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '400px',
-            color: '#9ca3af',
-            textAlign: 'center'
-          }}>
-            <div>
-              <p style={{ fontSize: '16px', marginBottom: '8px' }}>No data to display</p>
-              <p style={{ fontSize: '14px' }}>Please select a month from the filter above</p>
-            </div>
-          </div>
+        {chartType === 'bar' ? (
+          <Bar data={barChartData} options={chartOptions} />
         ) : (
-          chartType === 'bar' ? (
-            <Bar data={barChartData} options={chartOptions} />
-          ) : (
-            <Line data={lineChartData} options={chartOptions} />
-          )
+          <Line data={lineChartData} options={chartOptions} />
         )}
       </div>
       
@@ -554,25 +356,25 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
       }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '14px', color: '#6b7280' }}>Total Income</p>
-          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>৳{getTotalIncomeForPeriod().toFixed(2)}</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>৳{totalYearlyIncome.toFixed(2)}</p>
         </div>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '14px', color: '#6b7280' }}>Total Expenses</p>
-          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>৳{getTotalExpensesForPeriod().toFixed(2)}</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>৳{totalYearlyExpense.toFixed(2)}</p>
         </div>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '14px', color: '#6b7280' }}>Total Savings</p>
-          <p style={{ fontSize: '24px', fontWeight: 'bold', color: getTotalSavingsForPeriod() >= 0 ? '#4f46e5' : '#ef4444' }}>
-            ৳{getTotalSavingsForPeriod().toFixed(2)}
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: totalYearlySavings >= 0 ? '#4f46e5' : '#ef4444' }}>
+            ৳{totalYearlySavings.toFixed(2)}
           </p>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '14px', color: '#6b7280' }}>Average Income</p>
-          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{getAverageIncomeForPeriod().toFixed(2)}</p>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>Monthly Avg Income</p>
+          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{averageMonthlyIncome.toFixed(2)}</p>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '14px', color: '#6b7280' }}>Average Expense</p>
-          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{getAverageExpenseForPeriod().toFixed(2)}</p>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>Monthly Avg Expense</p>
+          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{averageMonthlyExpense.toFixed(2)}</p>
         </div>
       </div>
       
@@ -716,13 +518,13 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
         ))}
       </div>
       
-      {monthlyExpenses.every(data => data.total === 0) && monthlyIncomes.every(data => data.total === 0) && selectedMonth && (
+      {monthlyExpenses.every(data => data.total === 0) && monthlyIncomes.every(data => data.total === 0) && (
         <div style={{
           textAlign: 'center',
           padding: '40px',
           color: '#9ca3af'
         }}>
-          No financial data available for {selectedMonth} {selectedYear}
+          No financial data available for {selectedYear}
         </div>
       )}
     </div>

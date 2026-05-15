@@ -1,6 +1,6 @@
 # 🎬 Movie Master Pro
 
-![Movie Master Pro Banner](https://movie-master-pro-cf049.web.app/)
+![Movie Master Pro Banner](https://i.ibb.co.com/k2WQNt9c/Screenshot-2026-05-15-213149.png)
 
 **Movie Master Pro** is a full-stack movie portal where users can discover, save, and manage their favorite films. It's built on **React 19** with **Vite**, styled using **Tailwind CSS v4** and **DaisyUI**, and backed by **Firebase** for auth and real-time data. The goal was to keep things fast and user-friendly — lazy loading, smooth animations, and a clean dashboard all come together to make browsing feel effortless.
 

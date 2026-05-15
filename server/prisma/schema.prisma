@@ -1,0 +1,125 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum RoomType {
+  PUBLIC
+  PRIVATE
+  DIRECT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
+enum JoinRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  name      String?
+  email     String   @unique
+  password  String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedRooms   Room[]        @relation("RoomOwner")
+  memberships  RoomMember[]
+  messages     Message[]
+  readReceipts MessageRead[]
+  joinRequests JoinRequest[]
+
+  @@map("users")
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        RoomType @default(PUBLIC)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner        User          @relation("RoomOwner", fields: [ownerId], references: [id])
+  ownerId      String
+  members      RoomMember[]
+  messages     Message[]
+  joinRequests JoinRequest[]
+
+  @@map("rooms")
+}
+
+model JoinRequest {
+  id        String            @id @default(cuid())
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId String
+
+  @@unique([userId, roomId])
+  @@map("join_requests")
+}
+
+
+model RoomMember {
+  id       String   @id @default(cuid())
+  joinedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId String
+
+  @@unique([userId, roomId])
+  @@map("room_members")
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  content   String
+  type      MessageType @default(TEXT)
+  fileUrl   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  sender   User   @relation(fields: [senderId], references: [id])
+  senderId String
+  room     Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId   String
+
+  readBy MessageRead[]
+
+  @@map("messages")
+}
+
+model MessageRead {
+  id     String   @id @default(cuid())
+  readAt DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+
+  @@unique([userId, messageId])
+  @@map("message_reads")
+}
+

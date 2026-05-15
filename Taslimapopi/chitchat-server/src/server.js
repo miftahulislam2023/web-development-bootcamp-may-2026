@@ -15,7 +15,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 connectDB(uri)
 
-// const app = express();
+
 const CLIENT_URL = process.env.CLIENT_URL
 
 const PORT = process.env.PORT || 3000;
@@ -25,6 +25,11 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoute);
 app.use("/api/message", messageRoute);
+
+
+app.get("/deploy", (req, res) => {
+  res.send("deploy successful");
+});
 
 app.use(express.json());
 

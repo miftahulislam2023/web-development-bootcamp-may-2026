@@ -16,7 +16,7 @@ export const createIncomeService = async (incomeData, dbUser) => {
 		amount,
 		source,
 		note,
-		user: dbUser._id
+		user: dbUser._id,
 	});
 
 	return income;
@@ -131,12 +131,21 @@ export const getIncomesService = async ({
 		if (endDate) query.createdAt.$lte = new Date(endDate);
 	}
 
-	const skip = (page - 1) * limit;
+	const pageNumber = Number(page);
+  	const limitNumber = Number(limit);
+	const skip = (pageNumber - 1) * limitNumber;
+
+	const totalIncomes = await Income.countDocuments(query);
 
 	const incomes = await Income.find(query)
 		.sort({ createdAt: -1 })
 		.skip(skip)
-		.limit(Number(limit));
+		.limit(limitNumber);
 
-	return incomes;
+	return {
+		incomes,
+		totalIncomes,
+		totalPages: Math.ceil(totalIncomes / limitNumber),
+		currentPage: pageNumber
+	};
 };

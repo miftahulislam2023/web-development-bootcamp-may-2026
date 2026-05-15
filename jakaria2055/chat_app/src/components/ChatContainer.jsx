@@ -172,7 +172,7 @@ const ChatContainer = () => {
 
       {/* INPUT BAR */}
       <div className="flex-shrink-0 flex items-center gap-3 p-3 border-t border-white/10">
-        <div className="flex-1 flex items-center bg-gray-100/12 px-3 rounded-full">
+        <div className="flex-1 flex items-center bg-gray-300/40  px-3 rounded-full focus:ring-4 focus:ring-pink-400">
           <input
             onChange={(e) => setInput(e.target.value)}
             value={input}
@@ -184,7 +184,7 @@ const ChatContainer = () => {
             }}
             type="text"
             placeholder="Leave Message"
-            className="flex-1 text-sm p-3 border-none rounded-lg outline-none text-white placeholder-gray-400 bg-transparent"
+            className="flex-1 text-sm p-3 border-none rounded-lg outline-none text-white sm:placeholder-gray-600 lg:placeholder-gray-300 bg-transparent"
           />
           <input
             onChange={handleSendImage}
@@ -194,7 +194,7 @@ const ChatContainer = () => {
             hidden
           />
           <label htmlFor="image">
-            <Images className="w-7 cursor-pointer text-gray-300 hover:text-white transition-colors" />
+            <Images className="w-7 cursor-pointer text-gray-300 hover:text-purple-700 transition-colors" />
           </label>
         </div>
         <Send

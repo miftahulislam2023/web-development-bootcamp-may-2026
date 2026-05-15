@@ -25,10 +25,10 @@
 ### 🌐 Live Demo
 
 | Service | Link |
-|:---:|:---:|
-| 🖥️ **Frontend** | [https://financehub-prantonub.vercel.app/](#) |
-| 🔌 **Backend API** | [https://financehub-personal-expence-tracker.onrender.com](#) |
-| 🗄️ **Database** | MongoDB Atlas |
+|:--:|:--|
+| 🖥️ Frontend | https://financehub-prantonub.vercel.app/ |
+| 🔌 Backend API | https://financehub-personal-expence-tracker.onrender.com |
+| 🗄️ Database | MongoDB Atlas |
 
 ---
 
@@ -47,6 +47,20 @@
 - 🔑 **Google OAuth 2.0** sign-in via Passport.js
 - 🛡️ Protected routes on both **frontend and backend**
 - 🚪 Logout with full session cleanup
+
+</details>
+
+<details>
+<summary><b>🤖 AI Finance Assistant (Chatbot)</b></summary>
+<br/>
+
+- 🧠 Built-in AI chatbot to help users with **finance-related questions**
+- 💬 Users can ask anything about **budgeting, saving, expenses, and money management**
+- 📊 AI can analyze and explain **real transaction data insights**
+- ⚡ Powered by **Groq API + Llama 3.3 model** for fast responses
+- 📈 Provides personalized financial suggestions based on user activity
+- 🔐 Works securely with user-authenticated data only
+- 🚀 Integrated directly inside the FinanceHub dashboard for easy access
 
 </details>
 

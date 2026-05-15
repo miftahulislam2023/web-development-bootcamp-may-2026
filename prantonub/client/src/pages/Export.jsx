@@ -16,6 +16,8 @@ const MONTHS = [
   "December",
 ];
 
+const API_BASE = import.meta.env.VITE_API_URL || window.location.origin;
+
 export default function Export() {
   const now = new Date();
 
@@ -25,38 +27,16 @@ export default function Export() {
 
   const handleExportReport = async () => {
     setReportLoading(true);
-
-    // ✅ Open window BEFORE await (avoids popup blocker)
-    const newWindow = window.open("", "_blank");
-    if (newWindow) {
-      newWindow.document.write(
-        `<html><head><title>Loading...</title></head>
-        <body style="font-family:sans-serif;display:flex;align-items:center;
-        justify-content:center;height:100vh;margin:0;background:#f5f3ff;">
-        <p style="color:#4f46e5;font-size:18px;">⏳ Generating your report...</p>
-        </body></html>`,
-      );
-    }
-
     try {
-      const p = `month=${reportMonth}&year=${reportYear}`;
-      const response = await api.get(`/export/summary?${p}`, {
-        responseType: "text",
-      });
+      // Get token from localStorage
+      const token = localStorage.getItem("sw_token");
 
-      // ✅ Create blob URL and navigate the already-open window to it
-      // This way scripts in the HTML execute properly
-      const blob = new Blob([response.data], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
+      // Build direct URL with token as query param
+      const url = `${API_BASE}/api/export/summary?month=${reportMonth}&year=${reportYear}&token=${token}`;
 
-      if (newWindow) {
-        newWindow.location.href = url;
-      }
-
-      // Clean up blob URL after 2 minutes
-      setTimeout(() => URL.revokeObjectURL(url), 120000);
+      // Open directly — no await, no popup blocker
+      window.open(url, "_blank");
     } catch (err) {
-      if (newWindow) newWindow.close();
       alert("Failed to generate report. Please try again.");
       console.error(err);
     } finally {
@@ -149,7 +129,9 @@ export default function Export() {
             : `📄 Generate ${MONTHS[reportMonth - 1]} ${reportYear} PDF Report`}
         </button>
 
-   
+        <p className="text-xs text-gray-400 text-center">
+          📌 Report opens in a new tab → click ⬇ Download PDF to save
+        </p>
       </div>
 
       {/* CSV Export card */}

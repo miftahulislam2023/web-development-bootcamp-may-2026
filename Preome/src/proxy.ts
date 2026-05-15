@@ -11,11 +11,13 @@ export function proxy(request: NextRequest) {
                           request.nextUrl.pathname === '/monthly-stats'
   
   if (!token && isProtectedPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   if (token && isAuthPage) {
-    return NextResponse.redirect(new URL('/', request.url))
+    const dashboardUrl = new URL('/', request.url)
+    return NextResponse.redirect(dashboardUrl)
   }
 
   return NextResponse.next()

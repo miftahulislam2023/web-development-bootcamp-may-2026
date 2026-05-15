@@ -6,6 +6,9 @@
     "dev": "nodemon server.js",
     "start": "node server.js"
   },
+  "engines": {
+  "node": "20.x"
+},
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",

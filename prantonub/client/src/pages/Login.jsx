@@ -142,7 +142,7 @@ export default function Login() {
 
           <button
             onClick={() =>
-              (window.location.href = "http://localhost:5000/api/auth/google")
+              (window.location.href = "https://financehub-personal-expence-tracker.onrender.com/api/auth/google")
             }
             className="w-full flex items-center justify-center gap-3 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium py-3 rounded-xl text-sm transition-all"
           >

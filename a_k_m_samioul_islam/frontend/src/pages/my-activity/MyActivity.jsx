@@ -573,10 +573,7 @@ const MyActivity = () => {
 												Budget Amount
 											</p>
 											<p className="mt-3 text-3xl font-bold">
-												{formatCurrency(
-													currentBudget.amount,
-													userData?.currency,
-												)}
+												{formatCurrency(currentBudget.amount, userData?.currency)}
 											</p>
 										</div>
 
@@ -585,9 +582,7 @@ const MyActivity = () => {
 												Spent
 											</p>
 											<p className="mt-3 text-3xl font-bold text-red-500">
-												{formatCurrency(
-													currentBudget.spentAmount,
-												)}
+												{formatCurrency(currentBudget.spentAmount, userData?.currency)}
 											</p>
 										</div>
 
@@ -596,9 +591,7 @@ const MyActivity = () => {
 												Remaining
 											</p>
 											<p className="mt-3 text-3xl font-bold text-emerald-600">
-												{formatCurrency(
-													currentBudget.remainingAmount,
-												)}
+												{formatCurrency(currentBudget.remainingAmount, userData?.currency)}
 											</p>
 										</div>
 									</div>

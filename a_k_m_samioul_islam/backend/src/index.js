@@ -1,4 +1,7 @@
 import "dotenv/config";
+
+process.env.TZ = process.env.TZ || "Asia/Dhaka";
+
 import connectDB from "./config/db/dbConnect.js";
 import app from "./app.js";
 

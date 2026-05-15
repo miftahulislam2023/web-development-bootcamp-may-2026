@@ -25,38 +25,23 @@ export default function Export() {
 
   const handleExportReport = async () => {
     setReportLoading(true);
-
-    // ✅ FIX 1: Open the window BEFORE the await.
-    // Browsers only allow window.open() in direct response to a user gesture.
-    // After an `await`, the call is no longer synchronous and gets blocked as a popup.
-    const newWindow = window.open("", "_blank");
-
-    // Show a loading message in the new tab while the request runs
-    if (newWindow) {
-      newWindow.document.write(
-        "<html><body style='font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f3ff'>" +
-          "<p style='color:#4f46e5;font-size:18px'>⏳ Generating your report...</p></body></html>",
-      );
-    }
-
     try {
       const p = `month=${reportMonth}&year=${reportYear}`;
       const response = await api.get(`/export/summary?${p}`, {
-        responseType: "blob",
+        responseType: "text",
       });
 
-      // ✅ FIX 2: Convert blob to text, then write into the already-open window.
-      // The old code created an object URL but window.open() was called after await (popup blocked).
-      const htmlText = await response.data.text();
-
-      if (newWindow) {
-        newWindow.document.open();
-        newWindow.document.write(htmlText);
-        newWindow.document.close();
-      }
+      // Create blob from HTML text and trigger direct download
+      const blob = new Blob([response.data], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `FinanceHub-Report-${MONTHS[reportMonth - 1]}-${reportYear}.html`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
     } catch (err) {
-      // Close the blank tab if the request failed
-      if (newWindow) newWindow.close();
       alert("Failed to generate report. Please try again.");
       console.error(err);
     } finally {
@@ -146,9 +131,14 @@ export default function Export() {
           className="w-full btn-primary justify-center mb-3"
         >
           {reportLoading
-            ? "⏳ Generating... (may take a moment)"
+            ? "⏳ Generating..."
             : `📄 Generate ${MONTHS[reportMonth - 1]} ${reportYear} PDF Report`}
         </button>
+
+        <p className="text-xs text-gray-400 text-center">
+          📌 An HTML file will download → open it in browser → PDF saves
+          automatically
+        </p>
       </div>
 
       {/* CSV Export card */}

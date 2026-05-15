@@ -313,11 +313,6 @@ const exportSummary = async (req, res) => {
           spinner.style.display = "none";
         });
     }
-
-    // ✅ Auto-trigger PDF download as soon as page loads
-    window.addEventListener("load", function () {
-      setTimeout(downloadPDF, 1000);
-    });
   </script>
 </body>
 </html>`;

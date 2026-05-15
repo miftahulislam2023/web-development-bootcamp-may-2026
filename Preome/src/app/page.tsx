@@ -22,22 +22,12 @@ interface Income {
 export default function HomePage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [incomes, setIncomes] = useState<Income[]>([])
-  const [userName, setUserName] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchUser()
     fetchExpenses()
     fetchIncomes()
   }, [])
-
-  const fetchUser = async () => {
-    const response = await fetch('/api/auth/me')
-    const data = await response.json()
-    if (data.user) {
-      setUserName(data.user.name)
-    }
-  }
 
   const fetchExpenses = async () => {
     try {
@@ -88,7 +78,7 @@ export default function HomePage() {
           marginBottom: '32px'
         }}>
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'white' }}>
-            Welcome back, {userName}!
+            Dashboard
           </h1>
           <p style={{ color: 'rgba(255, 255, 255, 0.9)', marginTop: '4px' }}>
             Track your income, expenses, and savings

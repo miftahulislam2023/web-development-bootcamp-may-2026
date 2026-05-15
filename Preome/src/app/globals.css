@@ -18,13 +18,16 @@ main {
   min-height: calc(100vh - 80px);
 }
 
+/* Only apply container padding when main has content */
+main:has(.container) {
+  padding: 20px;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
-
-/* Rest of the CSS remains the same */
 
 button {
   transition: all 0.2s ease;

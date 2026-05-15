@@ -39,9 +39,9 @@ export const handleGoogleLogin = async (signInWithGoogle, setUserData, navigate)
             throw error;
         }
 
-        toast.success("Logged in with Google");
-
         navigate("/dashboard");
+
+        toast.success("Logged in with Google");
 
     } catch (error) {
         toast.error(error.response?.data?.message || "Login failed");

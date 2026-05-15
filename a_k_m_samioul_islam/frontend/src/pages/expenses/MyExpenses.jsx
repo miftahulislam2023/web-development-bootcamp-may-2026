@@ -309,7 +309,7 @@ const MyExpenses = () => {
 					<Pagination
 						count={totalPages}
 						page={page}
-						shape="rounded"
+						color="primary"
 						onChange={(event, value) => setPage(value)}
 					/>
 				</div>

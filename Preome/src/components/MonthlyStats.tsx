@@ -1,6 +1,29 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  PointElement,
+  LineElement
+} from 'chart.js'
+import { Bar, Line } from 'react-chartjs-2'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  PointElement,
+  LineElement
+)
 
 interface Expense {
   id: string
@@ -24,9 +47,11 @@ interface MonthlyStatsProps {
 
 export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
   const [filterType, setFilterType] = useState('month')
+  const [selectedMonth, setSelectedMonth] = useState('')
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [chartType, setChartType] = useState('bar')
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -37,9 +62,11 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
 
   const filteredExpenses = useMemo(() => {
     if (filterType === 'month') {
+      if (!selectedMonth) return expenses
+      const monthIndex = months.indexOf(selectedMonth)
       return expenses.filter(expense => {
         const expenseDate = new Date(expense.date)
-        return expenseDate.getFullYear() === selectedYear
+        return expenseDate.getMonth() === monthIndex && expenseDate.getFullYear() === selectedYear
       })
     } else {
       if (!startDate || !endDate) return expenses
@@ -50,13 +77,15 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
         return expenseDate >= start && expenseDate <= end
       })
     }
-  }, [expenses, filterType, selectedYear, startDate, endDate])
+  }, [expenses, filterType, selectedMonth, selectedYear, startDate, endDate, months])
 
   const filteredIncomes = useMemo(() => {
     if (filterType === 'month') {
+      if (!selectedMonth) return incomes
+      const monthIndex = months.indexOf(selectedMonth)
       return incomes.filter(income => {
         const incomeDate = new Date(income.date)
-        return incomeDate.getFullYear() === selectedYear
+        return incomeDate.getMonth() === monthIndex && incomeDate.getFullYear() === selectedYear
       })
     } else {
       if (!startDate || !endDate) return incomes
@@ -67,16 +96,15 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
         return incomeDate >= start && incomeDate <= end
       })
     }
-  }, [incomes, filterType, selectedYear, startDate, endDate])
+  }, [incomes, filterType, selectedMonth, selectedYear, startDate, endDate, months])
 
   const monthlyExpenses = months.map((month, index) => {
-    const monthExpenses = filteredExpenses.filter(expense => {
+    const monthExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date)
-      if (filterType === 'month') {
+      if (filterType === 'month' && selectedMonth) {
         return expenseDate.getMonth() === index && expenseDate.getFullYear() === selectedYear
-      } else {
-        return expenseDate.getMonth() === index
       }
+      return expenseDate.getMonth() === index
     })
     const total = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
     return {
@@ -87,13 +115,12 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
   })
 
   const monthlyIncomes = months.map((month, index) => {
-    const monthIncomes = filteredIncomes.filter(income => {
+    const monthIncomes = incomes.filter(income => {
       const incomeDate = new Date(income.date)
-      if (filterType === 'month') {
+      if (filterType === 'month' && selectedMonth) {
         return incomeDate.getMonth() === index && incomeDate.getFullYear() === selectedYear
-      } else {
-        return incomeDate.getMonth() === index
       }
+      return incomeDate.getMonth() === index
     })
     const total = monthIncomes.reduce((sum, inc) => sum + inc.amount, 0)
     return {
@@ -117,15 +144,208 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
   const averageMonthlyExpense = totalYearlyExpense / 12
   const averageMonthlyIncome = totalYearlyIncome / 12
 
-  const getDateRangeText = () => {
+  const barChartData = {
+    labels: months,
+    datasets: [
+      {
+        label: 'Income',
+        data: monthlyIncomes.map(data => data.total),
+        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+        borderColor: 'rgb(16, 185, 129)',
+        borderWidth: 2,
+        borderRadius: 8,
+        barPercentage: 0.7,
+        categoryPercentage: 0.8,
+      },
+      {
+        label: 'Expenses',
+        data: monthlyExpenses.map(data => data.total),
+        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 2,
+        borderRadius: 8,
+        barPercentage: 0.7,
+        categoryPercentage: 0.8,
+      },
+      {
+        label: 'Savings',
+        data: monthlySavings.map(data => data.total),
+        backgroundColor: 'rgba(79, 70, 229, 0.7)',
+        borderColor: 'rgb(79, 70, 229)',
+        borderWidth: 2,
+        borderRadius: 8,
+        barPercentage: 0.7,
+        categoryPercentage: 0.8,
+      }
+    ],
+  }
+
+  const lineChartData = {
+    labels: months,
+    datasets: [
+      {
+        label: 'Income',
+        data: monthlyIncomes.map(data => data.total),
+        borderColor: 'rgb(16, 185, 129)',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: 'rgb(16, 185, 129)',
+        pointBorderColor: 'white',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      },
+      {
+        label: 'Expenses',
+        data: monthlyExpenses.map(data => data.total),
+        borderColor: 'rgb(239, 68, 68)',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: 'rgb(239, 68, 68)',
+        pointBorderColor: 'white',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      },
+      {
+        label: 'Savings',
+        data: monthlySavings.map(data => data.total),
+        borderColor: 'rgb(79, 70, 229)',
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: 'rgb(79, 70, 229)',
+        pointBorderColor: 'white',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      }
+    ],
+  }
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          font: {
+            size: 12,
+          },
+          usePointStyle: true,
+          boxWidth: 10,
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            let label = context.dataset.label || ''
+            if (label) {
+              label += ': '
+            }
+            if (context.parsed.y !== null) {
+              label += '৳' + context.parsed.y.toFixed(2)
+            }
+            return label
+          }
+        }
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value: any) {
+            return '৳' + value.toFixed(2)
+          },
+          font: {
+            size: 11,
+          },
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)',
+        },
+        title: {
+          display: true,
+          text: 'Amount (BDT)',
+          font: {
+            size: 12,
+            weight: 'bold',
+          },
+        },
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 11,
+          },
+          rotation: 45,
+        },
+        grid: {
+          display: false,
+        },
+        title: {
+          display: true,
+          text: 'Months',
+          font: {
+            size: 12,
+            weight: 'bold',
+          },
+        },
+      },
+    },
+  }
+
+  const getSelectedPeriodText = () => {
     if (filterType === 'month') {
-      return `Year: ${selectedYear}`
+      if (selectedMonth) {
+        return `${selectedMonth} ${selectedYear}`
+      }
+      return 'Select a month to view data'
     } else {
       if (startDate && endDate) {
         return `${startDate} to ${endDate}`
       }
-      return 'Select date range'
+      return 'Select date range to view data'
     }
+  }
+
+  const getTotalIncomeForPeriod = () => {
+    if (filterType === 'month' && selectedMonth) {
+      return filteredIncomes.reduce((sum, inc) => sum + inc.amount, 0)
+    }
+    return totalYearlyIncome
+  }
+
+  const getTotalExpensesForPeriod = () => {
+    if (filterType === 'month' && selectedMonth) {
+      return filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+    }
+    return totalYearlyExpense
+  }
+
+  const getTotalSavingsForPeriod = () => {
+    return getTotalIncomeForPeriod() - getTotalExpensesForPeriod()
+  }
+
+  const getAverageIncomeForPeriod = () => {
+    if (filterType === 'month' && selectedMonth) {
+      return filteredIncomes.length > 0 ? getTotalIncomeForPeriod() / filteredIncomes.length : 0
+    }
+    return averageMonthlyIncome
+  }
+
+  const getAverageExpenseForPeriod = () => {
+    if (filterType === 'month' && selectedMonth) {
+      return filteredExpenses.length > 0 ? getTotalExpensesForPeriod() / filteredExpenses.length : 0
+    }
+    return averageMonthlyExpense
   }
 
   return (
@@ -149,7 +369,7 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
             Monthly Financial Overview
           </h3>
           <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
-            {getDateRangeText()}
+            {getSelectedPeriodText()}
           </p>
         </div>
         
@@ -167,29 +387,51 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
                 backgroundColor: 'white'
               }}
             >
-              <option value="month">Month/Year</option>
+              <option value="month">Month</option>
               <option value="dateRange">Date Range</option>
             </select>
           </div>
           
           {filterType === 'month' ? (
-            <div>
-              <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>Year:</label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  backgroundColor: 'white'
-                }}
-              >
-                {years.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div>
+                <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>Select Month:</label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    backgroundColor: 'white',
+                    minWidth: '140px'
+                  }}
+                >
+                  <option value="">Choose a month</option>
+                  {months.map(month => (
+                    <option key={month} value={month}>{month}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ marginRight: '8px', fontSize: '14px', color: '#374151' }}>Year:</label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -225,6 +467,82 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
           )}
         </div>
       </div>
+
+      {filterType === 'month' && !selectedMonth && (
+        <div style={{
+          backgroundColor: '#fef3c7',
+          color: '#92400e',
+          padding: '12px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          Please select a month to view your financial data
+        </div>
+      )}
+
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        marginBottom: '20px',
+        gap: '12px'
+      }}>
+        <button
+          onClick={() => setChartType('bar')}
+          style={{
+            padding: '6px 16px',
+            backgroundColor: chartType === 'bar' ? '#4f46e5' : 'transparent',
+            color: chartType === 'bar' ? 'white' : '#4f46e5',
+            border: chartType === 'bar' ? 'none' : '1px solid #4f46e5',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: '500'
+          }}
+        >
+          Bar Chart
+        </button>
+        <button
+          onClick={() => setChartType('line')}
+          style={{
+            padding: '6px 16px',
+            backgroundColor: chartType === 'line' ? '#4f46e5' : 'transparent',
+            color: chartType === 'line' ? 'white' : '#4f46e5',
+            border: chartType === 'line' ? 'none' : '1px solid #4f46e5',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: '500'
+          }}
+        >
+          Line Chart
+        </button>
+      </div>
+      
+      <div style={{ marginBottom: '32px', minHeight: '400px' }}>
+        {filterType === 'month' && !selectedMonth ? (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '400px',
+            color: '#9ca3af',
+            textAlign: 'center'
+          }}>
+            <div>
+              <p style={{ fontSize: '16px', marginBottom: '8px' }}>No data to display</p>
+              <p style={{ fontSize: '14px' }}>Please select a month from the filter above</p>
+            </div>
+          </div>
+        ) : (
+          chartType === 'bar' ? (
+            <Bar data={barChartData} options={chartOptions} />
+          ) : (
+            <Line data={lineChartData} options={chartOptions} />
+          )
+        )}
+      </div>
       
       <div style={{
         display: 'grid',
@@ -236,25 +554,25 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
       }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '14px', color: '#6b7280' }}>Total Income</p>
-          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>৳{totalYearlyIncome.toFixed(2)}</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>৳{getTotalIncomeForPeriod().toFixed(2)}</p>
         </div>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '14px', color: '#6b7280' }}>Total Expenses</p>
-          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>৳{totalYearlyExpense.toFixed(2)}</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>৳{getTotalExpensesForPeriod().toFixed(2)}</p>
         </div>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '14px', color: '#6b7280' }}>Total Savings</p>
-          <p style={{ fontSize: '24px', fontWeight: 'bold', color: totalYearlySavings >= 0 ? '#4f46e5' : '#ef4444' }}>
-            ৳{totalYearlySavings.toFixed(2)}
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color: getTotalSavingsForPeriod() >= 0 ? '#4f46e5' : '#ef4444' }}>
+            ৳{getTotalSavingsForPeriod().toFixed(2)}
           </p>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '14px', color: '#6b7280' }}>Monthly Avg Income</p>
-          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{averageMonthlyIncome.toFixed(2)}</p>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>Average Income</p>
+          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{getAverageIncomeForPeriod().toFixed(2)}</p>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '14px', color: '#6b7280' }}>Monthly Avg Expense</p>
-          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{averageMonthlyExpense.toFixed(2)}</p>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>Average Expense</p>
+          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1a1f36' }}>৳{getAverageExpenseForPeriod().toFixed(2)}</p>
         </div>
       </div>
       
@@ -398,13 +716,13 @@ export default function MonthlyStats({ expenses, incomes }: MonthlyStatsProps) {
         ))}
       </div>
       
-      {monthlyExpenses.every(data => data.total === 0) && monthlyIncomes.every(data => data.total === 0) && (
+      {monthlyExpenses.every(data => data.total === 0) && monthlyIncomes.every(data => data.total === 0) && selectedMonth && (
         <div style={{
           textAlign: 'center',
           padding: '40px',
           color: '#9ca3af'
         }}>
-          No financial data available for the selected {filterType === 'month' ? `year ${selectedYear}` : 'date range'}
+          No financial data available for {selectedMonth} {selectedYear}
         </div>
       )}
     </div>

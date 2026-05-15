@@ -1,38 +1,30 @@
 // server/src/utils/emailService.js
+// Using Brevo (Sendinblue) SMTP — works on Render, sends to any email
 
 const nodemailer = require("nodemailer");
 
-/**
- * Create transporter lazily (called at send time, not at startup).
- * This way if env vars are missing we get a clear error immediately
- * instead of a silent broken transporter created at boot.
- */
-const createTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+const sendOtpEmail = async (toEmail, otp) => {
+  if (!process.env.BREVO_USER || !process.env.BREVO_PASS) {
     throw new Error(
-      "Email not configured. Add EMAIL_USER and EMAIL_PASS to your Render environment variables.",
+      "Email not configured. Add BREVO_USER and BREVO_PASS to your Render environment variables.",
     );
   }
 
-  return nodemailer.createTransport({
-    service: "Gmail",
+  const transporter = nodemailer.createTransport({
+    host: "smtp-relay.brevo.com",
+    port: 587,
+    secure: false,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, // Gmail App Password (16 chars)
+      user: process.env.BREVO_USER,
+      pass: process.env.BREVO_PASS,
     },
-    // 10 second connection timeout — prevents 2-minute hangs
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 10000,
   });
-};
 
-const sendOtpEmail = async (toEmail, otp) => {
-  // This will throw immediately if env vars are missing
-  const transporter = createTransporter();
-
-  const mailOptions = {
-    from: `"FinanceHub" <${process.env.EMAIL_USER}>`,
+  const { error } = await transporter.sendMail({
+    from: '"FinanceHub" <ab705f001@smtp-brevo.com>',
     to: toEmail,
     subject: "Your FinanceHub Verification Code",
     html: `
@@ -72,12 +64,14 @@ const sendOtpEmail = async (toEmail, otp) => {
         </div>
       </div>
     `,
-  };
+  });
 
-  // ✅ Now THROWS on failure instead of silently swallowing the error
-  // This means authController gets the real error and returns it to frontend fast
-  const info = await transporter.sendMail(mailOptions);
-  console.log("✅ OTP email sent to:", toEmail, "| Response:", info.response);
+  if (error) {
+    console.error("❌ Brevo email error:", error);
+    throw new Error(error.message || "Failed to send verification email");
+  }
+
+  console.log("✅ OTP email sent to:", toEmail);
 };
 
 module.exports = { sendOtpEmail };

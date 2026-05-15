@@ -7,8 +7,8 @@
     "start": "node server.js"
   },
   "engines": {
-  "node": "20.x"
-},
+    "node": "20.x"
+  },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",
@@ -25,7 +25,8 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^8.0.7",
     "passport": "^0.6.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "resend": "^6.12.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

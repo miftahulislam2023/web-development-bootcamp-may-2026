@@ -26,14 +26,16 @@ const createBudgetSchema = z
   .refine(
     (data) => {
       const start = new Date(data.startDate);
-      const now = new Date();
 
-      return start > now;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return start >= today;
     },
     {
-      message: "Start date cannot be earlier than now",
+      message: "Start date cannot be earlier than today",
       path: ["startDate"],
-    },
+    }
   )
   .refine((data) => new Date(data.startDate) < new Date(data.endDate), {
     message: "Start date must be before end date",
@@ -52,8 +54,8 @@ const MyActivity = () => {
     resolver: zodResolver(createBudgetSchema),
     defaultValues: {
       amount: "",
-      startDate: "",
-      endDate: "",
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: ""
     },
   });
 

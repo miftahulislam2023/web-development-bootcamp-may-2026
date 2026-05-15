@@ -189,7 +189,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 ---
 
-<div align="center">
+<div align="left">
 
 ## 🔐 Google OAuth Setup
 
@@ -208,7 +208,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 ---
 
-<div align="center">
+<div align="left">
 
 ## 📄 License
 

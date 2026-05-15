@@ -25,30 +25,20 @@ export default function Export() {
 
   const handleExportReport = async () => {
     setReportLoading(true);
-
-    // Open new tab immediately (must be before await to avoid popup blocker)
-    const newWindow = window.open("", "_blank");
-    if (newWindow) {
-      newWindow.document.write(
-        "<html><body style='font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f3ff'>" +
-          "<p style='color:#4f46e5;font-size:18px'>⏳ Generating your report...</p></body></html>",
-      );
-    }
-
     try {
       const p = `month=${reportMonth}&year=${reportYear}`;
       const response = await api.get(`/export/summary?${p}`, {
         responseType: "text",
       });
 
-      // Write the HTML report into the already-open tab
-      if (newWindow) {
-        newWindow.document.open();
-        newWindow.document.write(response.data);
-        newWindow.document.close();
-      }
+      // Create a blob URL and open it — scripts execute properly this way
+      const blob = new Blob([response.data], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+
+      // Clean up after a delay
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (err) {
-      if (newWindow) newWindow.close();
       alert("Failed to generate report. Please try again.");
       console.error(err);
     } finally {
@@ -76,7 +66,6 @@ export default function Export() {
     }
   };
 
-  // Generate year options (5 years back to current year)
   const yearOptions = Array.from(
     { length: 6 },
     (_, i) => now.getFullYear() - 5 + i,
@@ -143,7 +132,7 @@ export default function Export() {
         </button>
 
         <p className="text-xs text-gray-400 text-center">
-          📌 Report opens in a new tab → click Download PDF to save
+          📌 Report opens in a new tab → click ⬇ Download PDF to save
         </p>
       </div>
 

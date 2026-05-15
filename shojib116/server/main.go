@@ -7,13 +7,16 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
+	app "github.com/shojib116/chat-app-server/application"
 	"github.com/shojib116/chat-app-server/config"
+	"github.com/shojib116/chat-app-server/infra"
+	"github.com/shojib116/chat-app-server/interfaces"
+	"github.com/shojib116/chat-app-server/interfaces/middlewares"
 	"github.com/shojib116/chat-app-server/internal/database"
 )
 
 func main() {
 	cfg := config.GetConfig()
-	sessionStore := NewSession()
 
 	dbURL := database.GetConnectionString(cfg.DB)
 
@@ -27,28 +30,25 @@ func main() {
 		log.Println(err)
 	}
 
-	hub := newHub(db, cfg)
-	go hub.run()
+	hub := app.NewHub(db, cfg)
+	go hub.Run()
 
 	mux := http.NewServeMux()
+	mngr := middlewares.NewManager(middlewares.CORS(cfg.FrontendDomain), middlewares.Logger)
 
-	h := NewHandler(db, cfg, sessionStore)
-	mux.HandleFunc("/ws", h.requireAuth(h.handleWS(hub)))
+	sessionStore := infra.NewSession()
+	repo := infra.NewStore(db)
 
-	mux.HandleFunc("POST /signin", h.handleSignin)
-	mux.HandleFunc("POST /signout", h.handleSignout)
+	service := app.NewServices(repo, cfg, sessionStore, hub)
 
-	mux.HandleFunc("GET /me", h.requireAuth(h.handleMe))
-	mux.HandleFunc("GET /users", h.requireAuth(h.handleGetUsersExceptCurrent))
+	h := interfaces.NewHandler(service)
 
-	mux.HandleFunc("GET /messages", h.requireAuth(h.handleGetMessages))
-
-	mux.HandleFunc("GET /chatlist", h.requireAuth(h.handleGetChatList))
-
-	mux.HandleFunc("POST /add-friend", h.requireAuth(h.handleAddFriend))
+	h.RegisterRoutes(mux, mngr, cfg)
 
 	addr := fmt.Sprintf(":%d", cfg.HttpPort)
-	err = http.ListenAndServe(addr, h.handleCORS(mux))
+
+	log.Println("server listening on port", addr)
+	err = http.ListenAndServe(addr, mngr.WrapMux(mux))
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

@@ -1,4 +1,4 @@
-package main
+package application
 
 import (
 	"context"
@@ -32,7 +32,7 @@ type Hub struct {
 	cfg        *config.Config
 }
 
-func newHub(db *sql.DB, cfg *config.Config) *Hub {
+func NewHub(db *sql.DB, cfg *config.Config) *Hub {
 	return &Hub{
 		broadcast:  make(chan Envelope),
 		register:   make(chan *Client),
@@ -45,7 +45,7 @@ func newHub(db *sql.DB, cfg *config.Config) *Hub {
 	}
 }
 
-func (h *Hub) run() {
+func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:

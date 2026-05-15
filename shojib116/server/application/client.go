@@ -1,4 +1,4 @@
-package main
+package application
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/shojib116/chat-app-server/infra"
 )
 
 const (
@@ -24,7 +25,16 @@ type Client struct {
 	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
-	user *Session
+	user *infra.Session
+}
+
+func NewClient(h *Hub, c *websocket.Conn, u *infra.Session) *Client {
+	return &Client{
+		hub:  h,
+		conn: c,
+		send: make(chan []byte),
+		user: u,
+	}
 }
 
 func (c *Client) readPump() {

@@ -533,7 +533,7 @@ const MyActivity = () => {
 							<>
 								<button
 									type="submit"
-									className="btn w-full h-12 font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
+									className="btn w-50 h-12 font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
 									onClick={openBudgetSetModal}
 								>
 									Set Budget
@@ -697,7 +697,7 @@ const MyActivity = () => {
 			>
 				<div className="modal-box max-w-xl p-6">
 					<div className="flex items-center justify-between mb-4">
-						<p className="text-xl font-bold graphik">Set Budget</p>
+						<p className="text-xl font-bold">Set Budget</p>
 						<button
 							className="btn btn-sm btn-circle btn-ghost"
 							onClick={closeBudgetSetModal}

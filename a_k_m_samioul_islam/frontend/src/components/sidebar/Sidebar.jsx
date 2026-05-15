@@ -9,11 +9,9 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
 import { NavLink, Outlet } from "react-router";
 import {
 	Activity,
@@ -28,6 +26,7 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import { useState } from "react";
 import { useRef } from "react";
+import { formatName } from "../../utils/formatting/formatting";
 
 const drawerWidth = 240;
 
@@ -399,7 +398,7 @@ const Sidebar = ({ userData, logout }) => {
 													lineHeight: 1.2,
 												}}
 											>
-												{userData?.name || "User Name"}
+												{formatName(userData?.name)}
 											</Typography>
 
 											<Typography
@@ -410,8 +409,7 @@ const Sidebar = ({ userData, logout }) => {
 													mt: 0.4,
 												}}
 											>
-												{userData?.email ||
-													"user@email.com"}
+												{userData?.email}
 											</Typography>
 										</Box>
 									</Box>

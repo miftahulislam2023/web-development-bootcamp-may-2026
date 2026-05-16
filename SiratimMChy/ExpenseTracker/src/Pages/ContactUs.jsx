@@ -107,7 +107,7 @@ const ContactUs = () => {
                             <div>
                                 <p className="font-semibold text-base-content mb-2">Customer support</p>
                                 <p>support@cashnivo.com</p>
-                                <p>+1 (555) 123-4567</p>
+                                <p>+880 1777-76677777</p>
                             </div>
                             <div>
                                 <p className="font-semibold text-base-content mb-2">Office hours</p>
@@ -116,9 +116,9 @@ const ContactUs = () => {
                             </div>
                             <div>
                                 <p className="font-semibold text-base-content mb-2">Address</p>
-                                <p>123 Finance Ave.</p>
-                                <p>Suite 400</p>
-                                <p>San Francisco, CA 94105</p>
+                                <p>kumarpara house-6</p>
+                                <p>Block-C</p>
+                                <p>Sylhet, Sylhet-3100</p>
                             </div>
                         </div>
 

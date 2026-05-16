@@ -21,8 +21,8 @@ const Categories = () => {
 
     useEffect(() => {
         const queryEmail = user?.email ? `&email=${user.email}` : '';
-        const fetchExpense = axios.get(`http://localhost:5000/categories?type=expense${queryEmail}`);
-        const fetchIncome = axios.get(`http://localhost:5000/categories?type=income${queryEmail}`);
+        const fetchExpense = axios.get(`https://cashnivo.vercel.app/categories?type=expense${queryEmail}`);
+        const fetchIncome = axios.get(`https://cashnivo.vercel.app/categories?type=income${queryEmail}`);
 
         Promise.all([fetchExpense, fetchIncome])
             .then(([expenseRes, incomeRes]) => {
@@ -73,7 +73,7 @@ const Categories = () => {
             isDefault: false
         };
 
-        axios.post('http://localhost:5000/categories', newCategory)
+        axios.post('https://cashnivo.vercel.app/categories', newCategory)
             .then(res => {
                 setCurrentCategories(prev => [
                     ...prev,
@@ -97,7 +97,7 @@ const Categories = () => {
         const name = editName.trim();
         if (!name) return;
 
-        axios.put(`http://localhost:5000/categories/${id}`, { name })
+        axios.put(`https://cashnivo.vercel.app/categories/${id}`, { name })
             .then(() => {
                 setCurrentCategories(prev =>
                     prev.map(c => c._id === id ? { ...c, name } : c)
@@ -118,7 +118,7 @@ const Categories = () => {
     };
 
     const handleRemoveCategory = (item) => {
-        axios.delete(`http://localhost:5000/categories/${item._id}`)
+        axios.delete(`https://cashnivo.vercel.app/categories/${item._id}`)
             .then(() => {
                 setCurrentCategories(prev => prev.filter(c => c._id !== item._id));
                 toast.success('Category deleted successfully!');

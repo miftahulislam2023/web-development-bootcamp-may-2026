@@ -44,7 +44,7 @@ const Login = () => {
                 email: user.email,
                 imageUrl: user.photoURL,
             };
-            await axios.post('http://localhost:5000/users', userData);
+            await axios.post('https://cashnivo.vercel.app/users', userData);
 
             setUser(user);
 

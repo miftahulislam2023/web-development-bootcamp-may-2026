@@ -9,7 +9,7 @@ app.use(express.json());
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const uri = "mongodb+srv://expensetracker:kqV2eYQj8AmxKf7b@cluster0.ybtdeyi.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ybtdeyi.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -21,8 +21,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
-
+  
     const database = client.db('expense-tracker')
     const usersCollection = database.collection('user')
     const categoriesCollection = database.collection('categories')
@@ -74,6 +73,22 @@ async function run() {
 
       res.send(result);
     });
+
+
+
+    app.get('/users', async (req, res) => {
+      try {
+        const result = await usersCollection.find().toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          message: 'Failed to fetch users',
+          error: error.message,
+        });
+      }
+    });
+
 
     app.get('/users/role/:email', async (req, res) => {
       const email = req.params.email;
@@ -280,21 +295,18 @@ async function run() {
       }
     });
 
-    await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    //await client.close();
+    
   }
 }
-run().catch(console.dir);
-
 
 app.get('/', (req, res) => {
   res.send("Expense Backend Tracker")
 })
 
-app.listen(port, () => {
-  console.log(`Expense Backend Tracker is running on ${port}`);
-
-})
+run().then(() => {
+  app.listen(port, () => {
+    console.log(`Expense Backend Tracker is running on ${port}`);
+  });
+}).catch(console.dir);

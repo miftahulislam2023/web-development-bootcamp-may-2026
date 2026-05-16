@@ -26,7 +26,7 @@ const AddTransaction = () => {
         const fetchCategories = async () => {
             try {
                 setLoadingCategories(true);
-                const res = await axios.get(`http://localhost:5000/categories?email=${user.email}`);
+                const res = await axios.get(`https://cashnivo.vercel.app/categories?email=${user.email}`);
                 if (!active) return;
                 const data = Array.isArray(res.data) ? res.data : [];
                 setCategories(data);
@@ -85,7 +85,7 @@ const AddTransaction = () => {
         };
 
         try {
-            await axios.post('http://localhost:5000/transactions', transaction);
+            await axios.post('https://cashnivo.vercel.app/transactions', transaction);
             toast.success('Transaction saved successfully!');
             navigate("/dashboard/dashboardhome");
         } catch (err) {

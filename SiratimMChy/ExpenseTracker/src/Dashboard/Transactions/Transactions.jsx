@@ -18,8 +18,8 @@ const Transactions = () => {
     useEffect(() => {
         if (!user?.email) return;
 
-        const fetchTx = axios.get(`http://localhost:5000/transactions?email=${encodeURIComponent(user.email)}`);
-        const fetchCats = axios.get(`http://localhost:5000/categories?email=${encodeURIComponent(user.email)}`);
+        const fetchTx = axios.get(`https://cashnivo.vercel.app/transactions?email=${encodeURIComponent(user.email)}`);
+        const fetchCats = axios.get(`https://cashnivo.vercel.app/categories?email=${encodeURIComponent(user.email)}`);
 
         Promise.all([fetchTx, fetchCats])
             .then(([txRes, catRes]) => {
@@ -43,7 +43,7 @@ const Transactions = () => {
         if (!window.confirm('Delete this transaction?')) return;
         setDeletingId(id);
 
-        axios.delete(`http://localhost:5000/transactions/${id}`)
+        axios.delete(`https://cashnivo.vercel.app/transactions/${id}`)
             .then(() => {
                 setTransactions(prev => prev.filter(t => t._id !== id));
                 toast.success('Transaction deleted.');
@@ -84,7 +84,7 @@ const Transactions = () => {
         setSaving(true);
         const updated = { ...editingTx, amount };
 
-        axios.put(`http://localhost:5000/transactions/${editingTx._id}`, updated)
+        axios.put(`https://cashnivo.vercel.app/transactions/${editingTx._id}`, updated)
             .then(() => {
                 setTransactions(prev =>
                     prev.map(t => t._id === editingTx._id ? updated : t)

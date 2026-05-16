@@ -63,7 +63,7 @@ const Register = () => {
                     updateProfile(auth.currentUser, {
                         displayName: name, photoURL: imageUrl
                     }).then(() => {
-                        axios.post('http://localhost:5000/users', formData)
+                        axios.post('https://cashnivo.vercel.app/users', formData)
                             .then(res => {
                                 console.log(res.data);
                             })
@@ -102,7 +102,7 @@ const Register = () => {
                 imageUrl: user.photoURL,
             };
 
-            await axios.post('http://localhost:5000/users', userData);
+            await axios.post('https://cashnivo.vercel.app/users', userData);
 
             setUser(user);
 

@@ -22,7 +22,7 @@ const DashboardHome = () => {
         const fetchData = async () => {
             try {
                 const res = await axios.get(
-                    `http://localhost:5000/transactions?email=${encodeURIComponent(user.email)}`,
+                    `https://cashnivo.vercel.app/transactions?email=${encodeURIComponent(user.email)}`,
                     { signal: controller.signal }
                 );
                 const data = Array.isArray(res.data) ? res.data : [];

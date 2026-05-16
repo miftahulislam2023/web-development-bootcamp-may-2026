@@ -16,7 +16,7 @@ const Hero = () => {
     ]);
 
     useEffect(() => {
-        axios.get('http://localhost:5000/stats')
+        axios.get('https://cashnivo.vercel.app/stats')
             .then(res => {
                 const { users, transactions, categories } = res.data;
                 setStats([
@@ -76,7 +76,7 @@ const Hero = () => {
                     {stats.map((stat, i) => (
                         <div
                             key={i}
-                            className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm px-8 py-4 text-center min-w-32.5"
+                            className="bg-base-100 rounded-lg border border-base-content/10 shadow-sm px-8 py-4 text-center min-w-32.5"
                         >
                             <p className="text-2xl font-extrabold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                                 {stat.value}

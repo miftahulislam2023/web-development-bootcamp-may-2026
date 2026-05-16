@@ -29,28 +29,21 @@ const Footer = () => {
                                 Home
                             </Link>
                         </li>
+                       
                         <li>
                             <Link
-                                to="/add-expense"
-                                className="text-base-content/80 text-sm font-semibold hover:text-blue-600 transition-colors duration-200"
-                            >
-                                Add Expense
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/add-income"
-                                className="text-base-content/80 text-sm font-semibold hover:text-blue-600 transition-colors duration-200"
-                            >
-                                Add Income
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/deshboard"
+                                to="/dashboard/dashboardhome"
                                 className="text-base-content/80 text-sm font-semibold hover:text-blue-600 transition-colors duration-200"
                             >
                                 Dashboard
+                            </Link>
+                        </li>
+                         <li>
+                            <Link
+                                to="/categories"
+                                className="text-base-content/80 text-sm font-semibold hover:text-blue-600 transition-colors duration-200"
+                            >
+                                Categories
                             </Link>
                         </li>
                     </ul>
@@ -60,14 +53,7 @@ const Footer = () => {
                 <nav>
                     <h6 className="text-base-content text-lg font-semibold mb-4">Company</h6>
                     <ul className="space-y-3">
-                        <li>
-                            <Link
-                                to="/categories"
-                                className="text-base-content/80 text-sm font-semibold hover:text-blue-600 transition-colors duration-200"
-                            >
-                                Categories
-                            </Link>
-                        </li>
+                        
                         <li>
                             <Link
                                 to="/about-us"
@@ -78,15 +64,15 @@ const Footer = () => {
                         </li>
                         <li>
                             <Link
-                                to="/privacy-policy"
+                                to="/contact"
                                 className="text-base-content/80 text-sm font-semibold hover:text-blue-600 transition-colors duration-200"
                             >
-                                Privacy Policy
+                               Contact Us
                             </Link>
                         </li>
                         <li>
                             <Link
-                                to="/terms"
+                                to="/terms-conditions"
                                 className="text-base-content/80 text-sm font-semibold hover:text-blue-600 transition-colors duration-200"
                             >
                                 Terms & Conditions

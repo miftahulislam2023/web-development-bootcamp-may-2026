@@ -55,7 +55,7 @@ const Profile = () => {
         displayName: name,
         photoURL: updatedPhotoURL,
       };
-      await axios.put(`http://localhost:5000/users/${user.email}`, {
+      await axios.put(`https://cashnivo.vercel.app/users/${user.email}`, {
         displayName: name,
         photoURL: updatedPhotoURL,
       });

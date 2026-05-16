@@ -231,7 +231,7 @@ func (h *Handler) setCookie(w http.ResponseWriter, opts CookieOptions) {
 		Value:    opts.Value,
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
 		Path:     opts.Path,
 		Expires:  time.Now().Add(opts.Expiry),
 	})
@@ -243,7 +243,7 @@ func (h *Handler) clearCookie(w http.ResponseWriter, name, path string) {
 		Value:    "",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
 		Path:     path,
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,

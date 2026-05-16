@@ -1,0 +1,36 @@
+{
+  "name": "frontend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/frontend/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "dev": {
+      "command": "next dev",
+      "options": {
+        "cwd": "apps/frontend"
+      }
+    },
+    "build": {
+      "command": "next build",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/.next"]
+    },
+    "start": {
+      "command": "next start",
+      "options": {
+        "cwd": "apps/frontend"
+      }
+    },
+    "lint": {
+      "command": "eslint",
+      "options": {
+        "cwd": "apps/frontend"
+      }
+    }
+  }
+}

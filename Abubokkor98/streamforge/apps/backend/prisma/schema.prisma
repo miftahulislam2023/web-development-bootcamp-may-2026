@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoomStatus {
+  OFFLINE
+  LIVE
+  ENDED
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  name              String
+  email             String    @unique
+  password          String
+  avatar_url        String?
+  is_active         Boolean   @default(true)
+  email_verified_at DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  // Relations
+  rooms                      Room[]
+  password_reset_otps        PasswordResetOtp[]
+  refresh_tokens             RefreshToken[]
+  chat_messages              ChatMessage[]
+  followers                  Follow[]                    @relation("HostFollows")
+  following                  Follow[]                    @relation("UserFollows")
+  notification_subscriptions NotificationSubscription[]
+
+  @@map("users")
+}
+
+model PasswordResetOtp {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  otp_hash   String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@map("password_reset_otps")
+}
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  token_hash String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("refresh_tokens")
+}
+
+model Room {
+  id                 Int        @id @default(autoincrement())
+  host_id            Int
+  room_key           String     @unique
+  title              String
+  description        String?    @db.Text
+  thumbnail_url      String?
+  status             RoomStatus @default(OFFLINE)
+  slow_mode_interval Int?
+  guest_chat_enabled Boolean    @default(true)
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
+
+  // Relations
+  host            User            @relation(fields: [host_id], references: [id], onDelete: Cascade)
+  stream_sessions StreamSession[]
+  chat_messages   ChatMessage[]
+
+  @@index([host_id])
+  @@index([status])
+  @@map("rooms")
+}
+
+model StreamSession {
+  id                  Int       @id @default(autoincrement())
+  room_id             Int
+  started_at          DateTime  @default(now())
+  ended_at            DateTime?
+  duration_seconds    Int?
+  peak_viewer_count   Int       @default(0)
+  total_chat_messages Int       @default(0)
+  created_at          DateTime  @default(now())
+
+  room          Room          @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  chat_messages ChatMessage[]
+
+  @@index([room_id])
+  @@index([started_at])
+  @@map("stream_sessions")
+}
+
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  room_id     Int
+  session_id  Int
+  sender_id   Int?
+  sender_name String
+  text        String   @db.VarChar(300)
+  is_pinned   Boolean  @default(false)
+  is_deleted  Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  room    Room          @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  session StreamSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  sender  User?         @relation(fields: [sender_id], references: [id], onDelete: SetNull)
+
+  @@index([room_id, session_id])
+  @@index([room_id, is_pinned])
+  @@index([sender_id])
+  @@map("chat_messages")
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  follower_id Int
+  host_id     Int
+  created_at  DateTime @default(now())
+
+  follower User @relation("UserFollows", fields: [follower_id], references: [id], onDelete: Cascade)
+  host     User @relation("HostFollows", fields: [host_id], references: [id], onDelete: Cascade)
+
+  @@unique([follower_id, host_id])
+  @@index([host_id])
+  @@map("follows")
+}
+
+model NotificationSubscription {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  endpoint   String   @unique
+  p256dh_key String
+  auth_key   String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("notification_subscriptions")
+}

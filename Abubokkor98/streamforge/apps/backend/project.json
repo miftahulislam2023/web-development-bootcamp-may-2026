@@ -1,0 +1,29 @@
+{
+  "name": "backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "dev": {
+      "command": "nodemon --watch 'src/**/*.ts' --exec \"ts-node -r tsconfig-paths/register src/main.ts\"",
+      "options": {
+        "cwd": "apps/backend"
+      }
+    },
+    "build": {
+      "command": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+      "options": {
+        "cwd": "apps/backend"
+      },
+      "inputs": ["production", "^production"],
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "start": {
+      "command": "node dist/main.js",
+      "options": {
+        "cwd": "apps/backend"
+      }
+    }
+  }
+}

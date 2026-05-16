@@ -1,7 +1,10 @@
-const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+import { goto } from "$app/navigation";
+import { authStore } from "$lib/store/auth";
 
-export async function signin(username: string) {
-  return fetch(`${base_url}/signin`, {
+const baseUrl = import.meta.env.VITE_SERVER_BASE_URL;
+
+export async function signin(username: string): Promise<Response> {
+  return fetch(`${baseUrl}/auth/signin`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -9,17 +12,20 @@ export async function signin(username: string) {
   });
 }
 
-export async function signout(userId: string) {
-  return fetch(`${base_url}/signout`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId }),
-  });
+export async function signout(): Promise<void> {
+  try {
+    await fetch(`${baseUrl}/auth/signout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } finally {
+    authStore.clear();
+    await goto("/signin", { invalidateAll: true });
+  }
 }
 
 export async function addFriend(userId: string) {
-  return fetch(`${base_url}/add-friend`, {
+  return fetch(`${baseUrl}/add-friend`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

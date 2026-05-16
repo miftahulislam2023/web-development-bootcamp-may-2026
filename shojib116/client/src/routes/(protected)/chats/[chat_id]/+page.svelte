@@ -44,6 +44,10 @@
     });
   });
 
+  function now() {
+    return new Date().toISOString();
+  }
+
   let { data } = $props();
   let user = $derived(data.user);
 
@@ -74,13 +78,15 @@
       return;
     }
 
+    console.log(now());
+
     const env: Envelope = {
       type: "direct",
-      from: user.userId,
+      from: user.user_id,
       to: currentChat().user_id,
       text: message.trim(),
       conversation_id: data.chat_id,
-      sentAt: new Date().toLocaleString(),
+      sentAt: now(),
     };
 
     conn.send(JSON.stringify(env));
@@ -145,7 +151,7 @@
 
       <div class="space-y-4">
         {#each messages as message}
-          {#if message.sender_id === user.userId}
+          {#if message.sender_id === user.user_id}
             <div class="flex justify-end">
               {@render messageBlock(message.text, user.username, true)}
             </div>

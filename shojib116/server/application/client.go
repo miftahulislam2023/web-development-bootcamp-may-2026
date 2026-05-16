@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/shojib116/chat-app-server/infra"
+	"github.com/shojib116/chat-app-server/internal/auth"
 )
 
 const (
@@ -25,10 +25,10 @@ type Client struct {
 	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
-	user *infra.Session
+	user auth.Session
 }
 
-func NewClient(h *Hub, c *websocket.Conn, u *infra.Session) *Client {
+func newClient(h *Hub, c *websocket.Conn, u auth.Session) *Client {
 	return &Client{
 		hub:  h,
 		conn: c,

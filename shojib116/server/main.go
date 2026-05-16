@@ -30,18 +30,17 @@ func main() {
 		log.Println(err)
 	}
 
-	hub := app.NewHub(db, cfg)
+	repo := infra.NewStore(db)
+
+	hub := app.NewHub(cfg, repo)
 	go hub.Run()
 
 	mux := http.NewServeMux()
 	mngr := middlewares.NewManager(middlewares.CORS(cfg.FrontendDomain), middlewares.Logger)
 
-	sessionStore := infra.NewSession()
-	repo := infra.NewStore(db)
+	service := app.NewServices(repo, cfg, hub)
 
-	service := app.NewServices(repo, cfg, sessionStore, hub)
-
-	h := interfaces.NewHandler(service)
+	h := interfaces.NewHandler(service, cfg)
 
 	h.RegisterRoutes(mux, mngr, cfg)
 

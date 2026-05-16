@@ -3,27 +3,28 @@ package application
 import (
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/shojib116/chat-app-server/config"
 	"github.com/shojib116/chat-app-server/infra"
+	"github.com/shojib116/chat-app-server/interfaces/utils"
+	"github.com/shojib116/chat-app-server/internal/auth"
 	"github.com/shojib116/chat-app-server/internal/database"
 )
 
 type Services struct {
-	repo    *infra.Store
-	cfg     *config.Config
-	Session *infra.SessionStore
-	hub     *Hub
+	repo *infra.Store
+	cfg  *config.Config
+	hub  *Hub
 }
 
-func NewServices(repo *infra.Store, cfg *config.Config, ss *infra.SessionStore, h *Hub) *Services {
+func NewServices(repo *infra.Store, cfg *config.Config, h *Hub) *Services {
 	return &Services{
-		repo:    repo,
-		cfg:     cfg,
-		Session: ss,
-		hub:     h,
+		repo: repo,
+		cfg:  cfg,
+		hub:  h,
 	}
 }
 
@@ -34,36 +35,60 @@ type Conversation = database.Conversation
 
 type ErrBadRequest struct{ Message string }
 type ErrInternalServer struct{ Message string }
+type ErrUnauthenticated struct{ Message string }
 
-func (e *ErrBadRequest) Error() string     { return e.Message }
-func (e *ErrInternalServer) Error() string { return e.Message }
+func (e *ErrBadRequest) Error() string      { return e.Message }
+func (e *ErrInternalServer) Error() string  { return e.Message }
+func (e *ErrUnauthenticated) Error() string { return e.Message }
 
-func (s *Services) SignInUser(username string) (string, error) {
+func (s *Services) SignInUser(username string) (accessToken, refreshToken string, err error) {
 	if len(username) < 1 {
-		return "", &ErrBadRequest{Message: "invalid user name"}
+		return "", "", &ErrBadRequest{Message: "invalid user name"}
 	}
 	user, err := s.repo.GetUserByUsername(username)
 	if err != sql.ErrNoRows && err != nil {
-		return "", &ErrInternalServer{Message: "failed to fetch user"}
+		return "", "", &ErrInternalServer{Message: "failed to fetch user"}
 	}
 
 	if err == sql.ErrNoRows {
 		user, err = s.repo.CreateUser(username)
 		if err != nil {
-			return "", &ErrInternalServer{Message: "failed to create user"}
+			return "", "", &ErrInternalServer{Message: "failed to create user"}
 		}
 	}
 
-	sessionId := s.Session.Create(infra.Session{
-		UserID:   user.ID,
-		Username: user.Username,
-	})
+	refreshToken, err = utils.GenerateToken(user.ID, user.Username, s.cfg.JWTSecret, s.cfg.RefreshTokenExpiry)
+	accessToken, err = utils.GenerateToken(user.ID, user.Username, s.cfg.JWTSecret, s.cfg.AccessTokenExpiry)
 
-	return sessionId, nil
+	// proceed as normal even if refresh token is not saved
+	s.repo.SaveRefreshToken(refreshToken, user.ID, time.Now().Add(s.cfg.RefreshTokenExpiry))
+
+	return accessToken, refreshToken, nil
 }
 
-func (s *Services) SignOutUser(value string) {
-	s.Session.Delete(value)
+func (s *Services) SignOutUser(token string) error {
+	err := s.repo.InvalidateRefreshToken(token)
+	if err != nil {
+		return &ErrInternalServer{Message: "failed to logout"}
+	}
+
+	return nil
+}
+
+func (s *Services) RefreshUser(token string) (string, error) {
+	user, err := s.repo.GetUserByRefreshToken(token)
+	if err == sql.ErrNoRows {
+		return "", &ErrUnauthenticated{Message: "invalid refresh token"}
+	} else if err != nil {
+		return "", &ErrInternalServer{Message: "failed to get user"}
+	}
+
+	accessToken, err := utils.GenerateToken(user.ID, user.Username, s.cfg.JWTSecret, s.cfg.AccessTokenExpiry)
+	if err != nil {
+		return "", &ErrInternalServer{Message: "failed to create access token"}
+	}
+
+	return accessToken, nil
 }
 
 func (s *Services) GetFriendList(userId uuid.UUID) (FriendList, error) {
@@ -118,8 +143,8 @@ func (s *Services) GetOrCreateConversation(user_a_id, user_b_id uuid.UUID) (*Con
 	return &conversation, nil
 }
 
-func (s *Services) WebSocket(c *websocket.Conn, u *infra.Session) {
-	client := NewClient(s.hub, c, u)
+func (s *Services) WebSocket(c *websocket.Conn, u auth.Session) {
+	client := newClient(s.hub, c, u)
 	client.hub.register <- client
 
 	go client.writePump()

@@ -1,14 +1,13 @@
 package application
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"log"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/shojib116/chat-app-server/config"
+	"github.com/shojib116/chat-app-server/infra"
 	"github.com/shojib116/chat-app-server/internal/database"
 )
 
@@ -27,21 +26,19 @@ type Hub struct {
 	broadcast  chan Envelope
 	register   chan *Client
 	unregister chan *Client
-	db         *sql.DB
-	queries    *database.Queries
 	cfg        *config.Config
+	repo       *infra.Store
 }
 
-func NewHub(db *sql.DB, cfg *config.Config) *Hub {
+func NewHub(cfg *config.Config, repo *infra.Store) *Hub {
 	return &Hub{
 		broadcast:  make(chan Envelope),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 		users:      make(map[string]*Client),
-		db:         db,
-		queries:    database.New(db),
 		cfg:        cfg,
+		repo:       repo,
 	}
 }
 
@@ -61,12 +58,7 @@ func (h *Hub) Run() {
 
 		case env := <-h.broadcast:
 			if env.Type == "direct" {
-				msg, err := h.queries.CreateMessage(context.Background(), database.CreateMessageParams{
-					Text:           env.Text,
-					SentAt:         env.SentAt,
-					SenderID:       env.From,
-					ConversationID: env.ConversationID,
-				})
+				msg, err := h.repo.CreateMessage(env.Text, env.From, env.ConversationID, env.SentAt)
 				if err != nil {
 					log.Printf("Failed to save message, %v", err)
 					continue
@@ -84,27 +76,6 @@ func (h *Hub) Run() {
 					sender.send <- data
 				}
 			}
-			// 	msg, err := h.queries.CreateMessage(context.Background(), database.CreateMessageParams{
-			// 		Text:   string(message),
-			// 		SentAt: time.Now(),
-			// 	})
-			// 	if err != nil {
-			// 		log.Printf("Failed to save message: %v", err)
-			// 		continue
-			// 	}
-			// 	marshalledMsg, err := json.Marshal([]database.Message{msg})
-			// 	if err != nil {
-			// 		log.Printf("Broadcasting error: %v", err)
-			// 		continue
-			// 	}
-			// 	for client := range h.clients {
-			// 		select {
-			// 		case client.send <- marshalledMsg:
-			// 		default:
-			// 			close(client.send)
-			// 			delete(h.clients, client)
-			// 		}
-			// 	}
 		}
 	}
 }

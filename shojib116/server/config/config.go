@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -20,15 +21,21 @@ type DBConfig struct {
 }
 
 type Config struct {
-	HttpPort       int
-	FrontendDomain string
-	DB             *DBConfig
+	HttpPort           int
+	FrontendDomain     string
+	JWTSecret          string
+	DB                 *DBConfig
+	RefreshTokenExpiry time.Duration
+	AccessTokenExpiry  time.Duration
 }
 
 var (
 	config     *Config
 	configOnce sync.Once
 )
+
+const RefreshTokenExpiry = 30 * 24 * time.Hour
+const AccessTokenExpiry = 15 * time.Minute
 
 func loadConfig() {
 	if err := godotenv.Load(); err != nil {
@@ -76,9 +83,12 @@ func loadConfig() {
 	}
 
 	config = &Config{
-		HttpPort:       port,
-		FrontendDomain: envOrExit("FRONTEND_DOMAIN"),
-		DB:             dbConfig,
+		HttpPort:           port,
+		FrontendDomain:     envOrExit("FRONTEND_DOMAIN"),
+		JWTSecret:          envOrExit("JWT_SECRET"),
+		DB:                 dbConfig,
+		RefreshTokenExpiry: RefreshTokenExpiry,
+		AccessTokenExpiry:  AccessTokenExpiry,
 	}
 }
 

@@ -4,47 +4,40 @@ import (
 	"context"
 	"net/http"
 
-	app "github.com/shojib116/chat-app-server/application"
-	"github.com/shojib116/chat-app-server/infra"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/shojib116/chat-app-server/interfaces/utils"
+	"github.com/shojib116/chat-app-server/internal/auth"
 )
 
-type contextKey string
-
-const UserContextKey contextKey = "user"
-
-func RequireAuth(
-	services *app.Services,
-) func(http.HandlerFunc) http.HandlerFunc {
-
+func AuthMiddleware(jwtSecret string) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
-
-		return func(w http.ResponseWriter, r *http.Request) {
-
-			cookie, err := r.Cookie("session")
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cookie, err := r.Cookie(string(auth.AccessTokenCookie))
 			if err != nil {
-				utils.HandleAndLogError(w, r, http.StatusUnauthorized, "unauthorized")
+				utils.HandleAndLogError(w, r, http.StatusUnauthorized, "missing access token")
 				return
 			}
 
-			session, ok := services.Session.Get(cookie.Value)
-			if !ok {
-				utils.HandleAndLogError(w, r, http.StatusUnauthorized, "unauthorized")
+			claims := &utils.Claims{}
+			token, err := jwt.ParseWithClaims(cookie.Value, claims, func(t *jwt.Token) (any, error) {
+				return []byte(jwtSecret), nil
+			})
+
+			if err != nil || !token.Valid {
+				utils.HandleAndLogError(w, r, http.StatusUnauthorized, "invalid or expired token")
 				return
 			}
 
-			ctx := context.WithValue(
-				r.Context(),
-				UserContextKey,
-				session,
-			)
-
-			next(w, r.WithContext(ctx))
-		}
+			ctx := context.WithValue(r.Context(), auth.UserContextKey, auth.Session{
+				UserID:   claims.UserID,
+				Username: claims.Username,
+			})
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }
 
-func GetSession(r *http.Request) (infra.Session, bool) {
-	s, ok := r.Context().Value(UserContextKey).(infra.Session)
-	return s, ok
+func GetSessionFromContext(ctx context.Context) (auth.Session, bool) {
+	session, ok := ctx.Value(auth.UserContextKey).(auth.Session)
+	return session, ok
 }

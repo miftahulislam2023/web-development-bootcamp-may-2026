@@ -92,7 +92,7 @@ cd a_k_m_samioul_islam
    MONGODB_URI=your_mongodb_connection_string
    OPENROUTER_API_KEY=your_openrouter_apikey
    OPENROUTER_MODEL=openrouter_model
-   FB_ADMIN_KEY=firebase_admin_sdk_key
+   FB_SERVICE_KEY=firebase_admin_sdk_key
    ```
 4. Start the development server:
    ```bash

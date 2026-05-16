@@ -31,12 +31,22 @@ async function getMessageModel() {
   return Message;
 }
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.NEXT_PUBLIC_APP_URL, // e.g. https://devconnect.vercel.app
+  process.env.CLIENT_URL,          // Alternative env name for clarity
+].filter(Boolean) as string[];
+
 const io = new Server(PORT, {
   cors: {
-    origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    origin: allowedOrigins.length > 0 ? allowedOrigins : "http://localhost:3000",
     credentials: true,
+    methods: ["GET", "POST"],
   },
 });
+
+// NOTE: Vercel does not run long-running Node processes. 
+// This socket server MUST be deployed to a persistent host like Render, Railway, or Fly.io.
 
 const onlineUsers = new Map<string, string>(); // userId -> socketId
 
@@ -92,4 +102,5 @@ io.on("connection", (socket) => {
   });
 });
 
-console.log(`Socket server listening on port ${PORT}`);
+console.log(`[Socket] Server started on port ${PORT}`);
+console.log(`[Socket] Allowed origins: ${allowedOrigins.join(", ")}`);

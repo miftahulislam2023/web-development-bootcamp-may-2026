@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { getSocketClient } from "@/lib/socket/client";
 
 type Message = {
   id: string;
@@ -29,6 +30,18 @@ type Room = {
   description: string | null;
   createdAt: string;
   memberCount: number;
+};
+
+type RealtimeMessage = {
+  id: string;
+  content: string;
+  roomId: string;
+  createdAt: string;
+  author: {
+    id: string;
+    username: string | null;
+    image: string | null;
+  };
 };
 
 function formatTimestamp(value: string) {
@@ -96,8 +109,9 @@ export default function RoomChatPage() {
     }
 
     const payload = (await response.json()) as MessagesResponse;
+    const orderedMessages = payload.messages.slice().reverse();
 
-    setMessages((current) => (cursor ? [...current, ...payload.messages] : payload.messages));
+    setMessages((current) => (cursor ? [...orderedMessages, ...current] : orderedMessages));
     setNextCursor(payload.nextCursor);
     setIsLoading(false);
   }
@@ -121,32 +135,90 @@ export default function RoomChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
+  useEffect(() => {
+    if (!room) {
+      return;
+    }
+
+    const socket = getSocketClient();
+
+    const handleReceiveMessage = (message: RealtimeMessage) => {
+      if (message.roomId !== roomId) {
+        return;
+      }
+
+      setMessages((current) => {
+        if (current.some((existingMessage) => existingMessage.id === message.id)) {
+          return current;
+        }
+
+        return [
+          ...current,
+          {
+            id: message.id,
+            content: message.content,
+            createdAt: message.createdAt,
+            author: {
+              id: message.author.id,
+              username: message.author.username,
+              name: null,
+              image: message.author.image,
+            },
+          },
+        ];
+      });
+    };
+
+    const handleConnect = () => {
+      // eslint-disable-next-line no-console
+      console.log("socket connect:", socket.id);
+      socket.emit("join_room", roomId);
+    };
+
+    const handleConnectError = (error: Error) => {
+      // eslint-disable-next-line no-console
+      console.log("socket connect_error:", error.message);
+    };
+
+    const handleDisconnect = (reason: string) => {
+      // eslint-disable-next-line no-console
+      console.log("socket disconnect:", reason);
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+    socket.connect();
+
+    if (socket.connected) {
+      socket.emit("join_room", roomId);
+    }
+
+    socket.on("receive_message", handleReceiveMessage);
+
+    return () => {
+      socket.off("receive_message", handleReceiveMessage);
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+      socket.emit("leave_room", roomId);
+      socket.disconnect();
+    };
+  }, [room, roomId]);
+
   async function onSendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSending(true);
     setError(null);
 
-    const response = await fetch("/api/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        roomId,
-        content,
-      }),
+    const socket = getSocketClient();
+    socket.emit("send_message", {
+      roomId,
+      content,
     });
 
-    setIsSending(false);
-
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({ message: "Failed to send message." }));
-      setError(payload.message ?? "Failed to send message.");
-      return;
-    }
-
     setContent("");
-    await loadMessages();
+    setIsSending(false);
   }
 
   if (isRoomLoading) {

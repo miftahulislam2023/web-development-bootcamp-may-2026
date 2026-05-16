@@ -11,6 +11,7 @@ export function getSocketClient(): Socket {
 
   socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:3001", {
     autoConnect: false,
+    withCredentials: true,
     transports: ["websocket"],
     reconnection: true,
     reconnectionAttempts: Infinity,

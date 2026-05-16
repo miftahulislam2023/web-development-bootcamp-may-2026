@@ -74,6 +74,14 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user]); // Re-run if user changes (e.g. login/logout)
 
+  // 2. Register User once connected
+  useEffect(() => {
+    if (!socketInstance || !isConnected || !user?._id) return;
+    
+    console.log(`[Socket] Registering user: ${user._id}`);
+    socketInstance.emit("user:register", user._id);
+  }, [socketInstance, isConnected, user?._id]);
+
   return (
     <SocketContext.Provider value={{ socket: socketInstance, isConnected, onlineUsers }}>
       {children}

@@ -1,40 +1,23 @@
 import { Server } from "socket.io";
-import { parse } from "cookie";
-import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
 
-const PORT = parseInt(process.env.SOCKET_PORT || "4000", 10);
-const JWT_SECRET = process.env.JWT_SECRET;
-const MONGODB_URI = process.env.MONGODB_URI;
+/**
+ * NOTE: Vercel does not run long-running Socket.io processes. 
+ * This server must be deployed separately on Render/Railway/Fly.io.
+ * 
+ * REST APIs (/api/messages) are the source of truth for auth and message saving.
+ * Socket.io is only for realtime delivery.
+ */
 
-if (!JWT_SECRET) {
-  console.error("JWT_SECRET is not defined");
-  process.exit(1);
-}
-
-if (!MONGODB_URI) {
-  console.error("MONGODB_URI is not defined");
-  process.exit(1);
-}
-
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log("Connected to MongoDB from Socket server"))
-  .catch((err) => console.error("MongoDB connection error:", err));
-
-// Dynamic import for Message model to ensure Mongoose is ready
-async function getMessageModel() {
-  const { Message } = await import("../models/Message.js");
-  return Message;
-}
+const PORT = parseInt(process.env.PORT || process.env.SOCKET_PORT || "4000", 10);
 
 const allowedOrigins = [
   "http://localhost:3000",
-  process.env.NEXT_PUBLIC_APP_URL, // e.g. https://devconnect.vercel.app
-  process.env.CLIENT_URL,          // Alternative env name for clarity
+  process.env.CLIENT_URL,
+  process.env.NEXT_PUBLIC_APP_URL,
 ].filter(Boolean) as string[];
 
 const io = new Server(PORT, {
@@ -45,60 +28,47 @@ const io = new Server(PORT, {
   },
 });
 
-// NOTE: Vercel does not run long-running Node processes. 
-// This socket server MUST be deployed to a persistent host like Render, Railway, or Fly.io.
-
 const onlineUsers = new Map<string, string>(); // userId -> socketId
 
-io.use((socket, next) => {
-  const cookieHeader = socket.handshake.headers.cookie;
-  if (!cookieHeader) {
-    return next(new Error("Authentication error"));
-  }
-
-  const cookies = parse(cookieHeader);
-  const token = cookies.token;
-
-  if (!token) {
-    return next(new Error("Authentication error"));
-  }
-
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as { userId: string; role: string };
-    socket.data.userId = payload.userId;
-    next();
-  } catch (error) {
-    next(new Error("Authentication error"));
-  }
-});
-
 io.on("connection", (socket) => {
-  const userId = socket.data.userId;
-  console.log(`User connected: ${userId} (socket: ${socket.id})`);
+  console.log(`[Socket] New connection: ${socket.id}`);
 
-  onlineUsers.set(userId, socket.id);
-  io.emit("user:online", userId);
+  // Registration flow for production-friendly cross-domain auth
+  socket.on("user:register", (userId: string) => {
+    if (!userId || typeof userId !== "string") return;
 
-  // Join personal room
-  socket.join(userId);
+    socket.data.userId = userId;
+    onlineUsers.set(userId, socket.id);
+    socket.join(userId);
+
+    console.log(`[Socket] User registered: ${userId} (socket: ${socket.id})`);
+    io.emit("user:online", userId);
+  });
 
   socket.on("message:send", (data: { chatId: string; message: any; receiverIds: string[] }) => {
     const { chatId, message, receiverIds } = data;
+    const senderId = socket.data.userId;
 
-    if (!userId || !chatId || !message || !Array.isArray(receiverIds)) {
+    if (!senderId || !chatId || !message || !Array.isArray(receiverIds)) {
+      console.warn(`[Socket] Invalid message:send from ${senderId || 'unknown'}`);
       return;
     }
 
-    // Forward the message to all receivers
+    // Forward the message to all receivers' personal rooms
     receiverIds.forEach((receiverId) => {
       io.to(receiverId).emit("message:new", { chatId, message });
     });
   });
 
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${userId}`);
-    onlineUsers.delete(userId);
-    io.emit("user:offline", userId);
+    const userId = socket.data.userId;
+    if (userId) {
+      console.log(`[Socket] User disconnected: ${userId}`);
+      onlineUsers.delete(userId);
+      io.emit("user:offline", userId);
+    } else {
+      console.log(`[Socket] Unregistered socket disconnected: ${socket.id}`);
+    }
   });
 });
 

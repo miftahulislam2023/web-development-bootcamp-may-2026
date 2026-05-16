@@ -3,7 +3,6 @@ export interface ChatUser {
   id: string;
   name: string;
   initials: string;
-  status?: "online" | "offline" | "away" | "dnd";
   avatarUrl?: string;
 }
 
@@ -49,8 +48,6 @@ export interface Chat {
   name: string;
   /** Initials for avatar fallback */
   initials: string;
-  /** Only meaningful for DMs */
-  status?: ChatUser["status"];
   /** Only meaningful for groups */
   memberCount?: number;
   lastMessage: string;

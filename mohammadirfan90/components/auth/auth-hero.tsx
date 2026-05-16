@@ -22,7 +22,7 @@ export function AuthHero() {
           <span className="text-primary">for Modern Teams.</span>
         </h1>
         <p className="text-lg text-text-secondary max-w-md">
-          Simple real-time conversations for friends, teams, and groups. Connect, 
+          Simple real-time conversations for friends, teams, and groups. Connect,
           collaborate, and grow together.
         </p>
       </div>
@@ -51,11 +51,11 @@ export function AuthHero() {
             </div>
           </div>
           <div className="bg-muted-surface p-3 rounded-xl rounded-tl-none text-sm text-text-primary mb-2">
-            Hey! Check out the new design system. It looks amazing! 🚀
+            Hey! Check out the new design. It looks amazing!
           </div>
           <div className="flex justify-end">
             <div className="bg-primary p-3 rounded-xl rounded-tr-none text-sm text-white">
-              Agreed! It's so clean and minimal.
+              Agreed! It's  clean and minimal.
             </div>
           </div>
         </div>
@@ -63,7 +63,7 @@ export function AuthHero() {
 
       <div className="relative z-10 flex items-center gap-6 text-sm text-text-muted font-medium">
         <div className="flex items-center gap-2">
-          <Zap size={16} className="text-primary" />
+
           <span>Real-time</span>
         </div>
         <div className="w-1 h-1 rounded-full bg-border" />

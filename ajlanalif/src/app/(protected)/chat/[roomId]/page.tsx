@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { getSocketClient } from "@/lib/socket/client";
@@ -33,6 +34,16 @@ type Room = {
   description: string | null;
   createdAt: string;
   memberCount: number;
+};
+
+type MyRoom = {
+  joinedAt: string;
+  room: {
+    id: string;
+    name: string;
+    description: string | null;
+    createdAt: string;
+  };
 };
 
 type RealtimeMessage = {
@@ -65,6 +76,18 @@ type MessageDeletedPayload = {
 
 type SocketConnectionState = "connected" | "connecting" | "reconnecting" | "disconnected";
 
+type LoadMessagesOptions = {
+  showLoading?: boolean;
+  scrollToBottom?: boolean;
+};
+
+const socketStatusCopy: Record<SocketConnectionState, string> = {
+  connected: "Connected",
+  connecting: "Connecting...",
+  reconnecting: "Reconnecting...",
+  disconnected: "Disconnected",
+};
+
 function formatTimestamp(value: string) {
   const date = new Date(value);
   return new Intl.DateTimeFormat("en-US", {
@@ -79,21 +102,52 @@ export default function RoomChatPage() {
   const { data: session, status } = useSession();
 
   const [room, setRoom] = useState<Room | null>(null);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [myRooms, setMyRooms] = useState<MyRoom[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [isRoomLoading, setIsRoomLoading] = useState(true);
+  const [isSidebarLoading, setIsSidebarLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [socketStatus, setSocketStatus] = useState<SocketConnectionState>("disconnected");
   const [error, setError] = useState<string | null>(null);
   const editingMessageIdRef = useRef<string | null>(null);
+  const messagesViewportRef = useRef<HTMLDivElement | null>(null);
+  const shouldStickToBottomRef = useRef(true);
 
   useEffect(() => {
     editingMessageIdRef.current = editingMessageId;
   }, [editingMessageId]);
+
+  const joinedRoomIds = useMemo(() => new Set(myRooms.map((entry) => entry.room.id)), [myRooms]);
+
+  function scrollMessagesToBottom(behavior: ScrollBehavior = "auto") {
+    const viewport = messagesViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollTo({
+      top: viewport.scrollHeight,
+      behavior,
+    });
+  }
+
+  function handleMessagesScroll() {
+    const viewport = messagesViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+    shouldStickToBottomRef.current = distanceFromBottom < 120;
+  }
 
   async function loadRoom() {
     setIsRoomLoading(true);
@@ -119,11 +173,46 @@ export default function RoomChatPage() {
     setIsRoomLoading(false);
   }
 
-  async function loadMessages(cursor?: string) {
+  async function loadSidebarData() {
+    setIsSidebarLoading(true);
+
+    try {
+      const [roomsResponse, myRoomsResponse] = await Promise.all([fetch("/api/rooms"), fetch("/api/rooms/me")]);
+
+      if (!roomsResponse.ok) {
+        throw new Error("Failed to load rooms.");
+      }
+
+      if (!myRoomsResponse.ok) {
+        throw new Error("Failed to load your room memberships.");
+      }
+
+      const roomsPayload = (await roomsResponse.json()) as Room[];
+      const myRoomsPayload = (await myRoomsResponse.json()) as MyRoom[];
+
+      setRooms(roomsPayload);
+      setMyRooms(myRoomsPayload);
+    } catch (caughtError) {
+      const message = caughtError instanceof Error ? caughtError.message : "Failed to load sidebar data.";
+      toast.error(message);
+    } finally {
+      setIsSidebarLoading(false);
+    }
+  }
+
+  async function loadMessages(cursor?: string, options: LoadMessagesOptions = {}) {
+    if (options.showLoading) {
+      setIsLoading(true);
+    }
+
     const query = new URLSearchParams({
       roomId,
       limit: "20",
     });
+
+    const viewport = messagesViewportRef.current;
+    const previousScrollHeight = viewport?.scrollHeight ?? 0;
+    const previousScrollTop = viewport?.scrollTop ?? 0;
 
     if (cursor) {
       query.set("cursor", cursor);
@@ -134,6 +223,7 @@ export default function RoomChatPage() {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({ message: "Failed to fetch messages." }));
       setError(payload.message ?? "Failed to fetch messages.");
+      toast.error(payload.message ?? "Failed to fetch messages.");
       setIsLoading(false);
       return;
     }
@@ -144,6 +234,24 @@ export default function RoomChatPage() {
     setMessages((current) => (cursor ? [...orderedMessages, ...current] : orderedMessages));
     setNextCursor(payload.nextCursor);
     setIsLoading(false);
+
+    requestAnimationFrame(() => {
+      const currentViewport = messagesViewportRef.current;
+
+      if (!currentViewport) {
+        return;
+      }
+
+      if (cursor) {
+        const nextScrollHeight = currentViewport.scrollHeight;
+        currentViewport.scrollTop = nextScrollHeight - previousScrollHeight + previousScrollTop;
+        return;
+      }
+
+      if (options.scrollToBottom ?? true) {
+        scrollMessagesToBottom("auto");
+      }
+    });
   }
 
   useEffect(() => {
@@ -153,8 +261,11 @@ export default function RoomChatPage() {
     setEditingMessageId(null);
     setEditingContent("");
     setError(null);
+    setSocketStatus("disconnected");
     setIsLoading(true);
+    setIsSidebarLoading(true);
     void loadRoom();
+    void loadSidebarData();
   }, [roomId]);
 
   useEffect(() => {
@@ -162,7 +273,7 @@ export default function RoomChatPage() {
       return;
     }
 
-    void loadMessages();
+    void loadMessages(undefined, { showLoading: true, scrollToBottom: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
@@ -178,7 +289,7 @@ export default function RoomChatPage() {
         userId: session.user.id,
       });
       socket.emit("join_room", roomId);
-      void loadMessages();
+      void loadMessages(undefined, { scrollToBottom: true });
     };
 
     const handleReceiveMessage = (message: RealtimeMessage) => {
@@ -260,6 +371,7 @@ export default function RoomChatPage() {
       // eslint-disable-next-line no-console
       console.log("socket reconnect:", attemptNumber, socket.id);
       setSocketStatus("connected");
+      toast.success("Connection restored.");
       rejoinRoomAndSync();
     };
 
@@ -273,6 +385,7 @@ export default function RoomChatPage() {
       // eslint-disable-next-line no-console
       console.log("socket connect_error:", error.message);
       setSocketStatus("disconnected");
+      setError("Realtime connection issue. Retrying in the background.");
     };
 
     const handleDisconnect = (reason: string) => {
@@ -284,6 +397,7 @@ export default function RoomChatPage() {
     const handleSocketError = (payload: { message?: string }) => {
       if (payload.message) {
         setError(payload.message);
+        toast.error(payload.message);
       }
     };
 
@@ -330,6 +444,10 @@ export default function RoomChatPage() {
     });
 
     setContent("");
+
+    if (shouldStickToBottomRef.current) {
+      requestAnimationFrame(() => scrollMessagesToBottom("smooth"));
+    }
   }
 
   async function onSendMessage(event: FormEvent<HTMLFormElement>) {
@@ -362,6 +480,8 @@ export default function RoomChatPage() {
       content: editingContent,
     });
 
+    toast.success("Message updated.");
+
     cancelEditing();
   }
 
@@ -370,170 +490,342 @@ export default function RoomChatPage() {
     socket.emit("delete_message", {
       messageId,
     });
+
+    toast.success("Message deleted.");
   }
+
+  const connectedRooms = useMemo(
+    () =>
+      rooms
+        .filter((entry) => joinedRoomIds.has(entry.id) || entry.id === room?.id)
+        .sort((left, right) => Number(right.id === room?.id) - Number(left.id === room?.id)),
+    [joinedRoomIds, room?.id, rooms]
+  );
+
+  const socketStatusTone: Record<SocketConnectionState, string> = {
+    connected: "border-emerald-400/20 bg-emerald-400/10 text-emerald-100",
+    connecting: "border-cyan-400/20 bg-cyan-400/10 text-cyan-100",
+    reconnecting: "border-amber-400/20 bg-amber-400/10 text-amber-100",
+    disconnected: "border-rose-400/20 bg-rose-400/10 text-rose-100",
+  };
+
+  const avatarLabel = (name: string | null | undefined) => (name?.trim().charAt(0) ?? "?").toUpperCase();
 
   if (isRoomLoading) {
     return (
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-6">
-        <p className="text-sm text-zinc-600">Loading room...</p>
+      <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-1 items-center justify-center rounded-[28px] border border-cyan-400/12 bg-slate-950/75 px-6 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/80">Loading room</p>
+            <p className="mt-3 text-sm text-slate-300">Preparing the conversation space...</p>
+          </div>
+        </div>
       </main>
     );
   }
 
   if (!room) {
     return (
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-6">
-        <header className="flex items-center justify-between border border-zinc-200 bg-white p-4">
-          <div>
-            <h1 className="text-lg font-semibold">Room not found</h1>
-            <p className="text-xs text-zinc-600">The requested room does not exist.</p>
+      <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-1 items-center justify-center rounded-[28px] border border-cyan-400/12 bg-slate-950/75 px-6 py-10 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+          <div className="max-w-md text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/80">Room unavailable</p>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-50">Room not found</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-300">The requested room does not exist or you no longer have access to it.</p>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Link href="/chat" className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">
+                Back to rooms
+              </Link>
+              <LogoutButton />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/chat" className="border border-zinc-300 px-3 py-1.5 text-xs">
-              Back to rooms
-            </Link>
-            <LogoutButton />
-          </div>
-        </header>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-6">
-      <header className="flex items-center justify-between border border-zinc-200 bg-white p-4">
-        <div>
-          <h1 className="text-lg font-semibold">{room.name}</h1>
-          <p className="text-xs text-zinc-600">{room.description ?? "No description"}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-500">{socketStatus === "connected" ? "Connected" : socketStatus === "reconnecting" ? "Reconnecting..." : socketStatus === "connecting" ? "Connecting..." : "Disconnected"}</span>
-          <Link href="/chat" className="border border-zinc-300 px-3 py-1.5 text-xs">
-            Back to rooms
-          </Link>
-          <LogoutButton />
-        </div>
-      </header>
+    <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="grid flex-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="rounded-[28px] border border-cyan-400/12 bg-slate-950/75 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6 lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/80">Room</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-50">{room.name}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{room.description ?? "No description available."}</p>
+            </div>
+            <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${socketStatusTone[socketStatus]}`}>
+              {socketStatusCopy[socketStatus]}
+            </span>
+          </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Members</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-50">{room.memberCount}</p>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Messages</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-50">{messages.length}</p>
+            </div>
+          </div>
 
-      <section className="border border-zinc-200 bg-white p-4">
-        <h2 className="text-sm font-semibold">Messages</h2>
+          <div className="mt-6 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-slate-300">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Quick links</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/chat" className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">
+                Rooms
+              </Link>
+              <LogoutButton />
+            </div>
+          </div>
 
-        {isLoading ? <p className="mt-3 text-sm text-zinc-600">Loading messages...</p> : null}
+          <div className="mt-6">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Joined rooms</h3>
+              <Link href="/chat" className="text-xs font-medium text-cyan-200 hover:text-cyan-100">
+                Browse all
+              </Link>
+            </div>
 
-        {!isLoading && messages.length === 0 ? (
-          <p className="mt-3 text-sm text-zinc-600">No messages yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {messages.map((message) => {
-              const isOwnMessage = message.author.id === session?.user?.id;
-              const isEditingThisMessage = editingMessageId === message.id;
+            {isSidebarLoading ? (
+              <div className="mt-4 space-y-3">
+                {[1, 2, 3].map((index) => (
+                  <div key={index} className="h-16 animate-pulse rounded-2xl border border-white/5 bg-white/5" />
+                ))}
+              </div>
+            ) : null}
 
-              return (
-                <li key={message.id} className="border border-zinc-200 p-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-zinc-500">
-                        {message.author.username ?? message.author.name ?? "Unknown"} - {formatTimestamp(message.createdAt)}
-                        {message.editedAt ? " (edited)" : ""}
-                        {message.deletedAt ? " [deleted]" : ""}
-                      </p>
+            {!isSidebarLoading && connectedRooms.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-dashed border-cyan-400/15 bg-slate-900/50 p-4 text-sm text-slate-400">
+                You have not joined any rooms yet.
+              </div>
+            ) : null}
 
-                      {isEditingThisMessage ? (
-                        <div className="mt-2 space-y-2">
-                          <textarea
-                            value={editingContent}
-                            onChange={(event) => setEditingContent(event.target.value)}
-                            className="block w-full border border-zinc-300 px-3 py-2 text-sm"
-                            rows={3}
-                          />
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => saveEdit(message.id)}
-                              className="border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-white"
-                            >
-                              Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={cancelEditing}
-                              className="border border-zinc-300 px-3 py-1.5 text-xs"
-                            >
-                              Cancel
-                            </button>
-                          </div>
+            {!isSidebarLoading && connectedRooms.length > 0 ? (
+              <ul className="mt-4 space-y-2">
+                {connectedRooms.map((connectedRoom) => {
+                  const isActive = connectedRoom.id === room.id;
+
+                  return (
+                    <li key={connectedRoom.id}>
+                      <Link
+                        href={`/chat/${connectedRoom.id}`}
+                        className={`block rounded-2xl border px-4 py-3 transition ${
+                          isActive
+                            ? "border-cyan-300/30 bg-cyan-400/10 text-slate-50"
+                            : "border-white/5 bg-white/5 text-slate-200 hover:border-cyan-400/20 hover:bg-slate-900"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="truncate text-sm font-medium">{connectedRoom.name}</span>
+                          {isActive ? (
+                            <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                              Active
+                            </span>
+                          ) : null}
                         </div>
-                      ) : (
-                        <p className="mt-1 text-sm">{message.deletedAt ? "[deleted]" : message.content}</p>
-                      )}
-                    </div>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
+                          {connectedRoom.description ?? "No description"}
+                        </p>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+          </div>
+        </aside>
 
-                    {isOwnMessage && !message.deletedAt && !isEditingThisMessage ? (
-                      <div className="flex shrink-0 items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => startEditing(message)}
-                          className="border border-zinc-300 px-2 py-1 text-xs"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteMessage(message.id)}
-                          className="border border-zinc-300 px-2 py-1 text-xs"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    ) : null}
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-cyan-400/12 bg-slate-950/75 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+          <header className="flex flex-col gap-4 border-b border-white/5 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/80">Live conversation</p>
+              <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight text-slate-50">{room.name}</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{room.description ?? "No room description provided."}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${socketStatusTone[socketStatus]}`}>
+                {socketStatusCopy[socketStatus]}
+              </span>
+              <Link href="/chat" className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">
+                Back to rooms
+              </Link>
+            </div>
+          </header>
+
+          {error ? (
+            <div className="border-b border-rose-400/15 bg-rose-400/10 px-5 py-3 text-sm text-rose-100 sm:px-6">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div
+              ref={messagesViewportRef}
+              onScroll={handleMessagesScroll}
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6"
+            >
+              {nextCursor ? (
+                <div className="mb-4 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void loadMessages(nextCursor);
+                    }}
+                    className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900"
+                  >
+                    Load older messages
+                  </button>
+                </div>
+              ) : null}
+
+              {isLoading ? (
+                <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-white/5 bg-white/5 text-center">
+                  <div>
+                    <p className="text-sm font-medium text-slate-100">Loading messages...</p>
+                    <p className="mt-1 text-xs text-slate-400">Pulling the latest conversation history.</p>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                </div>
+              ) : null}
 
-        {nextCursor ? (
-          <button
-            type="button"
-            onClick={() => {
-              void loadMessages(nextCursor);
-            }}
-            className="mt-3 border border-zinc-300 px-3 py-1.5 text-xs"
-          >
-            Load older messages
-          </button>
-        ) : null}
-      </section>
+              {!isLoading && messages.length === 0 ? (
+                <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-cyan-400/15 bg-slate-900/50 text-center">
+                  <div>
+                    <p className="text-sm font-medium text-slate-100">No messages yet</p>
+                    <p className="mt-1 text-xs text-slate-400">Send the first message to start the room.</p>
+                  </div>
+                </div>
+              ) : null}
 
-      <form onSubmit={onSendMessage} className="border border-zinc-200 bg-white p-4">
-        <label htmlFor="content" className="text-sm font-semibold">
-          New message
-        </label>
-        <textarea
-          id="content"
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              void sendMessage();
-            }
-          }}
-          className="mt-2 block w-full border border-zinc-300 px-3 py-2 text-sm"
-          rows={3}
-          required
-        />
-        <button
-          type="submit"
-          disabled={isSending}
-          className="mt-2 border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-60"
-        >
-          {isSending ? "Sending..." : "Send"}
-        </button>
-      </form>
+              {!isLoading && messages.length > 0 ? (
+                <ul className="space-y-3">
+                  {messages.map((message) => {
+                    const isOwnMessage = message.author.id === session?.user?.id;
+                    const isEditingThisMessage = editingMessageId === message.id;
+                    const displayName = message.author.username ?? message.author.name ?? "Unknown";
+
+                    return (
+                      <li key={message.id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
+                        <article
+                          className={`max-w-[92%] rounded-3xl border px-4 py-3 shadow-lg sm:max-w-[78%] ${
+                            isOwnMessage
+                              ? "border-cyan-300/20 bg-gradient-to-br from-cyan-400/18 to-sky-500/10 text-slate-50"
+                              : "border-white/6 bg-slate-900/80 text-slate-50"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isOwnMessage ? "bg-cyan-400/20 text-cyan-100" : "bg-white/10 text-slate-200"}`}>
+                                {avatarLabel(displayName)}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-slate-100">{displayName}</p>
+                                <p className="text-[11px] text-slate-400">{formatTimestamp(message.createdAt)}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                              {message.editedAt ? (
+                                <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-1 text-cyan-100">Edited</span>
+                              ) : null}
+                              {message.deletedAt ? (
+                                <span className="rounded-full border border-amber-300/20 bg-amber-400/10 px-2 py-1 text-amber-100">Deleted</span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {isEditingThisMessage ? (
+                            <div className="mt-4 space-y-3">
+                              <textarea
+                                value={editingContent}
+                                onChange={(event) => setEditingContent(event.target.value)}
+                                className="block w-full rounded-2xl border border-cyan-400/10 bg-slate-950/80 px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-400/25"
+                                rows={3}
+                              />
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => saveEdit(message.id)}
+                                  className="rounded-full bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEditing}
+                                  className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className={`mt-3 text-sm leading-6 ${message.deletedAt ? "italic text-slate-400" : "text-slate-100"}`}>
+                              {message.deletedAt ? "This message was deleted." : message.content}
+                            </p>
+                          )}
+
+                          {isOwnMessage && !message.deletedAt && !isEditingThisMessage ? (
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => startEditing(message)}
+                                className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteMessage(message.id)}
+                                className="rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/15"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : null}
+                        </article>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </div>
+
+            <form onSubmit={onSendMessage} className="border-t border-white/5 bg-slate-950/90 p-4 sm:p-5">
+              <label htmlFor="content" className="text-sm font-semibold text-slate-100">
+                New message
+              </label>
+              <textarea
+                id="content"
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void sendMessage();
+                  }
+                }}
+                className="mt-2 block w-full rounded-2xl border border-cyan-400/10 bg-slate-900/80 px-3 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-400/25"
+                rows={3}
+                placeholder="Write a message..."
+                required
+              />
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <p className="text-xs text-slate-400">Press Enter to send, Shift + Enter for a new line.</p>
+                <button
+                  type="submit"
+                  disabled={isSending}
+                  className="rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSending ? "Sending..." : "Send"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

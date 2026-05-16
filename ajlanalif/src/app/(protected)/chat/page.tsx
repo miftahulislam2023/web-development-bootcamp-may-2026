@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 
@@ -40,29 +41,29 @@ export default function ChatPage() {
     setIsLoading(true);
     setError(null);
 
-    const [roomsResponse, myRoomsResponse] = await Promise.all([
-      fetch("/api/rooms"),
-      fetch("/api/rooms/me"),
-    ]);
+    try {
+      const [roomsResponse, myRoomsResponse] = await Promise.all([fetch("/api/rooms"), fetch("/api/rooms/me")]);
 
-    if (!roomsResponse.ok) {
+      if (!roomsResponse.ok) {
+        throw new Error("Failed to load rooms.");
+      }
+
+      if (!myRoomsResponse.ok) {
+        throw new Error("Failed to load your room memberships.");
+      }
+
+      const roomsPayload = (await roomsResponse.json()) as Room[];
+      const myRoomsPayload = (await myRoomsResponse.json()) as MyRoom[];
+
+      setRooms(roomsPayload);
+      setMyRooms(myRoomsPayload);
+    } catch (caughtError) {
+      const message = caughtError instanceof Error ? caughtError.message : "Failed to load rooms.";
+      setError(message);
+      toast.error(message);
+    } finally {
       setIsLoading(false);
-      setError("Failed to load rooms.");
-      return;
     }
-
-    if (!myRoomsResponse.ok) {
-      setIsLoading(false);
-      setError("Failed to load your room memberships.");
-      return;
-    }
-
-    const roomsPayload = (await roomsResponse.json()) as Room[];
-    const myRoomsPayload = (await myRoomsResponse.json()) as MyRoom[];
-
-    setRooms(roomsPayload);
-    setMyRooms(myRoomsPayload);
-    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -90,9 +91,11 @@ export default function ChatPage() {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({ message: "Failed to create room." }));
       setError(payload.message ?? "Failed to create room.");
+      toast.error(payload.message ?? "Failed to create room.");
       return;
     }
 
+    toast.success("Room created.");
     setName("");
     setDescription("");
     await loadData();
@@ -112,88 +115,154 @@ export default function ChatPage() {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({ message: "Failed to join room." }));
       setError(payload.message ?? "Failed to join room.");
+      toast.error(payload.message ?? "Failed to join room.");
       return;
     }
 
+    toast.success("Joined room.");
     await loadData();
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6">
-      <header className="flex items-center justify-between border border-zinc-200 bg-white p-4">
-        <div>
-          <h1 className="text-lg font-semibold">Rooms</h1>
-          <p className="text-xs text-zinc-600">Signed in as {session?.user?.email}</p>
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <header className="rounded-[28px] border border-cyan-400/12 bg-slate-950/75 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-8">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/80">Workspace</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-50">Rooms</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+              Create or join rooms, then jump into realtime chat with a clean dashboard layout.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/profile" className="rounded-full border border-cyan-400/20 bg-slate-900/70 px-4 py-2 text-xs font-medium text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">
+              Profile
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
-        <LogoutButton />
+        <p className="mt-4 text-xs text-slate-400">Signed in as {session?.user?.email ?? "your account"}</p>
       </header>
 
-      <section className="border border-zinc-200 bg-white p-4">
-        <h2 className="text-sm font-semibold">Create room</h2>
-        <form onSubmit={onCreateRoom} className="mt-3 flex flex-col gap-2">
-          <input
-            type="text"
-            placeholder="Room name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="border border-zinc-300 px-3 py-2 text-sm"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Description (optional)"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            className="border border-zinc-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-fit border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-60"
-          >
-            {isSubmitting ? "Creating..." : "Create room"}
-          </button>
-        </form>
-      </section>
+      <section className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <aside className="rounded-[28px] border border-cyan-400/12 bg-slate-950/75 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-50">Create room</h2>
+          <p className="mt-1 text-sm text-slate-400">Start a new discussion space in seconds.</p>
+          <form onSubmit={onCreateRoom} className="mt-5 space-y-3">
+            <input
+              type="text"
+              placeholder="Room name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="w-full rounded-xl border border-cyan-400/10 bg-slate-900/80 px-3 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-400/25"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Description (optional)"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              className="w-full rounded-xl border border-cyan-400/10 bg-slate-900/80 px-3 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-400/25"
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Creating..." : "Create room"}
+            </button>
+          </form>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-50">{rooms.length}</p>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Joined</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-50">{joinedRoomIds.size}</p>
+            </div>
+          </div>
+        </aside>
 
-      <section className="border border-zinc-200 bg-white p-4">
-        <h2 className="text-sm font-semibold">All rooms</h2>
-        {isLoading ? <p className="mt-3 text-sm text-zinc-600">Loading rooms...</p> : null}
+        <section className="rounded-[28px] border border-cyan-400/12 bg-slate-950/75 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-50">All rooms</h2>
+              <p className="mt-1 text-sm text-slate-400">Joined rooms open directly; others can be joined in one tap.</p>
+            </div>
+            {error ? <span className="rounded-full border border-rose-400/20 bg-rose-400/10 px-3 py-1 text-xs text-rose-200">{error}</span> : null}
+          </div>
 
-        {!isLoading && rooms.length === 0 ? (
-          <p className="mt-3 text-sm text-zinc-600">No rooms yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {rooms.map((room) => {
-              const joined = joinedRoomIds.has(room.id);
+          {isLoading ? (
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {[1, 2, 3].map((index) => (
+                <div key={index} className="h-36 animate-pulse rounded-2xl border border-white/5 bg-white/5" />
+              ))}
+            </div>
+          ) : null}
 
-              return (
-                <li key={room.id} className="border border-zinc-200 p-3">
-                  <p className="text-sm font-medium">{room.name}</p>
-                  <p className="text-xs text-zinc-600">{room.description ?? "No description"}</p>
-                  <p className="text-xs text-zinc-500">Members: {room.memberCount}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    {joined ? (
-                      <Link href={`/chat/${room.id}`} className="border border-zinc-300 px-2 py-1 text-xs">
-                        Open
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => joinRoom(room.id)}
-                        className="border border-zinc-300 px-2 py-1 text-xs"
-                      >
-                        Join room
-                      </button>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+          {!isLoading && rooms.length === 0 ? (
+            <div className="mt-5 rounded-2xl border border-dashed border-cyan-400/15 bg-slate-900/50 p-8 text-center text-sm text-slate-400">
+              No rooms yet. Create the first one to get started.
+            </div>
+          ) : null}
+
+          {!isLoading && rooms.length > 0 ? (
+            <ul className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {rooms.map((room) => {
+                const joined = joinedRoomIds.has(room.id);
+
+                return (
+                  <li
+                    key={room.id}
+                    className="group rounded-2xl border border-white/5 bg-slate-900/60 p-4 transition hover:border-cyan-400/20 hover:bg-slate-900"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-base font-semibold text-slate-50">{room.name}</p>
+                          {joined ? (
+                            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                              Joined
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-400">
+                          {room.description ?? "No description provided."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3 text-xs text-slate-400">
+                      <span>{room.memberCount} members</span>
+                      <span className="rounded-full border border-white/5 bg-white/5 px-2 py-1">Room</span>
+                    </div>
+
+                    <div className="mt-4">
+                      {joined ? (
+                        <Link
+                          href={`/chat/${room.id}`}
+                          className="inline-flex rounded-full bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300"
+                        >
+                          Open room
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => joinRoom(room.id)}
+                          className="inline-flex rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900"
+                        >
+                          Join room
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
       </section>
     </main>
   );

@@ -155,7 +155,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           id: user._id,
           name: user.username,
           initials: getInitials(user.username),
-          status: "online",
           avatarUrl: user.avatar,
         };
         
@@ -181,7 +180,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               type: isDm ? "dm" : "group",
               name: displayName || "Unnamed Chat",
               initials: getInitials(displayName || "U"),
-              status: isDm ? "online" : undefined,
               memberCount: c.users.length,
               lastMessage: c.latestMessage ? c.latestMessage.content : "No messages yet",
               unreadCount: 0,
@@ -221,7 +219,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             type: isDm ? "dm" : "group",
             name: displayName || "Unnamed Chat",
             initials: getInitials(displayName || "U"),
-            status: isDm ? "online" : undefined,
             memberCount: c.users.length,
             lastMessage: c.latestMessage ? c.latestMessage.content : "No messages yet",
             unreadCount: 0,
@@ -255,7 +252,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           id: message.sender._id,
           name: message.sender.username,
           initials: getInitials(message.sender.username),
-          status: "online",
           avatarUrl: message.sender.avatar,
         }
       };
@@ -295,7 +291,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               id: m.sender._id,
               name: m.sender.username,
               initials: getInitials(m.sender.username),
-              status: "online", // Mocked
               avatarUrl: m.sender.avatar,
             }
           };
@@ -347,8 +342,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (data.success && data.data && socket) {
         // Find receivers
         const chat = state.chats.find(c => c.id === chatId);
-        if (chat && chat.memberIds) {
-          const receiverIds = chat.memberIds.filter(id => id !== state.currentUser.id);
+        if (chat && chat.memberIds && state.currentUser) {
+          const currentUserId = state.currentUser.id;
+          const receiverIds = chat.memberIds.filter(id => id !== currentUserId);
           socket.emit("message:send", {
             chatId,
             message: data.data,

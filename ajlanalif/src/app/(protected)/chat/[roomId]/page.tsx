@@ -63,6 +63,8 @@ type MessageDeletedPayload = {
   deletedAt: string;
 };
 
+type SocketConnectionState = "connected" | "connecting" | "reconnecting" | "disconnected";
+
 function formatTimestamp(value: string) {
   const date = new Date(value);
   return new Intl.DateTimeFormat("en-US", {
@@ -85,6 +87,7 @@ export default function RoomChatPage() {
   const [isRoomLoading, setIsRoomLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [socketStatus, setSocketStatus] = useState<SocketConnectionState>("disconnected");
   const [error, setError] = useState<string | null>(null);
   const editingMessageIdRef = useRef<string | null>(null);
 
@@ -170,6 +173,14 @@ export default function RoomChatPage() {
 
     const socket = getSocketClient();
 
+    const rejoinRoomAndSync = () => {
+      socket.emit("authenticate", {
+        userId: session.user.id,
+      });
+      socket.emit("join_room", roomId);
+      void loadMessages();
+    };
+
     const handleReceiveMessage = (message: RealtimeMessage) => {
       if (message.roomId !== roomId) {
         return;
@@ -241,20 +252,33 @@ export default function RoomChatPage() {
     const handleConnect = () => {
       // eslint-disable-next-line no-console
       console.log("socket connect:", socket.id);
-      socket.emit("authenticate", {
-        userId: session.user.id,
-      });
-      socket.emit("join_room", roomId);
+      setSocketStatus("connected");
+      rejoinRoomAndSync();
+    };
+
+    const handleReconnect = (attemptNumber: number) => {
+      // eslint-disable-next-line no-console
+      console.log("socket reconnect:", attemptNumber, socket.id);
+      setSocketStatus("connected");
+      rejoinRoomAndSync();
+    };
+
+    const handleReconnectAttempt = (attemptNumber: number) => {
+      // eslint-disable-next-line no-console
+      console.log("socket reconnect_attempt:", attemptNumber);
+      setSocketStatus("reconnecting");
     };
 
     const handleConnectError = (error: Error) => {
       // eslint-disable-next-line no-console
       console.log("socket connect_error:", error.message);
+      setSocketStatus("disconnected");
     };
 
     const handleDisconnect = (reason: string) => {
       // eslint-disable-next-line no-console
       console.log("socket disconnect:", reason);
+      setSocketStatus("disconnected");
     };
 
     const handleSocketError = (payload: { message?: string }) => {
@@ -263,7 +287,10 @@ export default function RoomChatPage() {
       }
     };
 
+    setSocketStatus(socket.connected ? "connected" : "connecting");
     socket.on("connect", handleConnect);
+    socket.on("reconnect", handleReconnect);
+    socket.on("reconnect_attempt", handleReconnectAttempt);
     socket.on("connect_error", handleConnectError);
     socket.on("disconnect", handleDisconnect);
     socket.on("receive_message", handleReceiveMessage);
@@ -273,10 +300,7 @@ export default function RoomChatPage() {
     socket.connect();
 
     if (socket.connected) {
-      socket.emit("authenticate", {
-        userId: session.user.id,
-      });
-      socket.emit("join_room", roomId);
+      rejoinRoomAndSync();
     }
 
     return () => {
@@ -285,6 +309,8 @@ export default function RoomChatPage() {
       socket.off("message_deleted", handleMessageDeleted);
       socket.off("socket_error", handleSocketError);
       socket.off("connect", handleConnect);
+      socket.off("reconnect", handleReconnect);
+      socket.off("reconnect_attempt", handleReconnectAttempt);
       socket.off("connect_error", handleConnectError);
       socket.off("disconnect", handleDisconnect);
       socket.emit("leave_room", roomId);
@@ -381,6 +407,7 @@ export default function RoomChatPage() {
           <p className="text-xs text-zinc-600">{room.description ?? "No description"}</p>
         </div>
         <div className="flex items-center gap-2">
+          <span className="text-xs text-zinc-500">{socketStatus === "connected" ? "Connected" : socketStatus === "reconnecting" ? "Reconnecting..." : socketStatus === "connecting" ? "Connecting..." : "Disconnected"}</span>
           <Link href="/chat" className="border border-zinc-300 px-3 py-1.5 text-xs">
             Back to rooms
           </Link>

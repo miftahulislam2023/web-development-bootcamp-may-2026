@@ -14,9 +14,9 @@ export function getSocketClient(): Socket {
     withCredentials: true,
     transports: ["websocket"],
     reconnection: true,
-    reconnectionAttempts: Infinity,
+    reconnectionAttempts: 10,
     reconnectionDelay: 1000,
-    reconnectionDelayMax: 10000,
+    reconnectionDelayMax: 5000,
   });
 
   return socketInstance;

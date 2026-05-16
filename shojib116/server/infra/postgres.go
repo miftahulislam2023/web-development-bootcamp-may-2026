@@ -25,8 +25,11 @@ func (s *Store) GetUserByUsername(username string) (database.User, error) {
 	return s.q.GetUserByUsername(context.Background(), username)
 }
 
-func (s *Store) CreateUser(username string) (database.User, error) {
-	return s.q.CreateUser(context.Background(), username)
+func (s *Store) CreateUser(username, password string) (database.User, error) {
+	return s.q.CreateUser(context.Background(), database.CreateUserParams{
+		Username: username,
+		Password: password,
+	})
 }
 
 func (s *Store) GetAllExceptCurrentUser(userId uuid.UUID) ([]database.GetAllUsersExceptCurrentRow, error) {

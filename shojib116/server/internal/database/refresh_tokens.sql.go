@@ -29,7 +29,7 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 }
 
 const getUserByRefreshToken = `-- name: GetUserByRefreshToken :one
-SELECT u.id, u.username, u.created_at FROM users u
+SELECT u.id, u.username, u.created_at, u.password FROM users u
 JOIN refresh_tokens rt ON u.id = rt.user_id
 WHERE rt.token_hash = $1 
   AND rt.expires_at > NOW()
@@ -39,7 +39,12 @@ WHERE rt.token_hash = $1
 func (q *Queries) GetUserByRefreshToken(ctx context.Context, tokenHash string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByRefreshToken, tokenHash)
 	var i User
-	err := row.Scan(&i.ID, &i.Username, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.CreatedAt,
+		&i.Password,
+	)
 	return i, err
 }
 

@@ -14,7 +14,7 @@ type Querier interface {
 	CreateConversation(ctx context.Context, arg CreateConversationParams) (Conversation, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) error
-	CreateUser(ctx context.Context, username string) (User, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetAllMessages(ctx context.Context) ([]Message, error)
 	GetAllUsersExceptCurrent(ctx context.Context, userAID uuid.UUID) ([]GetAllUsersExceptCurrentRow, error)
 	GetConversationByBothUserId(ctx context.Context, arg GetConversationByBothUserIdParams) (Conversation, error)

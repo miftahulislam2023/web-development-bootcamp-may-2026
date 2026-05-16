@@ -3,12 +3,15 @@ import { authStore } from "$lib/store/auth";
 
 const baseUrl = import.meta.env.VITE_SERVER_BASE_URL;
 
-export async function signin(username: string): Promise<Response> {
+export async function signin(
+  username: string,
+  password: string,
+): Promise<Response> {
   return fetch(`${baseUrl}/auth/signin`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ username, password }),
   });
 }
 

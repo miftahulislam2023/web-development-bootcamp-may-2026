@@ -41,7 +41,7 @@ func (e *ErrBadRequest) Error() string      { return e.Message }
 func (e *ErrInternalServer) Error() string  { return e.Message }
 func (e *ErrUnauthenticated) Error() string { return e.Message }
 
-func (s *Services) SignInUser(username string) (accessToken, refreshToken string, err error) {
+func (s *Services) SignInUser(username, password string) (accessToken, refreshToken string, err error) {
 	if len(username) < 1 {
 		return "", "", &ErrBadRequest{Message: "invalid user name"}
 	}
@@ -51,10 +51,20 @@ func (s *Services) SignInUser(username string) (accessToken, refreshToken string
 	}
 
 	if err == sql.ErrNoRows {
-		user, err = s.repo.CreateUser(username)
+		hash, err := auth.HashPassword(password)
+		if err != nil {
+			return "", "", &ErrInternalServer{Message: "failed to hash password"}
+		}
+		user, err = s.repo.CreateUser(username, hash)
 		if err != nil {
 			return "", "", &ErrInternalServer{Message: "failed to create user"}
 		}
+	}
+
+	ok, _ := auth.ComparePassword(password, user.Password)
+
+	if !ok {
+		return "", "", &ErrBadRequest{Message: "invalid username or password"}
 	}
 
 	refreshToken, err = utils.GenerateToken(user.ID, user.Username, s.cfg.JWTSecret, s.cfg.RefreshTokenExpiry)

@@ -13,21 +13,31 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users(username)
-VALUES($1)
-RETURNING id, username, created_at
+INSERT INTO users(username, password)
+VALUES($1, $2)
+RETURNING id, username, created_at, password
 `
 
-func (q *Queries) CreateUser(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, username)
+type CreateUserParams struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Password)
 	var i User
-	err := row.Scan(&i.ID, &i.Username, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.CreatedAt,
+		&i.Password,
+	)
 	return i, err
 }
 
 const getAllUsersExceptCurrent = `-- name: GetAllUsersExceptCurrent :many
 SELECT 
-  users.id, users.username, users.created_at, 
+  users.id, users.username, users.created_at, users.password, 
   EXISTS (
     SELECT 1 FROM conversations
     WHERE (conversations.user_a_id = $1 AND conversations.user_b_id = users.id)
@@ -41,6 +51,7 @@ type GetAllUsersExceptCurrentRow struct {
 	ID        uuid.UUID `json:"id"`
 	Username  string    `json:"username"`
 	CreatedAt time.Time `json:"created_at"`
+	Password  string    `json:"password"`
 	IsFriend  bool      `json:"is_friend"`
 }
 
@@ -57,6 +68,7 @@ func (q *Queries) GetAllUsersExceptCurrent(ctx context.Context, userAID uuid.UUI
 			&i.ID,
 			&i.Username,
 			&i.CreatedAt,
+			&i.Password,
 			&i.IsFriend,
 		); err != nil {
 			return nil, err
@@ -73,13 +85,18 @@ func (q *Queries) GetAllUsersExceptCurrent(ctx context.Context, userAID uuid.UUI
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, created_at FROM users
+SELECT id, username, created_at, password FROM users
 WHERE username = $1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
 	var i User
-	err := row.Scan(&i.ID, &i.Username, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.CreatedAt,
+		&i.Password,
+	)
 	return i, err
 }

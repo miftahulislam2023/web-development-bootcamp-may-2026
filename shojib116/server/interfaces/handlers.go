@@ -55,6 +55,7 @@ func (h *Handler) handleWS(allowedOrigin string) http.HandlerFunc {
 func (h *Handler) handleSignin(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Username string `json:"username"`
+		Password string `json:"password"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -62,7 +63,7 @@ func (h *Handler) handleSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.services.SignInUser(req.Username)
+	accessToken, refreshToken, err := h.services.SignInUser(req.Username, req.Password)
 
 	if err != nil {
 		handleError(w, r, err)

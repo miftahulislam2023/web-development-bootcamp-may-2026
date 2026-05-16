@@ -2,9 +2,11 @@
 
 import { useEffect } from "react"
 
-import { useRouter } from "next/navigation"
+import { useRouter }
+from "next/navigation"
 
-import Sidebar from "@/components/dashboard/sidebar"
+import Sidebar
+from "@/components/dashboard/sidebar"
 
 import {
   useAppSelector,
@@ -44,7 +46,9 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
+
         Loading...
+
       </div>
     )
   }
@@ -54,14 +58,16 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-100 dark:bg-background">
+    <div className="min-h-screen bg-zinc-100 dark:bg-background lg:flex">
 
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="min-w-0 flex-1 p-4 sm:p-6">
+
         {children}
+
       </main>
     </div>
   )

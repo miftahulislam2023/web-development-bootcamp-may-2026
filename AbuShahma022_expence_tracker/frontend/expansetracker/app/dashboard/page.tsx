@@ -10,10 +10,14 @@ import {
 
 import StatsCard from "@/components/dashboard/stats-card"
 
-import BudgetProgressCard from "@/components/dashboard/budget-progress-card"
-import MonthlyChart from "@/components/dashboard/monthly-chart"
+import BudgetProgressCard
+from "@/components/dashboard/budget-progress-card"
 
-import CategoryChart from "@/components/dashboard/category-chart"
+import MonthlyChart
+from "@/components/dashboard/monthly-chart"
+
+import CategoryChart
+from "@/components/dashboard/category-chart"
 
 import {
   getBudgetStatusApi,
@@ -22,7 +26,9 @@ import {
   getMonthlySummaryApi,
 } from "@/services/dashboard.api"
 
-import { useAppSelector } from "@/lib/hook"
+import {
+  useAppSelector,
+} from "@/lib/hook"
 
 interface SummaryData {
   totalExpense: number
@@ -42,7 +48,7 @@ interface BudgetData {
 
 export default function DashboardPage() {
 
-  // redux user
+  // Redux User
   const user =
     useAppSelector(
       (state) => state.auth.user
@@ -54,12 +60,23 @@ export default function DashboardPage() {
   const [budget, setBudget] =
     useState<BudgetData | null>(null)
 
+  const [monthlyData,
+    setMonthlyData] =
+    useState([])
+
+  const [categoryData,
+    setCategoryData] =
+    useState([])
+
   const [loading, setLoading] =
     useState(true)
 
+  // Dashboard Data
   const getDashboardData =
     async () => {
+
       try {
+
         const summaryResponse =
           await getExpenseSummaryApi()
 
@@ -73,47 +90,49 @@ export default function DashboardPage() {
         setBudget(
           budgetResponse.data
         )
+
       } catch (error) {
+
         console.log(error)
+
       } finally {
+
         setLoading(false)
       }
     }
 
-    const [monthlyData,
-  setMonthlyData] =
-  useState([])
-
-const [categoryData,
-  setCategoryData] =
-  useState([])
-
+  // Charts Data
   const getChartsData =
-  async () => {
-    try {
+    async () => {
 
-      const monthlyResponse =
-        await getMonthlySummaryApi()
+      try {
 
-      const categoryResponse =
-        await getCategorySummaryApi()
+        const monthlyResponse =
+          await getMonthlySummaryApi()
 
-      setMonthlyData(
-        monthlyResponse.data
-      )
+        const categoryResponse =
+          await getCategorySummaryApi()
 
-      setCategoryData(
-        categoryResponse.data
-      )
+        setMonthlyData(
+          monthlyResponse.data
+        )
 
-    } catch (error) {
-      console.log(error)
+        setCategoryData(
+          categoryResponse.data
+        )
+
+      } catch (error) {
+
+        console.log(error)
+      }
     }
-  }
 
   useEffect(() => {
+
     getDashboardData()
+
     getChartsData()
+
   }, [])
 
   if (loading) {
@@ -121,7 +140,9 @@ const [categoryData,
       <div className="flex h-[60vh] items-center justify-center">
 
         <p className="text-sm text-muted-foreground">
+
           Loading dashboard...
+
         </p>
       </div>
     )
@@ -131,21 +152,25 @@ const [categoryData,
     <div className="space-y-8">
 
       {/* Heading */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
         <div>
 
           <h1 className="text-4xl font-bold tracking-tight dark:text-black">
+
             Dashboard
+
           </h1>
 
           <p className="mt-2 text-muted-foreground">
+
             Track your expenses and monitor your financial activity.
+
           </p>
         </div>
 
         {/* User Card */}
-        <div className="hidden md:flex">
+        <div className="w-full sm:w-auto">
 
           <div className="bg-card flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm">
 
@@ -155,17 +180,21 @@ const [categoryData,
                 "/default-avatar.png"
               }
               alt="user"
-              className="size-11 rounded-full object-cover border"
+              className="size-11 rounded-full border object-cover"
             />
 
             <div>
 
               <p className="text-sm text-muted-foreground">
-                Welcome back 
+
+                Welcome back
+
               </p>
 
               <h3 className="font-semibold">
+
                 {user?.name}
+
               </h3>
             </div>
           </div>
@@ -173,7 +202,7 @@ const [categoryData,
       </div>
 
       {/* Stats */}
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
 
         <StatsCard
           title="Total Expense"
@@ -210,8 +239,6 @@ const [categoryData,
         />
       </div>
 
-      
-
       {/* Budget */}
       {budget && (
         <BudgetProgressCard
@@ -230,23 +257,17 @@ const [categoryData,
         />
       )}
 
-
       {/* Charts */}
-      <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+      <div className="grid min-w-0 gap-5 2xl:grid-cols-2">
 
-      <MonthlyChart
-        data={monthlyData}
-      />
+        <MonthlyChart
+          data={monthlyData}
+        />
 
-      <CategoryChart
-    data={categoryData}
-      />
-  </div>
-      
-
-
-
+        <CategoryChart
+          data={categoryData}
+        />
+      </div>
     </div>
-    
   )
 }

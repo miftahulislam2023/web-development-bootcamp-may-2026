@@ -568,7 +568,7 @@ const MyActivity = () => {
 									</div>
 
 									<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-										<div className="rounded-3xl border-2 border-black bg-black p-5 text-white transition-colors duration-500 hover:bg-white hover:text-black">
+										<div className="rounded-3xl border-2 border-black bg-black p-5 text-white">
 											<p className="text-xs uppercase tracking-[0.2em] text-white/70 hover:text-black/70">
 												Budget Amount
 											</p>

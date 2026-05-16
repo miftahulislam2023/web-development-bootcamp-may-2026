@@ -79,6 +79,9 @@ type SocketConnectionState = "connected" | "connecting" | "reconnecting" | "disc
 type LoadMessagesOptions = {
   showLoading?: boolean;
   scrollToBottom?: boolean;
+  preserveScrollPosition?: boolean;
+  appendAtTop?: boolean;
+  syncing?: boolean;
 };
 
 const socketStatusCopy: Record<SocketConnectionState, string> = {
@@ -112,16 +115,25 @@ export default function RoomChatPage() {
   const [isRoomLoading, setIsRoomLoading] = useState(true);
   const [isSidebarLoading, setIsSidebarLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [socketStatus, setSocketStatus] = useState<SocketConnectionState>("disconnected");
   const [error, setError] = useState<string | null>(null);
   const editingMessageIdRef = useRef<string | null>(null);
   const messagesViewportRef = useRef<HTMLDivElement | null>(null);
   const shouldStickToBottomRef = useRef(true);
+  const reconnectToastVisibleRef = useRef(false);
+  const isLoadingOlderRef = useRef(false);
+  const topLoadArmedRef = useRef(true);
 
   useEffect(() => {
     editingMessageIdRef.current = editingMessageId;
   }, [editingMessageId]);
+
+  useEffect(() => {
+    isLoadingOlderRef.current = isLoadingOlder;
+  }, [isLoadingOlder]);
 
   const joinedRoomIds = useMemo(() => new Set(myRooms.map((entry) => entry.room.id)), [myRooms]);
 
@@ -145,8 +157,56 @@ export default function RoomChatPage() {
       return;
     }
 
+    const distanceFromTop = viewport.scrollTop;
     const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
     shouldStickToBottomRef.current = distanceFromBottom < 120;
+
+    if (distanceFromTop > 260) {
+      topLoadArmedRef.current = true;
+    }
+
+    if (
+      topLoadArmedRef.current &&
+      distanceFromTop < 160 &&
+      nextCursor &&
+      messages.length > 0 &&
+      !isLoadingOlderRef.current &&
+      !isLoading
+    ) {
+      topLoadArmedRef.current = false;
+      void loadOlderMessages();
+    }
+  }
+
+  function normalizeMessages(entries: Message[]) {
+    const seen = new Set<string>();
+    const uniqueMessages: Message[] = [];
+
+    for (const entry of entries) {
+      if (seen.has(entry.id)) {
+        continue;
+      }
+
+      seen.add(entry.id);
+      uniqueMessages.push(entry);
+    }
+
+    return uniqueMessages;
+  }
+
+  async function loadOlderMessages() {
+    if (!nextCursor || isLoadingOlderRef.current) {
+      return;
+    }
+
+    isLoadingOlderRef.current = true;
+    setIsLoadingOlder(true);
+    await loadMessages(nextCursor, {
+      appendAtTop: true,
+      preserveScrollPosition: true,
+    });
+    setIsLoadingOlder(false);
+    isLoadingOlderRef.current = false;
   }
 
   async function loadRoom() {
@@ -161,9 +221,18 @@ export default function RoomChatPage() {
       return;
     }
 
+    if (response.status === 401 || response.status === 403) {
+      const message = "You need to sign in again to continue.";
+      setError(message);
+      toast.error(message);
+      setIsRoomLoading(false);
+      return;
+    }
+
     if (!response.ok) {
       const payload = await response.json().catch(() => ({ message: "Failed to load room." }));
       setError(payload.message ?? "Failed to load room.");
+      toast.error(payload.message ?? "Failed to load room.");
       setIsRoomLoading(false);
       return;
     }
@@ -205,6 +274,10 @@ export default function RoomChatPage() {
       setIsLoading(true);
     }
 
+    if (options.syncing) {
+      setIsSyncing(true);
+    }
+
     const query = new URLSearchParams({
       roomId,
       limit: "20",
@@ -213,6 +286,7 @@ export default function RoomChatPage() {
     const viewport = messagesViewportRef.current;
     const previousScrollHeight = viewport?.scrollHeight ?? 0;
     const previousScrollTop = viewport?.scrollTop ?? 0;
+    const shouldAutoScroll = options.scrollToBottom ?? shouldStickToBottomRef.current;
 
     if (cursor) {
       query.set("cursor", cursor);
@@ -220,18 +294,33 @@ export default function RoomChatPage() {
 
     const response = await fetch(`/api/messages?${query.toString()}`);
 
+    if (response.status === 401 || response.status === 403) {
+      const message = "You need to sign in again to view messages.";
+      setError(message);
+      toast.error(message);
+      setIsLoading(false);
+      setIsLoadingOlder(false);
+      setIsSyncing(false);
+      return;
+    }
+
     if (!response.ok) {
       const payload = await response.json().catch(() => ({ message: "Failed to fetch messages." }));
       setError(payload.message ?? "Failed to fetch messages.");
       toast.error(payload.message ?? "Failed to fetch messages.");
       setIsLoading(false);
+      setIsLoadingOlder(false);
+      setIsSyncing(false);
       return;
     }
 
     const payload = (await response.json()) as MessagesResponse;
     const orderedMessages = payload.messages.slice().reverse();
+    const normalizedMessages = normalizeMessages(orderedMessages);
 
-    setMessages((current) => (cursor ? [...orderedMessages, ...current] : orderedMessages));
+    setMessages((current) =>
+      cursor || options.appendAtTop ? normalizeMessages([...normalizedMessages, ...current]) : normalizedMessages
+    );
     setNextCursor(payload.nextCursor);
     setIsLoading(false);
 
@@ -239,18 +328,22 @@ export default function RoomChatPage() {
       const currentViewport = messagesViewportRef.current;
 
       if (!currentViewport) {
+        setIsLoadingOlder(false);
+        setIsSyncing(false);
         return;
       }
 
-      if (cursor) {
+      if (cursor || options.appendAtTop) {
         const nextScrollHeight = currentViewport.scrollHeight;
         currentViewport.scrollTop = nextScrollHeight - previousScrollHeight + previousScrollTop;
-        return;
+      } else if (shouldAutoScroll) {
+        scrollMessagesToBottom("auto");
+      } else if (options.preserveScrollPosition) {
+        currentViewport.scrollTop = previousScrollTop;
       }
 
-      if (options.scrollToBottom ?? true) {
-        scrollMessagesToBottom("auto");
-      }
+      setIsLoadingOlder(false);
+      setIsSyncing(false);
     });
   }
 
@@ -262,7 +355,10 @@ export default function RoomChatPage() {
     setEditingContent("");
     setError(null);
     setSocketStatus("disconnected");
+    setIsSyncing(false);
     setIsLoading(true);
+    setIsLoadingOlder(false);
+    topLoadArmedRef.current = true;
     setIsSidebarLoading(true);
     void loadRoom();
     void loadSidebarData();
@@ -289,13 +385,21 @@ export default function RoomChatPage() {
         userId: session.user.id,
       });
       socket.emit("join_room", roomId);
-      void loadMessages(undefined, { scrollToBottom: true });
+      void loadMessages(undefined, {
+        preserveScrollPosition: true,
+        scrollToBottom: shouldStickToBottomRef.current,
+        syncing: true,
+      });
     };
 
     const handleReceiveMessage = (message: RealtimeMessage) => {
       if (message.roomId !== roomId) {
         return;
       }
+
+      const viewport = messagesViewportRef.current;
+      const distanceFromBottom = viewport ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight : 0;
+      const shouldScroll = distanceFromBottom < 120;
 
       setMessages((current) => {
         if (current.some((existingMessage) => existingMessage.id === message.id)) {
@@ -319,6 +423,10 @@ export default function RoomChatPage() {
           },
         ];
       });
+
+      if (shouldScroll) {
+        requestAnimationFrame(() => scrollMessagesToBottom("smooth"));
+      }
     };
 
     const handleMessageEdited = (payload: MessageEditedPayload) => {
@@ -371,6 +479,8 @@ export default function RoomChatPage() {
       // eslint-disable-next-line no-console
       console.log("socket reconnect:", attemptNumber, socket.id);
       setSocketStatus("connected");
+      reconnectToastVisibleRef.current = false;
+      toast.dismiss("socket-reconnecting");
       toast.success("Connection restored.");
       rejoinRoomAndSync();
     };
@@ -379,19 +489,28 @@ export default function RoomChatPage() {
       // eslint-disable-next-line no-console
       console.log("socket reconnect_attempt:", attemptNumber);
       setSocketStatus("reconnecting");
+      if (!reconnectToastVisibleRef.current) {
+        reconnectToastVisibleRef.current = true;
+        toast.loading("Reconnecting...", { id: "socket-reconnecting" });
+      }
     };
 
     const handleConnectError = (error: Error) => {
       // eslint-disable-next-line no-console
       console.log("socket connect_error:", error.message);
       setSocketStatus("disconnected");
-      setError("Realtime connection issue. Retrying in the background.");
+      const message = "Realtime connection issue. Retrying in the background.";
+      setError(message);
+      toast.error(message);
     };
 
     const handleDisconnect = (reason: string) => {
       // eslint-disable-next-line no-console
       console.log("socket disconnect:", reason);
       setSocketStatus("disconnected");
+      if (reconnectToastVisibleRef.current) {
+        toast.dismiss("socket-reconnecting");
+      }
     };
 
     const handleSocketError = (payload: { message?: string }) => {
@@ -429,6 +548,8 @@ export default function RoomChatPage() {
       socket.off("disconnect", handleDisconnect);
       socket.emit("leave_room", roomId);
       socket.disconnect();
+      toast.dismiss("socket-reconnecting");
+      reconnectToastVisibleRef.current = false;
     };
   }, [room, roomId, session?.user?.id, status]);
 
@@ -437,6 +558,7 @@ export default function RoomChatPage() {
       return;
     }
 
+    const shouldScroll = shouldStickToBottomRef.current;
     const socket = getSocketClient();
     socket.emit("send_message", {
       roomId,
@@ -445,7 +567,7 @@ export default function RoomChatPage() {
 
     setContent("");
 
-    if (shouldStickToBottomRef.current) {
+    if (shouldScroll) {
       requestAnimationFrame(() => scrollMessagesToBottom("smooth"));
     }
   }
@@ -637,8 +759,8 @@ export default function RoomChatPage() {
           </div>
         </aside>
 
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-cyan-400/12 bg-slate-950/75 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-          <header className="flex flex-col gap-4 border-b border-white/5 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+        <section className="flex min-h-0 flex-col overflow-visible rounded-[28px] border border-cyan-400/12 bg-slate-950/75 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:overflow-hidden">
+          <header className="sticky top-0 z-30 flex flex-col gap-4 border-b border-white/5 bg-slate-950/90 px-5 py-5 backdrop-blur-xl sm:px-6 lg:static lg:bg-transparent lg:backdrop-blur-0 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/80">Live conversation</p>
               <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight text-slate-50">{room.name}</h1>
@@ -667,16 +789,25 @@ export default function RoomChatPage() {
               onScroll={handleMessagesScroll}
               className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6"
             >
+              {isSyncing ? (
+                <div className="mb-4 flex justify-center">
+                  <span className="rounded-full border border-amber-300/20 bg-amber-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-100">
+                    Syncing latest messages...
+                  </span>
+                </div>
+              ) : null}
+
               {nextCursor ? (
                 <div className="mb-4 flex justify-center">
                   <button
                     type="button"
                     onClick={() => {
-                      void loadMessages(nextCursor);
+                      void loadOlderMessages();
                     }}
-                    className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900"
+                    disabled={isLoadingOlder}
+                    className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Load older messages
+                    {isLoadingOlder ? "Loading older messages..." : "Load older messages"}
                   </button>
                 </div>
               ) : null}
@@ -791,6 +922,12 @@ export default function RoomChatPage() {
                   })}
                 </ul>
               ) : null}
+
+              {!isLoading && !isLoadingOlder && !isSyncing && socketStatus === "disconnected" ? (
+                <div className="mt-4 rounded-2xl border border-rose-400/15 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                  Connection interrupted. The app will retry automatically.
+                </div>
+              ) : null}
             </div>
 
             <form onSubmit={onSendMessage} className="border-t border-white/5 bg-slate-950/90 p-4 sm:p-5">
@@ -811,12 +948,13 @@ export default function RoomChatPage() {
                 rows={3}
                 placeholder="Write a message..."
                 required
+                disabled={isSending || socketStatus === "disconnected"}
               />
               <div className="mt-3 flex items-center justify-between gap-3">
                 <p className="text-xs text-slate-400">Press Enter to send, Shift + Enter for a new line.</p>
                 <button
                   type="submit"
-                  disabled={isSending}
+                  disabled={isSending || socketStatus === "disconnected"}
                   className="rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSending ? "Sending..." : "Send"}

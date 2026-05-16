@@ -33,6 +33,7 @@ export default function ChatPage() {
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const joinedRoomIds = useMemo(() => new Set(myRooms.map((entry) => entry.room.id)), [myRooms]);
@@ -103,24 +104,29 @@ export default function ChatPage() {
 
   async function joinRoom(roomId: string) {
     setError(null);
+    setJoiningRoomId(roomId);
 
-    const response = await fetch("/api/rooms/join", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ roomId }),
-    });
+    try {
+      const response = await fetch("/api/rooms/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ roomId }),
+      });
 
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({ message: "Failed to join room." }));
-      setError(payload.message ?? "Failed to join room.");
-      toast.error(payload.message ?? "Failed to join room.");
-      return;
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({ message: "Failed to join room." }));
+        setError(payload.message ?? "Failed to join room.");
+        toast.error(payload.message ?? "Failed to join room.");
+        return;
+      }
+
+      toast.success("Joined room.");
+      await loadData();
+    } finally {
+      setJoiningRoomId(null);
     }
-
-    toast.success("Joined room.");
-    await loadData();
   }
 
   return (
@@ -251,9 +257,10 @@ export default function ChatPage() {
                         <button
                           type="button"
                           onClick={() => joinRoom(room.id)}
-                          className="inline-flex rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900"
+                          disabled={joiningRoomId === room.id}
+                          className="inline-flex rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Join room
+                          {joiningRoomId === room.id ? "Joining..." : "Join room"}
                         </button>
                       )}
                     </div>

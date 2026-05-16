@@ -1,0 +1,11 @@
+.env
+*.env
+node_modules
+farhanaislamsaima/.git-child-backup/
+farhanaislamsaima/node_modules
+farhanaislamsaima/client/node_modules
+farhanaislamsaima/server/node_modules
+dist
+farhanaislamsaima/dist
+farhanaislamsaima/client/dist
+npm-debug.log

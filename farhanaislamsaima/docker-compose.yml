@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chat-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: chatdb
+      POSTGRES_USER: chatuser
+      POSTGRES_PASSWORD: chatpassword
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: chat-server
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://chatuser:chatpassword@postgres:5432/chatdb
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: change-this-secret-before-production
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      CLOUDINARY_UPLOAD_FOLDER: echoline/chat-images
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL:-}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY:-}
+      CLIENT_URL: http://localhost:5173
+    depends_on:
+      - postgres
+      - redis
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: chat-client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:4000/api
+      VITE_SOCKET_URL: http://localhost:4000
+      VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY:-}
+      VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN:-}
+      VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID:-}
+      VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET:-}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID:-}
+      VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID:-}
+      VITE_FIREBASE_VAPID_KEY: ${VITE_FIREBASE_VAPID_KEY:-}
+    depends_on:
+      - server
+
+volumes:
+  postgres-data:

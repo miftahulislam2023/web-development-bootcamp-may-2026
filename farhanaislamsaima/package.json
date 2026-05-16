@@ -1,0 +1,16 @@
+{
+  "name": "mern-live-chat-app",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "start": "npm run start --workspaces"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}

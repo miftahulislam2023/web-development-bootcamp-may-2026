@@ -2,6 +2,9 @@
 
 WalletWatch is a comprehensive full stack web application designed to help users manage their personal finances effectively. It provides a platform to track incomes, monitor expenses and gain insights into spending habits through a user-friendly dashboard and AI powered analysis.
 
+**Live Link**: [WalletWatch](https://walletwatch-bb4ee.web.app/)  
+**Server Link**: [Server](https://web-development-bootcamp-may-2026.onrender.com/)
+
 ## Core Features
 
 - **User Authentication**: Secure login and registration system using Firebase Authentication.
@@ -33,6 +36,10 @@ WalletWatch is a comprehensive full stack web application designed to help users
 - **Database**: MongoDB
 - **ODM**: Mongoose
 - **JWT**: Firebase Admin SDK
+
+### Deployment
+- **Frontend**: Firebase Hosting
+- **Backend** : Render
 
 ## Project Structure
 

@@ -12,7 +12,14 @@
 [![TailwindCSS](https://img.shields.io/badge/Tailwind-4.3.0-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![DaisyUI](https://img.shields.io/badge/DaisyUI-5.5.19-5A0EF8?style=flat&logo=daisyui&logoColor=white)](https://daisyui.com/)
 
-[Live Demo](https://expensetracker-2ab95.web.app/) • [Report Bug](https://github.com/SiratimMChy/cashnivo/issues) • [Request Feature](https://github.com/SiratimMChy/cashnivo/issues)
+<div align="center">
+<a href="https://expensetracker-2ab95.web.app/" target="_blank">
+
+![Live Demo](https://img.shields.io/badge/EXPENSE%20TRACKER-LIVE%20DEMO-6366F1?style=for-the-badge&logo=firefox-browser&logoColor=white&labelColor=111827)
+
+</a>
+</div>
+
 
 </div>
 

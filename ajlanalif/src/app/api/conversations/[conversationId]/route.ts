@@ -29,6 +29,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ con
           username: true,
           image: true,
           bio: true,
+          lastSeenAt: true,
         },
       },
       userB: {
@@ -39,6 +40,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ con
           username: true,
           image: true,
           bio: true,
+          lastSeenAt: true,
         },
       },
     },

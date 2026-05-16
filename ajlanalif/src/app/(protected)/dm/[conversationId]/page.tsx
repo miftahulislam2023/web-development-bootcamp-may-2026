@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 
 import { ConversationSidebar } from "@/components/dm/conversation-sidebar";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { bumpDmUnreadCount, clearDmUnreadCount, getTotalUnreadCount, readDmUnreadCounts, readRoomUnreadCounts } from "@/lib/dm-unread";
 import { getSocketClient } from "@/lib/socket/client";
 import type { DmConversationSummary, DmMessage, DmUser } from "@/lib/dm";
 
@@ -30,6 +31,7 @@ type DmSocketMessage = {
   content: string;
   conversationId: string;
   createdAt: string;
+  seenAt?: string | null;
   author: {
     id: string;
     username: string | null;
@@ -52,6 +54,67 @@ type MessageEditedPayload = {
 type MessageDeletedPayload = {
   messageId: string;
   deletedAt: string;
+};
+
+type MessageSeenPayload = {
+  conversationId: string;
+  messageIds: string[];
+  seenAt: string;
+  seenByUserId: string;
+};
+
+type PresenceSnapshotPayload = {
+  userIds: string[];
+};
+
+type PresenceEventPayload = {
+  userId: string;
+  lastSeenAt?: string;
+};
+
+type DirectTypingPayload = {
+  conversationId: string;
+  user: {
+    id: string;
+    username: string | null;
+  };
+};
+
+type DirectMessageBrowserEventDetail = {
+  kind: "message" | "edited" | "deleted";
+  conversationId: string;
+  message: {
+    id: string;
+    content: string;
+    conversationId: string;
+    createdAt: string;
+    editedAt?: string | null;
+    deletedAt?: string | null;
+    seenAt?: string | null;
+    author: {
+      id: string;
+      username: string | null;
+      name: string | null;
+      image: string | null;
+    };
+  };
+  sender: {
+    id: string;
+    username: string | null;
+    name: string | null;
+    image: string | null;
+  };
+};
+
+type PresenceBrowserEventDetail = {
+  userId: string;
+  isOnline: boolean;
+  lastSeenAt: string | null;
+};
+
+type UnreadBrowserEventDetail = {
+  dm: Record<string, number>;
+  rooms: Record<string, number>;
 };
 
 type SocketConnectionState = "connected" | "connecting" | "reconnecting" | "disconnected";
@@ -79,6 +142,39 @@ function avatarLabel(user: DmUser) {
   return (user.username ?? user.name ?? "?").trim().charAt(0).toUpperCase();
 }
 
+function formatLastSeen(lastSeenAt: string | null | undefined) {
+  if (!lastSeenAt) {
+    return "Last seen recently";
+  }
+
+  const timestamp = new Date(lastSeenAt).getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return "Last seen recently";
+  }
+
+  const diffMs = Date.now() - timestamp;
+
+  if (diffMs < 60_000) {
+    return "Last seen recently";
+  }
+
+  const diffMinutes = Math.floor(diffMs / 60_000);
+
+  if (diffMinutes < 60) {
+    return `Last seen ${diffMinutes}m ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+
+  if (diffHours < 24) {
+    return `Last seen ${diffHours}h ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `Last seen ${diffDays}d ago`;
+}
+
 export default function DirectMessagePage() {
   const router = useRouter();
   const params = useParams<{ conversationId: string }>();
@@ -104,6 +200,12 @@ export default function DirectMessagePage() {
   const [isSocketAuthenticated, setIsSocketAuthenticated] = useState(false);
   const [socketStatus, setSocketStatus] = useState<SocketConnectionState>("disconnected");
   const [error, setError] = useState<string | null>(null);
+  const [presenceByUserId, setPresenceByUserId] = useState<Record<string, { isOnline: boolean; lastSeenAt: string | null }>>({});
+  const [typingByConversationId, setTypingByConversationId] = useState<Record<string, boolean>>({});
+  const [activeTypingUsers, setActiveTypingUsers] = useState<Array<{ id: string; username: string | null }>>([]);
+  const [unreadByConversationId, setUnreadByConversationId] = useState<Record<string, number>>({});
+  const [roomUnreadByRoomId, setRoomUnreadByRoomId] = useState<Record<string, number>>({});
+  const [isWindowFocused, setIsWindowFocused] = useState(true);
 
   const messagesViewportRef = useRef<HTMLDivElement | null>(null);
   const shouldStickToBottomRef = useRef(true);
@@ -111,6 +213,11 @@ export default function DirectMessagePage() {
   const isLoadingOlderRef = useRef(false);
   const editingMessageIdRef = useRef<string | null>(null);
   const topLoadArmedRef = useRef(true);
+  const typingTimeoutByConversationIdRef = useRef<Map<string, number>>(new Map());
+  const localTypingTimeoutRef = useRef<number | null>(null);
+  const isLocallyTypingRef = useRef(false);
+  const conversationsRef = useRef<DmConversationSummary[]>([]);
+  const notifiedDmMessageIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     editingMessageIdRef.current = editingMessageId;
@@ -119,6 +226,168 @@ export default function DirectMessagePage() {
   useEffect(() => {
     isLoadingOlderRef.current = isLoadingOlder;
   }, [isLoadingOlder]);
+
+  useEffect(() => {
+    setUnreadByConversationId(readDmUnreadCounts());
+    setRoomUnreadByRoomId(readRoomUnreadCounts());
+  }, []);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  useEffect(() => {
+    const handleDmUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<DirectMessageBrowserEventDetail>).detail;
+
+      if (!detail?.conversationId) {
+        return;
+      }
+
+      setUnreadByConversationId(readDmUnreadCounts());
+      setRoomUnreadByRoomId(readRoomUnreadCounts());
+
+      setConversations((current) => {
+        const updatedAt = new Date().toISOString();
+        const next = current.map((entry) => {
+          if (entry.id !== detail.conversationId) {
+            return entry;
+          }
+
+          return {
+            ...entry,
+            updatedAt,
+            latestMessage: {
+              ...detail.message,
+              editedAt: detail.message.editedAt ?? null,
+              deletedAt: detail.message.deletedAt ?? null,
+              seenAt: detail.message.seenAt ?? null,
+            },
+          };
+        });
+
+        return next.sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+      });
+
+      if (detail.conversationId !== conversationId) {
+        return;
+      }
+
+      if (detail.kind === "message") {
+        setMessages((current) => {
+          if (current.some((message) => message.id === detail.message.id)) {
+            return current;
+          }
+
+          return [
+            ...current,
+            {
+              id: detail.message.id,
+              content: detail.message.content,
+              conversationId: detail.message.conversationId,
+              createdAt: detail.message.createdAt,
+              editedAt: detail.message.editedAt ?? null,
+              deletedAt: detail.message.deletedAt ?? null,
+              seenAt: detail.message.seenAt ?? null,
+              author: {
+                id: detail.message.author.id,
+                username: detail.message.author.username,
+                name: detail.message.author.name,
+                image: detail.message.author.image,
+              },
+            },
+          ];
+        });
+      }
+
+      if (detail.kind === "edited") {
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === detail.message.id
+              ? { ...message, content: detail.message.content, editedAt: detail.message.editedAt ?? null, deletedAt: null }
+              : message
+          )
+        );
+      }
+
+      if (detail.kind === "deleted") {
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === detail.message.id ? { ...message, content: "[deleted]", deletedAt: detail.message.deletedAt ?? null } : message
+          )
+        );
+      }
+
+      if (editingMessageIdRef.current === detail.message.id) {
+        setEditingMessageId(null);
+        setEditingContent("");
+      }
+    };
+
+    const handlePresenceUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<PresenceBrowserEventDetail>).detail;
+
+      if (!detail?.userId) {
+        return;
+      }
+
+      setPresenceByUserId((current) => ({
+        ...current,
+        [detail.userId]: {
+          isOnline: detail.isOnline,
+          lastSeenAt: detail.lastSeenAt,
+        },
+      }));
+    };
+
+    const handleUnreadUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<UnreadBrowserEventDetail>).detail;
+
+      if (!detail) {
+        return;
+      }
+
+      setUnreadByConversationId(detail.dm);
+      setRoomUnreadByRoomId(detail.rooms);
+    };
+
+    window.addEventListener("dm_updated", handleDmUpdated);
+    window.addEventListener("presence_updated", handlePresenceUpdated);
+    window.addEventListener("realtime_unread_updated", handleUnreadUpdated);
+
+    return () => {
+      window.removeEventListener("dm_updated", handleDmUpdated);
+      window.removeEventListener("presence_updated", handlePresenceUpdated);
+      window.removeEventListener("realtime_unread_updated", handleUnreadUpdated);
+    };
+  }, [conversationId]);
+
+  useEffect(() => {
+    const updateWindowState = () => {
+      setIsWindowFocused(document.visibilityState === "visible" && window.document.hasFocus());
+    };
+
+    updateWindowState();
+    window.addEventListener("focus", updateWindowState);
+    window.addEventListener("blur", updateWindowState);
+    document.addEventListener("visibilitychange", updateWindowState);
+
+    return () => {
+      window.removeEventListener("focus", updateWindowState);
+      window.removeEventListener("blur", updateWindowState);
+      document.removeEventListener("visibilitychange", updateWindowState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const totalUnread = getTotalUnreadCount({ dm: unreadByConversationId, rooms: roomUnreadByRoomId });
+
+    document.title = totalUnread > 0 ? `(${totalUnread}) Realtime Chat App` : "Realtime Chat App";
+
+    return () => {
+      document.title = "Realtime Chat App";
+    };
+  }, [roomUnreadByRoomId, unreadByConversationId]);
 
   function normalizeMessages(entries: DmMessage[]) {
     const seen = new Set<string>();
@@ -197,6 +466,18 @@ export default function DirectMessagePage() {
 
       const payload = (await response.json()) as DmConversationSummary[];
       setConversations(payload);
+      setPresenceByUserId((current) => {
+        const next = { ...current };
+
+        for (const entry of payload) {
+          next[entry.otherUser.id] = {
+            isOnline: current[entry.otherUser.id]?.isOnline ?? false,
+            lastSeenAt: entry.otherUser.lastSeenAt ?? current[entry.otherUser.id]?.lastSeenAt ?? null,
+          };
+        }
+
+        return next;
+      });
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "Failed to load conversations.";
       toast.error(message);
@@ -340,6 +621,11 @@ export default function DirectMessagePage() {
     setIsLoadingOlder(false);
     setIsSyncing(false);
     topLoadArmedRef.current = true;
+    setTypingByConversationId((current) => {
+      const { [conversationId]: _removed, ...next } = current;
+      return next;
+    });
+    setUnreadByConversationId(clearDmUnreadCount(conversationId));
     void loadConversations();
     void loadConversation();
   }, [conversationId]);
@@ -359,10 +645,41 @@ export default function DirectMessagePage() {
     }
 
     const socket = getSocketClient();
-    let pendingJoinConversationId: string | null = null;
+
+    const clearTypingConversation = (targetConversationId: string) => {
+      setTypingByConversationId((current) => {
+        if (!current[targetConversationId]) {
+          return current;
+        }
+
+        const { [targetConversationId]: _removed, ...next } = current;
+        return next;
+      });
+
+      if (targetConversationId === conversationId) {
+        setActiveTypingUsers([]);
+      }
+    };
+
+    const scheduleTypingAutoStop = (targetConversationId: string) => {
+      const timeoutMap = typingTimeoutByConversationIdRef.current;
+      const existingTimeout = timeoutMap.get(targetConversationId);
+
+      if (typeof existingTimeout === "number") {
+        window.clearTimeout(existingTimeout);
+      }
+
+      const timeout = window.setTimeout(() => {
+        timeoutMap.delete(targetConversationId);
+        clearTypingConversation(targetConversationId);
+      }, 1800);
+
+      timeoutMap.set(targetConversationId, timeout);
+    };
 
     const joinConversationAndSync = () => {
       socket.emit("join_conversation", conversationId);
+      setUnreadByConversationId(clearDmUnreadCount(conversationId));
       void loadMessages(undefined, {
         preserveScrollPosition: true,
         scrollToBottom: shouldStickToBottomRef.current,
@@ -370,184 +687,170 @@ export default function DirectMessagePage() {
       });
     };
 
-    const requestAuthentication = () => {
-      pendingJoinConversationId = conversationId;
-      setIsSocketAuthenticated(false);
-      socket.emit("authenticate", { userId: session.user.id });
-    };
+    const handleDmUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<DirectMessageBrowserEventDetail>).detail;
 
-    const handleReceiveDirectMessage = (message: DmSocketMessage) => {
-      if (message.conversationId !== conversationId) {
+      if (!detail?.conversationId) {
         return;
       }
 
-      const viewport = messagesViewportRef.current;
-      const distanceFromBottom = viewport ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight : 0;
-      const shouldScroll = distanceFromBottom < 120;
+      setUnreadByConversationId(readDmUnreadCounts());
+      setRoomUnreadByRoomId(readRoomUnreadCounts());
 
-      setMessages((current) => {
-        if (current.some((existingMessage) => existingMessage.id === message.id)) {
-          return current;
-        }
+      setConversations((current) => {
+        const updatedAt = new Date().toISOString();
+        const next = current.map((entry) => {
+          if (entry.id !== detail.conversationId) {
+            return entry;
+          }
 
-        return [
-          ...current,
-          {
-            id: message.id,
-            content: message.content,
-            conversationId: message.conversationId,
-            createdAt: message.createdAt,
-            editedAt: null,
-            deletedAt: null,
-            author: {
-              id: message.author.id,
-              username: message.author.username,
-              name: message.author.name,
-              image: message.author.image,
+          return {
+            ...entry,
+            updatedAt,
+            latestMessage: {
+              ...detail.message,
+              editedAt: detail.message.editedAt ?? null,
+              deletedAt: detail.message.deletedAt ?? null,
+              seenAt: detail.message.seenAt ?? null,
             },
-          },
-        ];
+          };
+        });
+
+        return next.sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
       });
 
-      updateConversationPreview({
-        id: message.id,
-        content: message.content,
-        conversationId: message.conversationId,
-        createdAt: message.createdAt,
-        editedAt: null,
-        deletedAt: null,
-        author: {
-          id: message.author.id,
-          username: message.author.username,
-          name: message.author.name,
-          image: message.author.image,
-        },
-      });
-
-      if (shouldScroll) {
-        requestAnimationFrame(() => scrollMessagesToBottom("smooth"));
-      }
-    };
-
-    const handleMessageEdited = (payload: MessageEditedPayload) => {
-      setMessages((current) =>
-        current.map((message) =>
-          message.id === payload.messageId
-            ? { ...message, content: payload.content, editedAt: payload.editedAt, deletedAt: null }
-            : message
-        )
-      );
-
-      updateConversationPreview(
-        {
-          id: payload.messageId,
-          content: payload.content,
-          createdAt: payload.editedAt,
-          editedAt: payload.editedAt,
-          deletedAt: null,
-          conversationId,
-          author: {
-            id: payload.author.id,
-            username: payload.author.username,
-            name: null,
-            image: payload.author.image,
-          },
-        },
-        payload.messageId
-      );
-
-      if (editingMessageIdRef.current === payload.messageId) {
-        setEditingMessageId(null);
-        setEditingContent("");
-      }
-    };
-
-    const handleMessageDeleted = (payload: MessageDeletedPayload) => {
-      setMessages((current) =>
-        current.map((message) =>
-          message.id === payload.messageId ? { ...message, content: "[deleted]", deletedAt: payload.deletedAt } : message
-        )
-      );
-
-      updateConversationPreview(
-        {
-          id: payload.messageId,
-          content: "[deleted]",
-          conversationId,
-          createdAt: payload.deletedAt,
-          editedAt: null,
-          deletedAt: payload.deletedAt,
-          author: {
-            id: session?.user?.id ?? "",
-            username: session?.user?.username ?? null,
-            name: session?.user?.name ?? null,
-            image: session?.user?.image ?? null,
-          },
-        },
-        payload.messageId
-      );
-
-      if (editingMessageIdRef.current === payload.messageId) {
-        setEditingMessageId(null);
-        setEditingContent("");
-      }
-    };
-
-    const handleConnect = () => {
-      setSocketStatus("connected");
-      requestAuthentication();
-    };
-
-    const handleAuthenticated = (payload: { userId?: string }) => {
-      if (!payload?.userId || payload.userId !== session.user.id) {
+      if (detail.conversationId !== conversationId) {
         return;
       }
 
-      setIsSocketAuthenticated(true);
+      if (detail.kind === "message") {
+        setMessages((current) => {
+          if (current.some((message) => message.id === detail.message.id)) {
+            return current;
+          }
 
-      if (pendingJoinConversationId === conversationId) {
-        joinConversationAndSync();
+          return [
+            ...current,
+            {
+              id: detail.message.id,
+              content: detail.message.content,
+              conversationId: detail.message.conversationId,
+              createdAt: detail.message.createdAt,
+              editedAt: detail.message.editedAt ?? null,
+              deletedAt: detail.message.deletedAt ?? null,
+              seenAt: detail.message.seenAt ?? null,
+              author: {
+                id: detail.message.author.id,
+                username: detail.message.author.username,
+                name: detail.message.author.name,
+                image: detail.message.author.image,
+              },
+            },
+          ];
+        });
+
+        const viewport = messagesViewportRef.current;
+        const distanceFromBottom = viewport ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight : 0;
+
+        if (distanceFromBottom < 120) {
+          requestAnimationFrame(() => scrollMessagesToBottom("smooth"));
+        }
       }
-    };
 
-    const handleReconnect = () => {
-      setSocketStatus("connected");
-      reconnectToastVisibleRef.current = false;
-      toast.dismiss("dm-socket-reconnecting");
-      toast.success("Connection restored.");
-      requestAuthentication();
-    };
-
-    const handleReconnectAttempt = () => {
-      setSocketStatus("reconnecting");
-      if (!reconnectToastVisibleRef.current) {
-        reconnectToastVisibleRef.current = true;
-        toast.loading("Reconnecting...", { id: "dm-socket-reconnecting" });
+      if (detail.kind === "edited") {
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === detail.message.id ? { ...message, content: detail.message.content, editedAt: detail.message.editedAt ?? null, deletedAt: null } : message
+          )
+        );
       }
-    };
 
-    const handleDisconnect = () => {
-      setSocketStatus("disconnected");
-      setIsSocketAuthenticated(false);
-      if (reconnectToastVisibleRef.current) {
-        toast.dismiss("dm-socket-reconnecting");
+      if (detail.kind === "deleted") {
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === detail.message.id ? { ...message, content: "[deleted]", deletedAt: detail.message.deletedAt ?? null } : message
+          )
+        );
       }
-    };
 
-    const handleConnectError = (socketError: Error) => {
-      setSocketStatus("disconnected");
-      setIsSocketAuthenticated(false);
-      const message = socketError.message || "Realtime connection issue. Retrying in the background.";
-      setError(message);
-      toast.error(message);
-    };
-
-    const handleAuthenticationFailed = (payload: { message?: string }) => {
-      setIsSocketAuthenticated(false);
-
-      if (payload.message) {
-        setError(payload.message);
+      if (editingMessageIdRef.current === detail.message.id) {
+        setEditingMessageId(null);
+        setEditingContent("");
       }
+
+      clearTypingConversation(conversationId);
+    };
+
+    const handlePresenceUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<PresenceBrowserEventDetail>).detail;
+
+      if (!detail?.userId) {
+        return;
+      }
+
+      setPresenceByUserId((current) => ({
+        ...current,
+        [detail.userId]: {
+          isOnline: detail.isOnline,
+          lastSeenAt: detail.lastSeenAt,
+        },
+      }));
+    };
+
+    const handleUnreadUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<UnreadBrowserEventDetail>).detail;
+
+      if (!detail) {
+        return;
+      }
+
+      setUnreadByConversationId(detail.dm);
+      setRoomUnreadByRoomId(detail.rooms);
+    };
+
+    const handleDirectTypingStart = (payload: DirectTypingPayload) => {
+      if (payload.user.id === session.user.id) {
+        return;
+      }
+
+      setTypingByConversationId((current) => ({
+        ...current,
+        [payload.conversationId]: true,
+      }));
+
+      if (payload.conversationId === conversationId) {
+        setActiveTypingUsers((current) => {
+          if (current.some((user) => user.id === payload.user.id)) {
+            return current;
+          }
+
+          return [...current, payload.user];
+        });
+      }
+
+      scheduleTypingAutoStop(payload.conversationId);
+    };
+
+    const handleDirectTypingStop = (payload: DirectTypingPayload) => {
+      const timeoutMap = typingTimeoutByConversationIdRef.current;
+      const existingTimeout = timeoutMap.get(payload.conversationId);
+
+      if (typeof existingTimeout === "number") {
+        window.clearTimeout(existingTimeout);
+        timeoutMap.delete(payload.conversationId);
+      }
+
+      clearTypingConversation(payload.conversationId);
+    };
+
+    const handleMessageSeen = (payload: MessageSeenPayload) => {
+      if (payload.conversationId !== conversationId || !payload.messageIds.length) {
+        return;
+      }
+
+      const seenMessageIds = new Set(payload.messageIds);
+
+      setMessages((current) => current.map((message) => (seenMessageIds.has(message.id) ? { ...message, seenAt: payload.seenAt } : message)));
     };
 
     const handleSocketError = (payload: { message?: string }) => {
@@ -558,40 +861,36 @@ export default function DirectMessagePage() {
     };
 
     setSocketStatus(socket.connected ? "connected" : "connecting");
-    socket.on("connect", handleConnect);
-    socket.on("authenticated", handleAuthenticated);
-    socket.on("authentication_failed", handleAuthenticationFailed);
-    socket.on("reconnect", handleReconnect);
-    socket.on("reconnect_attempt", handleReconnectAttempt);
-    socket.on("disconnect", handleDisconnect);
-    socket.on("connect_error", handleConnectError);
-    socket.on("receive_direct_message", handleReceiveDirectMessage);
-    socket.on("message_edited", handleMessageEdited);
-    socket.on("message_deleted", handleMessageDeleted);
+    socket.on("direct_typing_start", handleDirectTypingStart);
+    socket.on("direct_typing_stop", handleDirectTypingStop);
+    socket.on("message_seen", handleMessageSeen);
     socket.on("socket_error", handleSocketError);
-    socket.connect();
+    window.addEventListener("dm_updated", handleDmUpdated);
+    window.addEventListener("presence_updated", handlePresenceUpdated);
+    window.addEventListener("realtime_unread_updated", handleUnreadUpdated);
 
     if (socket.connected) {
-      requestAuthentication();
+      joinConversationAndSync();
     }
 
     return () => {
-      socket.off("connect", handleConnect);
-      socket.off("authenticated", handleAuthenticated);
-      socket.off("authentication_failed", handleAuthenticationFailed);
-      socket.off("reconnect", handleReconnect);
-      socket.off("reconnect_attempt", handleReconnectAttempt);
-      socket.off("disconnect", handleDisconnect);
-      socket.off("connect_error", handleConnectError);
-      socket.off("receive_direct_message", handleReceiveDirectMessage);
-      socket.off("message_edited", handleMessageEdited);
-      socket.off("message_deleted", handleMessageDeleted);
+      socket.off("direct_typing_start", handleDirectTypingStart);
+      socket.off("direct_typing_stop", handleDirectTypingStop);
+      socket.off("message_seen", handleMessageSeen);
       socket.off("socket_error", handleSocketError);
+      window.removeEventListener("dm_updated", handleDmUpdated);
+      window.removeEventListener("presence_updated", handlePresenceUpdated);
+      window.removeEventListener("realtime_unread_updated", handleUnreadUpdated);
       socket.emit("leave_conversation", conversationId);
-      socket.disconnect();
-      setIsSocketAuthenticated(false);
-      toast.dismiss("dm-socket-reconnecting");
-      reconnectToastVisibleRef.current = false;
+      for (const timeout of typingTimeoutByConversationIdRef.current.values()) {
+        window.clearTimeout(timeout);
+      }
+      typingTimeoutByConversationIdRef.current.clear();
+      setActiveTypingUsers([]);
+      setTypingByConversationId((current) => {
+        const { [conversationId]: _removed, ...next } = current;
+        return next;
+      });
     };
   }, [conversation, conversationId, session?.user?.id, status]);
 
@@ -666,6 +965,50 @@ export default function DirectMessagePage() {
     }
   }
 
+  function stopLocalTyping() {
+    const socket = getSocketClient();
+
+    if (isLocallyTypingRef.current && socketStatus !== "disconnected") {
+      socket.emit("direct_typing_stop", { conversationId });
+    }
+
+    isLocallyTypingRef.current = false;
+
+    if (localTypingTimeoutRef.current) {
+      window.clearTimeout(localTypingTimeoutRef.current);
+      localTypingTimeoutRef.current = null;
+    }
+  }
+
+  function handleComposerChange(nextValue: string) {
+    setContent(nextValue);
+
+    if (socketStatus === "disconnected") {
+      return;
+    }
+
+    const socket = getSocketClient();
+    const hasText = nextValue.trim().length > 0;
+
+    if (!hasText) {
+      stopLocalTyping();
+      return;
+    }
+
+    if (!isLocallyTypingRef.current) {
+      socket.emit("direct_typing_start", { conversationId });
+      isLocallyTypingRef.current = true;
+    }
+
+    if (localTypingTimeoutRef.current) {
+      window.clearTimeout(localTypingTimeoutRef.current);
+    }
+
+    localTypingTimeoutRef.current = window.setTimeout(() => {
+      stopLocalTyping();
+    }, 1200);
+  }
+
   function saveEdit(messageId: string) {
     if (!editingContent.trim()) {
       return;
@@ -691,12 +1034,13 @@ export default function DirectMessagePage() {
       return;
     }
 
-    if (!isSocketAuthenticated) {
+    if (socketStatus === "disconnected") {
       toast.error("Realtime connection is not ready yet.");
       return;
     }
 
     const shouldScroll = shouldStickToBottomRef.current;
+    stopLocalTyping();
     getSocketClient().emit("send_direct_message", {
       conversationId,
       content,
@@ -769,6 +1113,9 @@ export default function DirectMessagePage() {
           onStartConversation={startConversation}
           emptyLabel="No conversations yet. Search a username to start one."
           activeSection="dm"
+          presenceByUserId={presenceByUserId}
+          unreadByConversationId={unreadByConversationId}
+          typingByConversationId={typingByConversationId}
         />
 
         <section className="flex min-h-0 flex-col overflow-visible rounded-[28px] border border-cyan-400/12 bg-slate-950/75 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] lg:overflow-hidden">
@@ -779,11 +1126,25 @@ export default function DirectMessagePage() {
                 {conversation.otherUser.username ?? conversation.otherUser.name ?? "Unknown user"}
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Realtime direct messages with the same minimal architecture as room chat.</p>
+              <p className="mt-1 text-xs text-slate-400">
+                {presenceByUserId[conversation.otherUser.id]?.isOnline
+                  ? "Online"
+                  : formatLastSeen(presenceByUserId[conversation.otherUser.id]?.lastSeenAt ?? conversation.otherUser.lastSeenAt)}
+              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${socketStatusTone[socketStatus]}`}>
                 {socketStatusCopy[socketStatus]}
+              </span>
+              <span
+                className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                  presenceByUserId[conversation.otherUser.id]?.isOnline
+                    ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
+                    : "border-slate-400/20 bg-slate-500/10 text-slate-200"
+                }`}
+              >
+                {presenceByUserId[conversation.otherUser.id]?.isOnline ? "Online" : "Offline"}
               </span>
               <Link href="/dm" className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-4 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">
                 Back to DMs
@@ -840,6 +1201,13 @@ export default function DirectMessagePage() {
                     const isOwnMessage = message.author.id === session?.user?.id;
                     const isEditingThisMessage = editingMessageId === message.id;
                     const displayName = message.author.username ?? message.author.name ?? "Unknown";
+                    const deliveryStatus = isOwnMessage
+                      ? message.seenAt
+                        ? "Seen"
+                        : socketStatus === "connected" && isSocketAuthenticated
+                          ? "Delivered"
+                          : "Sent"
+                      : null;
 
                     return (
                       <li key={message.id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
@@ -876,6 +1244,10 @@ export default function DirectMessagePage() {
                             <p className={`mt-3 text-sm leading-6 ${message.deletedAt ? "italic text-slate-400" : "text-slate-100"}`}>{message.deletedAt ? "This message was deleted." : message.content}</p>
                           )}
 
+                          {deliveryStatus && !isEditingThisMessage ? (
+                            <p className="mt-2 text-right text-[11px] font-medium text-slate-400">{deliveryStatus}</p>
+                          ) : null}
+
                           {isOwnMessage && !message.deletedAt && !isEditingThisMessage ? (
                             <div className="mt-4 flex flex-wrap items-center gap-2">
                               <button type="button" onClick={() => { setEditingMessageId(message.id); setEditingContent(message.content); }} className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">Edit</button>
@@ -891,11 +1263,17 @@ export default function DirectMessagePage() {
             </div>
 
             <form onSubmit={onSubmit} className="border-t border-white/5 bg-slate-950/90 p-4 sm:p-5">
+              {activeTypingUsers.length > 0 ? (
+                <p className="mb-2 text-xs text-cyan-100">
+                  {activeTypingUsers[0].username ?? "User"}
+                  {activeTypingUsers.length > 1 ? ` and ${activeTypingUsers.length - 1} others` : ""} typing...
+                </p>
+              ) : null}
               <label htmlFor="content" className="text-sm font-semibold text-slate-100">New message</label>
               <textarea
                 id="content"
                 value={content}
-                onChange={(event) => setContent(event.target.value)}
+                onChange={(event) => handleComposerChange(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -906,11 +1284,11 @@ export default function DirectMessagePage() {
                 rows={3}
                 placeholder="Write a direct message..."
                 required
-                disabled={isSending || socketStatus === "disconnected" || !isSocketAuthenticated}
+                disabled={isSending || socketStatus === "disconnected"}
               />
               <div className="mt-3 flex items-center justify-between gap-3">
                 <p className="text-xs text-slate-400">Press Enter to send, Shift + Enter for a new line.</p>
-                <button type="submit" disabled={isSending || socketStatus === "disconnected" || !isSocketAuthenticated} className="rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60">{isSending ? "Sending..." : "Send"}</button>
+                <button type="submit" disabled={isSending || socketStatus === "disconnected"} className="rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60">{isSending ? "Sending..." : "Send"}</button>
               </div>
             </form>
           </div>

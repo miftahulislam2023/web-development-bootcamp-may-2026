@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
 
+import { RealtimeProvider } from "@/providers/realtime-provider";
+
 type AppProvidersProps = {
   children: ReactNode;
 };
@@ -11,7 +13,7 @@ type AppProvidersProps = {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <SessionProvider>
-      {children}
+      <RealtimeProvider>{children}</RealtimeProvider>
       <Toaster
         position="top-right"
         gutter={12}

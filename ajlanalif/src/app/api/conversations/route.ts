@@ -19,6 +19,7 @@ const conversationSelect = {
       username: true,
       image: true,
       bio: true,
+      lastSeenAt: true,
     },
   },
   userB: {
@@ -29,6 +30,7 @@ const conversationSelect = {
       username: true,
       image: true,
       bio: true,
+      lastSeenAt: true,
     },
   },
   messages: {
@@ -42,6 +44,7 @@ const conversationSelect = {
       createdAt: true,
       editedAt: true,
       deletedAt: true,
+      seenAt: true,
       author: {
         select: {
           id: true,

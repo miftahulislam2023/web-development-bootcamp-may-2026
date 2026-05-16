@@ -8,6 +8,13 @@ import toast from "react-hot-toast";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { getSocketClient } from "@/lib/socket/client";
+import {
+  bumpRoomUnreadCount,
+  clearRoomUnreadCount,
+  getTotalUnreadCount,
+  readDmUnreadCounts,
+  readRoomUnreadCounts,
+} from "@/lib/dm-unread";
 
 type Message = {
   id: string;
@@ -74,6 +81,26 @@ type MessageDeletedPayload = {
   deletedAt: string;
 };
 
+type RoomPresenceUser = {
+  id: string;
+  username: string | null;
+  image: string | null;
+};
+
+type RoomPresencePayload = {
+  roomId: string;
+  activeCount: number;
+  activeUsers: RoomPresenceUser[];
+};
+
+type RoomTypingPayload = {
+  roomId: string;
+  user: {
+    id: string;
+    username: string | null;
+  };
+};
+
 type SocketConnectionState = "connected" | "connecting" | "reconnecting" | "disconnected";
 
 type LoadMessagesOptions = {
@@ -120,12 +147,21 @@ export default function RoomChatPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [socketStatus, setSocketStatus] = useState<SocketConnectionState>("disconnected");
   const [error, setError] = useState<string | null>(null);
+  const [activeRoomUsers, setActiveRoomUsers] = useState<RoomPresenceUser[]>([]);
+  const [typingUsers, setTypingUsers] = useState<Array<{ id: string; username: string | null }>>([]);
+  const [dmUnreadByConversationId, setDmUnreadByConversationId] = useState<Record<string, number>>({});
+  const [roomUnreadByRoomId, setRoomUnreadByRoomId] = useState<Record<string, number>>({});
+  const [isWindowFocused, setIsWindowFocused] = useState(true);
   const editingMessageIdRef = useRef<string | null>(null);
   const messagesViewportRef = useRef<HTMLDivElement | null>(null);
   const shouldStickToBottomRef = useRef(true);
   const reconnectToastVisibleRef = useRef(false);
   const isLoadingOlderRef = useRef(false);
   const topLoadArmedRef = useRef(true);
+  const typingTimeoutByUserIdRef = useRef<Map<string, number>>(new Map());
+  const localTypingTimeoutRef = useRef<number | null>(null);
+  const isLocallyTypingRef = useRef(false);
+  const notifiedRoomMessageIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     editingMessageIdRef.current = editingMessageId;
@@ -134,6 +170,38 @@ export default function RoomChatPage() {
   useEffect(() => {
     isLoadingOlderRef.current = isLoadingOlder;
   }, [isLoadingOlder]);
+
+  useEffect(() => {
+    setDmUnreadByConversationId(readDmUnreadCounts());
+    setRoomUnreadByRoomId(readRoomUnreadCounts());
+  }, []);
+
+  useEffect(() => {
+    const updateWindowState = () => {
+      setIsWindowFocused(document.visibilityState === "visible" && window.document.hasFocus());
+    };
+
+    updateWindowState();
+    window.addEventListener("focus", updateWindowState);
+    window.addEventListener("blur", updateWindowState);
+    document.addEventListener("visibilitychange", updateWindowState);
+
+    return () => {
+      window.removeEventListener("focus", updateWindowState);
+      window.removeEventListener("blur", updateWindowState);
+      document.removeEventListener("visibilitychange", updateWindowState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const totalUnread = getTotalUnreadCount({ dm: dmUnreadByConversationId, rooms: roomUnreadByRoomId });
+
+    document.title = totalUnread > 0 ? `(${totalUnread}) Realtime Chat App` : "Realtime Chat App";
+
+    return () => {
+      document.title = "Realtime Chat App";
+    };
+  }, [dmUnreadByConversationId, roomUnreadByRoomId]);
 
   const joinedRoomIds = useMemo(() => new Set(myRooms.map((entry) => entry.room.id)), [myRooms]);
 
@@ -369,9 +437,26 @@ export default function RoomChatPage() {
       return;
     }
 
+    setRoomUnreadByRoomId(clearRoomUnreadCount(roomId));
     void loadMessages(undefined, { showLoading: true, scrollToBottom: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
+
+  useEffect(() => {
+    if (!room || status !== "authenticated" || !session?.user?.id || myRooms.length === 0) {
+      return;
+    }
+
+    const socket = getSocketClient();
+
+    for (const myRoom of myRooms) {
+      if (myRoom.room.id === roomId) {
+        continue;
+      }
+
+      socket.emit("join_room", myRoom.room.id);
+    }
+  }, [myRooms, room, roomId, session?.user?.id, status]);
 
   useEffect(() => {
     if (!room || status !== "authenticated" || !session?.user?.id) {
@@ -385,6 +470,13 @@ export default function RoomChatPage() {
         userId: session.user.id,
       });
       socket.emit("join_room", roomId);
+      for (const myRoom of myRooms) {
+        if (myRoom.room.id === roomId) {
+          continue;
+        }
+
+        socket.emit("join_room", myRoom.room.id);
+      }
       void loadMessages(undefined, {
         preserveScrollPosition: true,
         scrollToBottom: shouldStickToBottomRef.current,
@@ -393,9 +485,43 @@ export default function RoomChatPage() {
     };
 
     const handleReceiveMessage = (message: RealtimeMessage) => {
+      if (!notifiedRoomMessageIdsRef.current.has(message.id)) {
+        const isActiveRoomMessage = message.roomId === roomId;
+        const shouldShowToast = !isWindowFocused || !isActiveRoomMessage;
+
+        if (shouldShowToast) {
+          const senderName = message.author.username ?? "Unknown user";
+          const preview = message.content.length > 120 ? `${message.content.slice(0, 117)}...` : message.content;
+          if (process.env.NODE_ENV !== "production") {
+            // eslint-disable-next-line no-console
+            console.log("Room toast fired", message.id, message.roomId);
+          }
+
+          toast.custom(
+            (t) => (
+              <div
+                className={`max-w-sm rounded-2xl border border-cyan-400/20 bg-slate-950/95 px-4 py-3 shadow-2xl transition ${
+                  t.visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+                }`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/80">Room message</p>
+                <p className="mt-1 text-sm font-semibold text-slate-50">{senderName}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-300">{preview}</p>
+              </div>
+            ),
+            { id: `room-notification-${message.id}` }
+          );
+        }
+
+        notifiedRoomMessageIdsRef.current.add(message.id);
+      }
+
       if (message.roomId !== roomId) {
+        setRoomUnreadByRoomId(bumpRoomUnreadCount(message.roomId));
         return;
       }
+
+      setRoomUnreadByRoomId(clearRoomUnreadCount(roomId));
 
       const viewport = messagesViewportRef.current;
       const distanceFromBottom = viewport ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight : 0;
@@ -468,6 +594,58 @@ export default function RoomChatPage() {
       }
     };
 
+    const handleRoomPresenceUpdate = (payload: RoomPresencePayload) => {
+      if (payload.roomId !== roomId) {
+        return;
+      }
+
+      setActiveRoomUsers(payload.activeUsers);
+    };
+
+    const handleTypingStart = (payload: RoomTypingPayload) => {
+      if (payload.roomId !== roomId || payload.user.id === session.user.id) {
+        return;
+      }
+
+      setTypingUsers((current) => {
+        if (current.some((entry) => entry.id === payload.user.id)) {
+          return current;
+        }
+
+        return [...current, payload.user];
+      });
+
+      const timeoutMap = typingTimeoutByUserIdRef.current;
+      const existingTimeout = timeoutMap.get(payload.user.id);
+
+      if (typeof existingTimeout === "number") {
+        window.clearTimeout(existingTimeout);
+      }
+
+      const timeout = window.setTimeout(() => {
+        timeoutMap.delete(payload.user.id);
+        setTypingUsers((current) => current.filter((entry) => entry.id !== payload.user.id));
+      }, 1800);
+
+      timeoutMap.set(payload.user.id, timeout);
+    };
+
+    const handleTypingStop = (payload: RoomTypingPayload) => {
+      if (payload.roomId !== roomId) {
+        return;
+      }
+
+      const timeoutMap = typingTimeoutByUserIdRef.current;
+      const existingTimeout = timeoutMap.get(payload.user.id);
+
+      if (typeof existingTimeout === "number") {
+        window.clearTimeout(existingTimeout);
+        timeoutMap.delete(payload.user.id);
+      }
+
+      setTypingUsers((current) => current.filter((entry) => entry.id !== payload.user.id));
+    };
+
     const handleConnect = () => {
       // eslint-disable-next-line no-console
       console.log("socket connect:", socket.id);
@@ -527,6 +705,9 @@ export default function RoomChatPage() {
     socket.on("connect_error", handleConnectError);
     socket.on("disconnect", handleDisconnect);
     socket.on("receive_message", handleReceiveMessage);
+    socket.on("room_presence_update", handleRoomPresenceUpdate);
+    socket.on("typing_start", handleTypingStart);
+    socket.on("typing_stop", handleTypingStop);
     socket.on("message_edited", handleMessageEdited);
     socket.on("message_deleted", handleMessageDeleted);
     socket.on("socket_error", handleSocketError);
@@ -538,6 +719,9 @@ export default function RoomChatPage() {
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
+      socket.off("room_presence_update", handleRoomPresenceUpdate);
+      socket.off("typing_start", handleTypingStart);
+      socket.off("typing_stop", handleTypingStop);
       socket.off("message_edited", handleMessageEdited);
       socket.off("message_deleted", handleMessageDeleted);
       socket.off("socket_error", handleSocketError);
@@ -548,6 +732,13 @@ export default function RoomChatPage() {
       socket.off("disconnect", handleDisconnect);
       socket.emit("leave_room", roomId);
       socket.disconnect();
+      stopLocalTyping();
+      for (const timeout of typingTimeoutByUserIdRef.current.values()) {
+        window.clearTimeout(timeout);
+      }
+      typingTimeoutByUserIdRef.current.clear();
+      setTypingUsers([]);
+      setActiveRoomUsers([]);
       toast.dismiss("socket-reconnecting");
       reconnectToastVisibleRef.current = false;
     };
@@ -557,6 +748,8 @@ export default function RoomChatPage() {
     if (!content.trim()) {
       return;
     }
+
+    stopLocalTyping();
 
     const shouldScroll = shouldStickToBottomRef.current;
     const socket = getSocketClient();
@@ -570,6 +763,50 @@ export default function RoomChatPage() {
     if (shouldScroll) {
       requestAnimationFrame(() => scrollMessagesToBottom("smooth"));
     }
+  }
+
+  function stopLocalTyping() {
+    const socket = getSocketClient();
+
+    if (isLocallyTypingRef.current && socketStatus !== "disconnected") {
+      socket.emit("typing_stop", { roomId });
+    }
+
+    isLocallyTypingRef.current = false;
+
+    if (localTypingTimeoutRef.current) {
+      window.clearTimeout(localTypingTimeoutRef.current);
+      localTypingTimeoutRef.current = null;
+    }
+  }
+
+  function handleComposerChange(nextValue: string) {
+    setContent(nextValue);
+
+    if (socketStatus === "disconnected") {
+      return;
+    }
+
+    const socket = getSocketClient();
+    const hasText = nextValue.trim().length > 0;
+
+    if (!hasText) {
+      stopLocalTyping();
+      return;
+    }
+
+    if (!isLocallyTypingRef.current) {
+      socket.emit("typing_start", { roomId });
+      isLocallyTypingRef.current = true;
+    }
+
+    if (localTypingTimeoutRef.current) {
+      window.clearTimeout(localTypingTimeoutRef.current);
+    }
+
+    localTypingTimeoutRef.current = window.setTimeout(() => {
+      stopLocalTyping();
+    }, 1200);
   }
 
   async function onSendMessage(event: FormEvent<HTMLFormElement>) {
@@ -690,9 +927,25 @@ export default function RoomChatPage() {
               <p className="mt-2 text-2xl font-semibold text-slate-50">{room.memberCount}</p>
             </div>
             <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Messages</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-50">{messages.length}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Active now</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-50">{activeRoomUsers.length}</p>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-slate-300">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Room presence</p>
+            {activeRoomUsers.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeRoomUsers.map((user) => (
+                  <span key={user.id} className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                    <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                    {(user.username ?? "User").trim().charAt(0).toUpperCase()}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-slate-400">No active members yet.</p>
+            )}
           </div>
 
           <div className="mt-6 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-slate-300">
@@ -734,6 +987,7 @@ export default function RoomChatPage() {
               <ul className="mt-4 space-y-2">
                 {connectedRooms.map((connectedRoom) => {
                   const isActive = connectedRoom.id === room.id;
+                  const unreadCount = roomUnreadByRoomId[connectedRoom.id] ?? 0;
 
                   return (
                     <li key={connectedRoom.id}>
@@ -747,11 +1001,18 @@ export default function RoomChatPage() {
                       >
                         <div className="flex items-center justify-between gap-3">
                           <span className="truncate text-sm font-medium">{connectedRoom.name}</span>
-                          {isActive ? (
-                            <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
-                              Active
-                            </span>
-                          ) : null}
+                          <div className="flex items-center gap-2">
+                            {unreadCount > 0 && !isActive ? (
+                              <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                                {unreadCount}
+                              </span>
+                            ) : null}
+                            {isActive ? (
+                              <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                                Active
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                         <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-400">
                           {connectedRoom.description ?? "No description"}
@@ -937,13 +1198,19 @@ export default function RoomChatPage() {
             </div>
 
             <form onSubmit={onSendMessage} className="border-t border-white/5 bg-slate-950/90 p-4 sm:p-5">
+              {typingUsers.length > 0 ? (
+                <p className="mb-2 text-xs text-cyan-100">
+                  {typingUsers[0].username ?? "User"}
+                  {typingUsers.length > 1 ? ` and ${typingUsers.length - 1} others` : ""} typing...
+                </p>
+              ) : null}
               <label htmlFor="content" className="text-sm font-semibold text-slate-100">
                 New message
               </label>
               <textarea
                 id="content"
                 value={content}
-                onChange={(event) => setContent(event.target.value)}
+                onChange={(event) => handleComposerChange(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();

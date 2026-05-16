@@ -1,13 +1,77 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
 import { ConversationSidebar } from "@/components/dm/conversation-sidebar";
+import { bumpDmUnreadCount, getTotalUnreadCount, readDmUnreadCounts, readRoomUnreadCounts } from "@/lib/dm-unread";
 import type { DmConversationSummary, DmUser } from "@/lib/dm";
+
+type PresenceSnapshotPayload = {
+  userIds: string[];
+};
+
+type PresenceEventPayload = {
+  userId: string;
+  lastSeenAt?: string;
+};
+
+type InboxDirectMessagePayload = {
+  id: string;
+  conversationId: string;
+  content: string;
+  author: {
+    id: string;
+    username: string | null;
+  };
+};
+
+type DirectTypingPayload = {
+  conversationId: string;
+  user: {
+    id: string;
+  };
+};
+
+type DirectMessageBrowserEventDetail = {
+  kind: "message" | "edited" | "deleted";
+  conversationId: string;
+  message: {
+    id: string;
+    content: string;
+    conversationId: string;
+    createdAt: string;
+    editedAt?: string | null;
+    deletedAt?: string | null;
+    seenAt?: string | null;
+    author: {
+      id: string;
+      username: string | null;
+      name: string | null;
+      image: string | null;
+    };
+  };
+  sender: {
+    id: string;
+    username: string | null;
+    name: string | null;
+    image: string | null;
+  };
+};
+
+type PresenceBrowserEventDetail = {
+  userId: string;
+  isOnline: boolean;
+  lastSeenAt: string | null;
+};
+
+type UnreadBrowserEventDetail = {
+  dm: Record<string, number>;
+  rooms: Record<string, number>;
+};
 
 export default function DirectMessagesPage() {
   const router = useRouter();
@@ -18,6 +82,14 @@ export default function DirectMessagesPage() {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSocketAuthenticated, setIsSocketAuthenticated] = useState(false);
+  const [presenceByUserId, setPresenceByUserId] = useState<Record<string, { isOnline: boolean; lastSeenAt: string | null }>>({});
+  const [typingByConversationId, setTypingByConversationId] = useState<Record<string, boolean>>({});
+  const [unreadByConversationId, setUnreadByConversationId] = useState<Record<string, number>>({});
+  const [roomUnreadByRoomId, setRoomUnreadByRoomId] = useState<Record<string, number>>({});
+  const [isWindowFocused, setIsWindowFocused] = useState(true);
+  const conversationsRef = useRef<DmConversationSummary[]>([]);
+  const notifiedDmMessageIdsRef = useRef<Set<string>>(new Set());
 
   const conversationCount = useMemo(() => conversations.length, [conversations]);
 
@@ -34,6 +106,18 @@ export default function DirectMessagesPage() {
 
       const payload = (await response.json()) as DmConversationSummary[];
       setConversations(payload);
+      setPresenceByUserId((current) => {
+        const next = { ...current };
+
+        for (const entry of payload) {
+          next[entry.otherUser.id] = {
+            isOnline: current[entry.otherUser.id]?.isOnline ?? false,
+            lastSeenAt: entry.otherUser.lastSeenAt ?? current[entry.otherUser.id]?.lastSeenAt ?? null,
+          };
+        }
+
+        return next;
+      });
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "Failed to load conversations.";
       setError(message);
@@ -42,6 +126,113 @@ export default function DirectMessagesPage() {
       setIsLoadingConversations(false);
     }
   }
+
+  useEffect(() => {
+    setUnreadByConversationId(readDmUnreadCounts());
+    setRoomUnreadByRoomId(readRoomUnreadCounts());
+  }, []);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  useEffect(() => {
+    const handleDmUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<DirectMessageBrowserEventDetail>).detail;
+
+      if (!detail?.conversationId) {
+        return;
+      }
+
+      setUnreadByConversationId(readDmUnreadCounts());
+      setRoomUnreadByRoomId(readRoomUnreadCounts());
+
+      setConversations((current) => {
+        const updatedAt = new Date().toISOString();
+        const next = current.map((entry) => {
+          if (entry.id !== detail.conversationId) {
+            return entry;
+          }
+
+          return {
+            ...entry,
+            updatedAt,
+            latestMessage: {
+              ...detail.message,
+              editedAt: detail.message.editedAt ?? null,
+              deletedAt: detail.message.deletedAt ?? null,
+              seenAt: detail.message.seenAt ?? null,
+            },
+          };
+        });
+
+        return next.sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+      });
+    };
+
+    const handlePresenceUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<PresenceBrowserEventDetail>).detail;
+
+      if (!detail?.userId) {
+        return;
+      }
+
+      setPresenceByUserId((current) => ({
+        ...current,
+        [detail.userId]: {
+          isOnline: detail.isOnline,
+          lastSeenAt: detail.lastSeenAt,
+        },
+      }));
+    };
+
+    const handleUnreadUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<UnreadBrowserEventDetail>).detail;
+
+      if (!detail) {
+        return;
+      }
+
+      setUnreadByConversationId(detail.dm);
+      setRoomUnreadByRoomId(detail.rooms);
+    };
+
+    window.addEventListener("dm_updated", handleDmUpdated);
+    window.addEventListener("presence_updated", handlePresenceUpdated);
+    window.addEventListener("realtime_unread_updated", handleUnreadUpdated);
+
+    return () => {
+      window.removeEventListener("dm_updated", handleDmUpdated);
+      window.removeEventListener("presence_updated", handlePresenceUpdated);
+      window.removeEventListener("realtime_unread_updated", handleUnreadUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateWindowState = () => {
+      setIsWindowFocused(document.visibilityState === "visible" && window.document.hasFocus());
+    };
+
+    updateWindowState();
+    window.addEventListener("focus", updateWindowState);
+    window.addEventListener("blur", updateWindowState);
+    document.addEventListener("visibilitychange", updateWindowState);
+
+    return () => {
+      window.removeEventListener("focus", updateWindowState);
+      window.removeEventListener("blur", updateWindowState);
+      document.removeEventListener("visibilitychange", updateWindowState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const totalUnread = getTotalUnreadCount({ dm: unreadByConversationId, rooms: roomUnreadByRoomId });
+    document.title = totalUnread > 0 ? `(${totalUnread}) Realtime Chat App` : "Realtime Chat App";
+
+    return () => {
+      document.title = "Realtime Chat App";
+    };
+  }, [roomUnreadByRoomId, unreadByConversationId]);
 
   useEffect(() => {
     void loadConversations();
@@ -127,6 +318,9 @@ export default function DirectMessagesPage() {
           isSearching={isSearching}
           onStartConversation={startConversation}
           emptyLabel="No conversations yet. Search a username to start one."
+          presenceByUserId={presenceByUserId}
+          unreadByConversationId={unreadByConversationId}
+          typingByConversationId={typingByConversationId}
         />
 
         <section className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-cyan-400/12 bg-slate-950/75 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl">

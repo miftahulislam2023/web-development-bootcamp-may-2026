@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { getTotalUnreadCount, readDmUnreadCounts, readRoomUnreadCounts } from "@/lib/dm-unread";
 
 type Room = {
   id: string;
@@ -35,6 +36,8 @@ export default function ChatPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dmUnreadByConversationId, setDmUnreadByConversationId] = useState<Record<string, number>>({});
+  const [roomUnreadByRoomId, setRoomUnreadByRoomId] = useState<Record<string, number>>({});
 
   const joinedRoomIds = useMemo(() => new Set(myRooms.map((entry) => entry.room.id)), [myRooms]);
 
@@ -70,6 +73,21 @@ export default function ChatPage() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    setDmUnreadByConversationId(readDmUnreadCounts());
+    setRoomUnreadByRoomId(readRoomUnreadCounts());
+  }, []);
+
+  useEffect(() => {
+    const totalUnread = getTotalUnreadCount({ dm: dmUnreadByConversationId, rooms: roomUnreadByRoomId });
+
+    document.title = totalUnread > 0 ? `(${totalUnread}) Realtime Chat App` : "Realtime Chat App";
+
+    return () => {
+      document.title = "Realtime Chat App";
+    };
+  }, [dmUnreadByConversationId, roomUnreadByRoomId]);
 
   async function onCreateRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -221,6 +239,7 @@ export default function ChatPage() {
             <ul className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {rooms.map((room) => {
                 const joined = joinedRoomIds.has(room.id);
+                const unreadCount = roomUnreadByRoomId[room.id] ?? 0;
 
                 return (
                   <li
@@ -231,6 +250,11 @@ export default function ChatPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="truncate text-base font-semibold text-slate-50">{room.name}</p>
+                          {unreadCount > 0 ? (
+                            <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                              {unreadCount}
+                            </span>
+                          ) : null}
                           {joined ? (
                             <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
                               Joined

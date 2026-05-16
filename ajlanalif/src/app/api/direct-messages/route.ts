@@ -12,6 +12,7 @@ const directMessageSelect = {
   updatedAt: true,
   editedAt: true,
   deletedAt: true,
+  seenAt: true,
   author: {
     select: {
       id: true,

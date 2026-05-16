@@ -30,3 +30,7 @@ export const getDirectMessagesQuerySchema = z.object({
       return Math.min(Math.max(Math.trunc(parsed), 1), 100);
     }),
 });
+
+export const directTypingSchema = z.object({
+  conversationId: z.string().min(1, "conversationId is required."),
+});

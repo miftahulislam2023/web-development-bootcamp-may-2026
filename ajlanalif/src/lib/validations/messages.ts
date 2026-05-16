@@ -30,6 +30,10 @@ export const deleteMessageRealtimeSchema = z.object({
   messageId: z.string().min(1, "messageId is required."),
 });
 
+export const roomTypingSchema = z.object({
+  roomId: z.string().min(1, "roomId is required."),
+});
+
 export const getMessagesQuerySchema = z.object({
   roomId: z.string().min(1, "roomId is required."),
   cursor: z.string().min(1).optional(),

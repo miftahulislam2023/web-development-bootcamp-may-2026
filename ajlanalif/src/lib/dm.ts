@@ -4,6 +4,7 @@ export type DmUser = {
   name: string | null;
   image: string | null;
   bio: string | null;
+  lastSeenAt?: string | null;
 };
 
 export type DmMessage = {
@@ -14,6 +15,7 @@ export type DmMessage = {
   createdAt: string;
   editedAt: string | null;
   deletedAt: string | null;
+  seenAt?: string | null;
   author: {
     id: string;
     username: string | null;

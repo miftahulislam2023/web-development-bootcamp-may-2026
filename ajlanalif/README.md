@@ -18,7 +18,7 @@ Built on a modern tech stack featuring **Next.js**, **Socket.IO**, **Prisma**, a
 ## 3. Live Deployment
 
 **Frontend URL**: [https://realtime-chat-frontend-1ujx.onrender.com](https://realtime-chat-frontend-1ujx.onrender.com)  
-**Socket Server URL**: [https://realtime-chat-frontend-1ujx.onrender.com](https://realtime-chat-frontend-1ujx.onrender.com) *(Assumed same domain if proxied, or add separate backend link)*
+**Socket Server URL**: [https://web-development-bootcamp-may-2026-hsxn.onrender.com](https://web-development-bootcamp-may-2026-hsxn.onrender.com) 
 
 ---
 
@@ -135,8 +135,6 @@ The architecture separates standard REST/Server-Component data fetching from per
 ### Login Page
 ![Login Screenshot](./screenshots/login.png)
 
-### Room Dashboard
-![Room Dashboard](./screenshots/room-dashboard.png)
 
 ### Room Chat List
 ![Room Chat List](./screenshots/room-chat-list.png)
@@ -215,20 +213,10 @@ This project is tailored for split or monolithic deployment configurations:
 * **Database (Neon)**: The PostgreSQL database leverages Neon's serverless Postgres for high availability and rapid connection pooling.
 * **Socket Server**: The custom Socket.IO server is deployed alongside the frontend or on a dedicated Render Web Service to ensure persistent WebSocket integrity without serverless timeouts.
 
----
-
-## 14. Future Improvements
-
-* 📎 **Media Uploads & File Sharing**: Allow users to share images and documents directly in chat.
-* 📞 **Voice & Video Calls**: WebRTC integration for direct 1-on-1 calls.
-* 😀 **Message Reactions**: Allow users to drop emoji reactions on specific messages.
-* 📱 **Push Notifications**: Integrate native Web Push API for offline mobile notifications.
-* 👥 **Group DMs**: Allow adding more than 2 users to a direct messaging thread.
-* 🖼️ **Group Avatars**: Support custom uploaded images for rooms.
 
 ---
 
-## 15. Author
+## 14. Author
 
 **Sayed Ajlan Al Alif**  
 Dept. of CSE  

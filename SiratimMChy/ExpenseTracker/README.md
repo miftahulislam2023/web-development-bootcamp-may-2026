@@ -15,7 +15,7 @@
 <div align="center">
 <a href="https://expensetracker-2ab95.web.app/" target="_blank">
 
-![Live Demo](https://img.shields.io/badge/EXPENSE%20TRACKER-LIVE%20DEMO-6366F1?style=for-the-badge&logo=firefox-browser&logoColor=white&labelColor=111827)
+![Live Demo](https://img.shields.io/badge/CASHNIVO-LIVE%20DEMO-6366F1?style=for-the-badge&logo=firefox-browser&logoColor=white&labelColor=111827)
 
 </a>
 </div>

@@ -14,9 +14,6 @@ const Aside = () => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
 
-
-
-
     const handleLogout = () => {
         signOut(auth);
         navigate('/login');

@@ -76,7 +76,7 @@ const Hero = () => {
                     {stats.map((stat, i) => (
                         <div
                             key={i}
-                            className="bg-base-100 rounded-lg border border-base-content/10 shadow-sm px-8 py-4 text-center min-w-32.5"
+                            className="bg-base-100 rounded-lg border border-base-content/10 shadow-sm px-8 py-4 text-center w-72"
                         >
                             <p className="text-2xl font-extrabold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                                 {stat.value}

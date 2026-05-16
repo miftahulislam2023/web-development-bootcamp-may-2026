@@ -25,6 +25,7 @@ type Config struct {
 	FrontendDomain     string
 	JWTSecret          string
 	DB                 *DBConfig
+	DBConnectionString string
 	RefreshTokenExpiry time.Duration
 	AccessTokenExpiry  time.Duration
 }
@@ -87,6 +88,7 @@ func loadConfig() {
 		FrontendDomain:     envOrExit("FRONTEND_DOMAIN"),
 		JWTSecret:          envOrExit("JWT_SECRET"),
 		DB:                 dbConfig,
+		DBConnectionString: envOrExit("DB_CONNECTION_STRING"),
 		RefreshTokenExpiry: RefreshTokenExpiry,
 		AccessTokenExpiry:  AccessTokenExpiry,
 	}

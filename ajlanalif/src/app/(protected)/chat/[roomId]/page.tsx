@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { useSession } from "next-auth/react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { getSocketClient } from "@/lib/socket/client";
@@ -55,6 +56,7 @@ function formatTimestamp(value: string) {
 export default function RoomChatPage() {
   const params = useParams<{ roomId: string }>();
   const roomId = params.roomId;
+  const { data: session, status } = useSession();
 
   const [room, setRoom] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -136,7 +138,7 @@ export default function RoomChatPage() {
   }, [room]);
 
   useEffect(() => {
-    if (!room) {
+    if (!room || status !== "authenticated" || !session?.user?.id) {
       return;
     }
 
@@ -172,6 +174,9 @@ export default function RoomChatPage() {
     const handleConnect = () => {
       // eslint-disable-next-line no-console
       console.log("socket connect:", socket.id);
+      socket.emit("authenticate", {
+        userId: session.user.id,
+      });
       socket.emit("join_room", roomId);
     };
 
@@ -191,6 +196,9 @@ export default function RoomChatPage() {
     socket.connect();
 
     if (socket.connected) {
+      socket.emit("authenticate", {
+        userId: session.user.id,
+      });
       socket.emit("join_room", roomId);
     }
 
@@ -204,12 +212,12 @@ export default function RoomChatPage() {
       socket.emit("leave_room", roomId);
       socket.disconnect();
     };
-  }, [room, roomId]);
+  }, [room, roomId, session?.user?.id, status]);
 
-  async function onSendMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSending(true);
-    setError(null);
+  async function sendMessage() {
+    if (!content.trim()) {
+      return;
+    }
 
     const socket = getSocketClient();
     socket.emit("send_message", {
@@ -218,6 +226,14 @@ export default function RoomChatPage() {
     });
 
     setContent("");
+  }
+
+  async function onSendMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSending(true);
+    setError(null);
+
+    await sendMessage();
     setIsSending(false);
   }
 
@@ -306,6 +322,12 @@ export default function RoomChatPage() {
           id="content"
           value={content}
           onChange={(event) => setContent(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              void sendMessage();
+            }
+          }}
           className="mt-2 block w-full border border-zinc-300 px-3 py-2 text-sm"
           rows={3}
           required

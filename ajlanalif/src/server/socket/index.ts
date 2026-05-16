@@ -1,6 +1,7 @@
+import "dotenv/config";
+
 import { createServer } from "node:http";
 
-import { getToken } from "next-auth/jwt";
 import { Server } from "socket.io";
 
 import { prisma } from "@/lib/prisma";
@@ -8,8 +9,6 @@ import { sendMessageSchema } from "@/lib/validations/messages";
 
 const socketPort = Number(process.env.SOCKET_PORT ?? 3001);
 const socketOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-const nextAuthSecret = process.env.NEXTAUTH_SECRET;
-
 const httpServer = createServer();
 
 const io = new Server(httpServer, {
@@ -26,32 +25,23 @@ type SocketUser = {
   image: string | null;
 };
 
-io.use(async (socket, next) => {
-  try {
-    // eslint-disable-next-line no-console
-    console.log("socket auth middleware");
-    // eslint-disable-next-line no-console
-    console.log("cookies:", socket.request.headers.cookie ?? "<none>");
+io.on("connection", (socket) => {
+  // eslint-disable-next-line no-console
+  console.log(`socket connected: ${socket.id}`);
 
-    if (!nextAuthSecret) {
+  socket.on("authenticate", async ({ userId }: { userId?: string }) => {
+    // eslint-disable-next-line no-console
+    console.log("authenticate:", userId ?? "<missing>");
+
+    if (!userId || typeof userId !== "string") {
       // eslint-disable-next-line no-console
-      console.log("unauthorized socket: missing NEXTAUTH_SECRET");
-      return next(new Error("Missing NEXTAUTH_SECRET"));
+      console.log("unauthorized socket: missing userId");
+      socket.emit("socket_error", { message: "Unauthorized" });
+      return;
     }
 
-    const token = await getToken({
-      req: socket.request as Parameters<typeof getToken>[0]["req"],
-      secret: nextAuthSecret,
-    });
-
-    // eslint-disable-next-line no-console
-    console.log("token:", token ? { sub: token.sub, email: token.email } : null);
-
-    // Temporary debug bypass: use the first user in the database to confirm connection flow.
-    const user = await prisma.user.findFirst({
-      orderBy: {
-        createdAt: "asc",
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
       select: {
         id: true,
         email: true,
@@ -62,26 +52,15 @@ io.use(async (socket, next) => {
 
     if (!user) {
       // eslint-disable-next-line no-console
-      console.log("unauthorized socket: no users found for debug bypass");
-      return next(new Error("Unauthorized"));
+      console.log("unauthorized socket: user not found", userId);
+      socket.emit("socket_error", { message: "Unauthorized" });
+      return;
     }
 
     (socket.data as { user?: SocketUser }).user = user;
     // eslint-disable-next-line no-console
-    console.log("socket auth middleware success:", user.id);
-    return next();
-  } catch {
-    // eslint-disable-next-line no-console
-    console.log("unauthorized socket");
-    return next(new Error("Unauthorized"));
-  }
-});
-
-io.on("connection", (socket) => {
-  const user = (socket.data as { user?: SocketUser }).user;
-
-  // eslint-disable-next-line no-console
-  console.log(`socket connected: ${socket.id} (${user?.id ?? "unknown"})`);
+    console.log("authenticated user id:", user.id);
+  });
 
   socket.on("join_room", (roomId: string) => {
     if (typeof roomId !== "string" || roomId.length === 0) {
@@ -119,6 +98,8 @@ io.on("connection", (socket) => {
     const user = (socket.data as { user?: SocketUser }).user;
 
     if (!user) {
+      // eslint-disable-next-line no-console
+      console.log("unauthorized socket: send_message without authenticated user");
       socket.emit("socket_error", {
         message: "Unauthorized",
       });

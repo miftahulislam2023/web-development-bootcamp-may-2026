@@ -18,7 +18,10 @@ import (
 func main() {
 	cfg := config.GetConfig()
 
-	dbURL := database.GetConnectionString(cfg.DB)
+	dbURL := cfg.DBConnectionString
+	if dbURL == "" {
+		dbURL = database.GetConnectionString(cfg.DB)
+	}
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {

@@ -206,13 +206,13 @@ const MyProfile = () => {
 					</div>
 					<div className="flex flex-col gap-5 md:ml-auto">
 						<button
-							className="w-full flex gap-2 items-center justify-center font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500 p-2"
+							className="w-full flex gap-2 rounded-lg items-center justify-center font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500 p-2"
 							onClick={handleOpenUpdateModal}
 						>
 							<FaRegEdit /> Edit Profile
 						</button>
 						<button
-							className="w-full flex gap-2 items-center justify-center font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500 p-2"
+							className="w-full flex gap-2 rounded-lg items-center justify-center font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500 p-2"
 							onClick={handleOpenResetPasswordModal}
 						>
 							<FiLock /> Reset Password

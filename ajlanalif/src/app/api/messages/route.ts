@@ -59,6 +59,8 @@ export async function POST(request: Request) {
       roomId: true,
       createdAt: true,
       updatedAt: true,
+      editedAt: true,
+      deletedAt: true,
       author: {
         select: {
           id: true,
@@ -125,7 +127,6 @@ export async function GET(request: Request) {
   const messages = await prisma.message.findMany({
     where: {
       roomId: parsed.data.roomId,
-      deletedAt: null,
     },
     orderBy: {
       createdAt: "desc",
@@ -142,6 +143,8 @@ export async function GET(request: Request) {
       content: true,
       createdAt: true,
       updatedAt: true,
+      editedAt: true,
+      deletedAt: true,
       author: {
         select: {
           id: true,

@@ -5,7 +5,11 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 
 import { prisma } from "@/lib/prisma";
-import { sendMessageSchema } from "@/lib/validations/messages";
+import {
+  deleteMessageRealtimeSchema,
+  editMessageRealtimeSchema,
+  sendMessageSchema,
+} from "@/lib/validations/messages";
 
 const socketPort = Number(process.env.SOCKET_PORT ?? 3001);
 const socketOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -170,6 +174,170 @@ io.on("connection", (socket) => {
 
     // eslint-disable-next-line no-console
     console.log("receive_message:", message.id);
+  });
+
+  socket.on("edit_message", async (payload: unknown) => {
+    // eslint-disable-next-line no-console
+    console.log("edit_message:", payload);
+
+    const parsed = editMessageRealtimeSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      socket.emit("socket_error", {
+        message: "Invalid message payload.",
+      });
+      return;
+    }
+
+    const user = (socket.data as { user?: SocketUser }).user;
+
+    if (!user) {
+      // eslint-disable-next-line no-console
+      console.log("unauthorized socket: edit_message without authenticated user");
+      socket.emit("socket_error", {
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    const existingMessage = await prisma.message.findUnique({
+      where: { id: parsed.data.messageId },
+      select: {
+        id: true,
+        authorId: true,
+        roomId: true,
+      },
+    });
+
+    if (!existingMessage) {
+      socket.emit("socket_error", {
+        message: "Message not found.",
+      });
+      return;
+    }
+
+    if (!existingMessage.roomId) {
+      socket.emit("socket_error", {
+        message: "Room not found.",
+      });
+      return;
+    }
+
+    if (existingMessage.authorId !== user.id) {
+      socket.emit("socket_error", {
+        message: "You do not own this message.",
+      });
+      return;
+    }
+
+    const editedAt = new Date();
+
+    const updatedMessage = await prisma.message.update({
+      where: { id: parsed.data.messageId },
+      data: {
+        content: parsed.data.content,
+        editedAt,
+      },
+      select: {
+        id: true,
+        content: true,
+        editedAt: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    io.to(existingMessage.roomId).emit("message_edited", {
+      messageId: updatedMessage.id,
+      content: updatedMessage.content,
+      editedAt: updatedMessage.editedAt,
+      author: {
+        id: updatedMessage.author.id,
+        username: updatedMessage.author.username,
+        image: updatedMessage.author.image,
+      },
+    });
+
+    // eslint-disable-next-line no-console
+    console.log("message_edited:", updatedMessage.id);
+  });
+
+  socket.on("delete_message", async (payload: unknown) => {
+    // eslint-disable-next-line no-console
+    console.log("delete_message:", payload);
+
+    const parsed = deleteMessageRealtimeSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      socket.emit("socket_error", {
+        message: "Invalid message payload.",
+      });
+      return;
+    }
+
+    const user = (socket.data as { user?: SocketUser }).user;
+
+    if (!user) {
+      // eslint-disable-next-line no-console
+      console.log("unauthorized socket: delete_message without authenticated user");
+      socket.emit("socket_error", {
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    const existingMessage = await prisma.message.findUnique({
+      where: { id: parsed.data.messageId },
+      select: {
+        id: true,
+        authorId: true,
+        roomId: true,
+      },
+    });
+
+    if (!existingMessage) {
+      socket.emit("socket_error", {
+        message: "Message not found.",
+      });
+      return;
+    }
+
+    if (!existingMessage.roomId) {
+      socket.emit("socket_error", {
+        message: "Room not found.",
+      });
+      return;
+    }
+
+    if (existingMessage.authorId !== user.id) {
+      socket.emit("socket_error", {
+        message: "You do not own this message.",
+      });
+      return;
+    }
+
+    const deletedAt = new Date();
+
+    await prisma.message.update({
+      where: { id: parsed.data.messageId },
+      data: {
+        content: "[deleted]",
+        deletedAt,
+      },
+    });
+
+    io.to(existingMessage.roomId).emit("message_deleted", {
+      messageId: parsed.data.messageId,
+      deletedAt,
+    });
+
+    // eslint-disable-next-line no-console
+    console.log("message_deleted:", parsed.data.messageId);
   });
 
   socket.on("disconnect", (reason) => {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSession } from "next-auth/react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -12,6 +12,8 @@ type Message = {
   id: string;
   content: string;
   createdAt: string;
+  editedAt: string | null;
+  deletedAt: string | null;
   author: {
     id: string;
     username: string | null;
@@ -45,6 +47,22 @@ type RealtimeMessage = {
   };
 };
 
+type MessageEditedPayload = {
+  messageId: string;
+  content: string;
+  editedAt: string;
+  author: {
+    id: string;
+    username: string | null;
+    image: string | null;
+  };
+};
+
+type MessageDeletedPayload = {
+  messageId: string;
+  deletedAt: string;
+};
+
 function formatTimestamp(value: string) {
   const date = new Date(value);
   return new Intl.DateTimeFormat("en-US", {
@@ -62,10 +80,17 @@ export default function RoomChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [content, setContent] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
   const [isRoomLoading, setIsRoomLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const editingMessageIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    editingMessageIdRef.current = editingMessageId;
+  }, [editingMessageId]);
 
   async function loadRoom() {
     setIsRoomLoading(true);
@@ -122,10 +147,11 @@ export default function RoomChatPage() {
     setMessages([]);
     setNextCursor(null);
     setContent("");
+    setEditingMessageId(null);
+    setEditingContent("");
     setError(null);
-    void (async () => {
-      await loadRoom();
-    })();
+    setIsLoading(true);
+    void loadRoom();
   }, [roomId]);
 
   useEffect(() => {
@@ -160,6 +186,8 @@ export default function RoomChatPage() {
             id: message.id,
             content: message.content,
             createdAt: message.createdAt,
+            editedAt: null,
+            deletedAt: null,
             author: {
               id: message.author.id,
               username: message.author.username,
@@ -169,6 +197,45 @@ export default function RoomChatPage() {
           },
         ];
       });
+    };
+
+    const handleMessageEdited = (payload: MessageEditedPayload) => {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === payload.messageId
+            ? {
+                ...message,
+                content: payload.content,
+                editedAt: payload.editedAt,
+                deletedAt: null,
+              }
+            : message
+        )
+      );
+
+      if (editingMessageIdRef.current === payload.messageId) {
+        setEditingMessageId(null);
+        setEditingContent("");
+      }
+    };
+
+    const handleMessageDeleted = (payload: MessageDeletedPayload) => {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === payload.messageId
+            ? {
+                ...message,
+                content: "[deleted]",
+                deletedAt: payload.deletedAt,
+              }
+            : message
+        )
+      );
+
+      if (editingMessageIdRef.current === payload.messageId) {
+        setEditingMessageId(null);
+        setEditingContent("");
+      }
     };
 
     const handleConnect = () => {
@@ -190,9 +257,19 @@ export default function RoomChatPage() {
       console.log("socket disconnect:", reason);
     };
 
+    const handleSocketError = (payload: { message?: string }) => {
+      if (payload.message) {
+        setError(payload.message);
+      }
+    };
+
     socket.on("connect", handleConnect);
     socket.on("connect_error", handleConnectError);
     socket.on("disconnect", handleDisconnect);
+    socket.on("receive_message", handleReceiveMessage);
+    socket.on("message_edited", handleMessageEdited);
+    socket.on("message_deleted", handleMessageDeleted);
+    socket.on("socket_error", handleSocketError);
     socket.connect();
 
     if (socket.connected) {
@@ -202,10 +279,11 @@ export default function RoomChatPage() {
       socket.emit("join_room", roomId);
     }
 
-    socket.on("receive_message", handleReceiveMessage);
-
     return () => {
       socket.off("receive_message", handleReceiveMessage);
+      socket.off("message_edited", handleMessageEdited);
+      socket.off("message_deleted", handleMessageDeleted);
+      socket.off("socket_error", handleSocketError);
       socket.off("connect", handleConnect);
       socket.off("connect_error", handleConnectError);
       socket.off("disconnect", handleDisconnect);
@@ -235,6 +313,37 @@ export default function RoomChatPage() {
 
     await sendMessage();
     setIsSending(false);
+  }
+
+  function startEditing(message: Message) {
+    setEditingMessageId(message.id);
+    setEditingContent(message.content);
+  }
+
+  function cancelEditing() {
+    setEditingMessageId(null);
+    setEditingContent("");
+  }
+
+  function saveEdit(messageId: string) {
+    if (!editingContent.trim()) {
+      return;
+    }
+
+    const socket = getSocketClient();
+    socket.emit("edit_message", {
+      messageId,
+      content: editingContent,
+    });
+
+    cancelEditing();
+  }
+
+  function deleteMessage(messageId: string) {
+    const socket = getSocketClient();
+    socket.emit("delete_message", {
+      messageId,
+    });
   }
 
   if (isRoomLoading) {
@@ -290,14 +399,72 @@ export default function RoomChatPage() {
           <p className="mt-3 text-sm text-zinc-600">No messages yet.</p>
         ) : (
           <ul className="mt-3 space-y-2">
-            {messages.map((message) => (
-              <li key={message.id} className="border border-zinc-200 p-2">
-                <p className="text-xs text-zinc-500">
-                  {message.author.username ?? message.author.name ?? "Unknown"} - {formatTimestamp(message.createdAt)}
-                </p>
-                <p className="text-sm">{message.content}</p>
-              </li>
-            ))}
+            {messages.map((message) => {
+              const isOwnMessage = message.author.id === session?.user?.id;
+              const isEditingThisMessage = editingMessageId === message.id;
+
+              return (
+                <li key={message.id} className="border border-zinc-200 p-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-zinc-500">
+                        {message.author.username ?? message.author.name ?? "Unknown"} - {formatTimestamp(message.createdAt)}
+                        {message.editedAt ? " (edited)" : ""}
+                        {message.deletedAt ? " [deleted]" : ""}
+                      </p>
+
+                      {isEditingThisMessage ? (
+                        <div className="mt-2 space-y-2">
+                          <textarea
+                            value={editingContent}
+                            onChange={(event) => setEditingContent(event.target.value)}
+                            className="block w-full border border-zinc-300 px-3 py-2 text-sm"
+                            rows={3}
+                          />
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveEdit(message.id)}
+                              className="border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-white"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEditing}
+                              className="border border-zinc-300 px-3 py-1.5 text-xs"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-sm">{message.deletedAt ? "[deleted]" : message.content}</p>
+                      )}
+                    </div>
+
+                    {isOwnMessage && !message.deletedAt && !isEditingThisMessage ? (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEditing(message)}
+                          className="border border-zinc-300 px-2 py-1 text-xs"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteMessage(message.id)}
+                          className="border border-zinc-300 px-2 py-1 text-xs"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
 

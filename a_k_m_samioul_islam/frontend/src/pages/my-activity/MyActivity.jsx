@@ -533,7 +533,7 @@ const MyActivity = () => {
 							<>
 								<button
 									type="submit"
-									className="btn w-50 h-12 font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
+									className="btn w-50 h-12 rounded-lg font-medium cursor-pointer text-lg bg-black text-white border-white hover:bg-white hover:text-black hover:border-black border transition-colors duration-500"
 									onClick={openBudgetSetModal}
 								>
 									Set Budget

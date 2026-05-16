@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --whatsapp-green: #25D366;
+  --whatsapp-dark-green: #128C7E;
+  --whatsapp-teal: #075E54;
+  --chat-bg: #0a1628;
+  --sidebar-bg: #111b21;
+  --message-bg: #1f2c34;
+  --input-bg: #2a3942;
+  --own-message: #005c4b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--chat-bg);
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4b5563; }

@@ -106,6 +106,11 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       return;
     }
 
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.log("current active user set:", session.user.id);
+    }
+
     const socket = getSocketClient();
 
     const handleConnect = () => {
@@ -247,7 +252,25 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       );
     };
 
+    const handleOnlineUsers = (payload: { userIds: string[] }) => {
+      if (process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.log("received online_users:", payload.userIds);
+      }
+      for (const userId of payload.userIds) {
+        window.dispatchEvent(
+          new CustomEvent<PresenceEventDetail>("presence_updated", {
+            detail: { userId, isOnline: true, lastSeenAt: null },
+          })
+        );
+      }
+    };
+
     const handleUserOnline = (payload: { userId: string }) => {
+      if (process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.log("received user_online:", payload.userId);
+      }
       window.dispatchEvent(
         new CustomEvent<PresenceEventDetail>("presence_updated", {
           detail: { userId: payload.userId, isOnline: true, lastSeenAt: null },
@@ -256,6 +279,10 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     };
 
     const handleUserOffline = (payload: { userId: string; lastSeenAt?: string }) => {
+      if (process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.log("received user_offline:", payload.userId);
+      }
       window.dispatchEvent(
         new CustomEvent<PresenceEventDetail>("presence_updated", {
           detail: { userId: payload.userId, isOnline: false, lastSeenAt: payload.lastSeenAt ?? null },
@@ -269,6 +296,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     socket.on("receive_direct_message", handleReceiveDirectMessage);
     socket.on("message_edited", handleMessageEdited);
     socket.on("message_deleted", handleMessageDeleted);
+    socket.on("online_users", handleOnlineUsers);
     socket.on("user_online", handleUserOnline);
     socket.on("user_offline", handleUserOffline);
     socket.connect();
@@ -284,6 +312,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       socket.off("receive_direct_message", handleReceiveDirectMessage);
       socket.off("message_edited", handleMessageEdited);
       socket.off("message_deleted", handleMessageDeleted);
+      socket.off("online_users", handleOnlineUsers);
       socket.off("user_online", handleUserOnline);
       socket.off("user_offline", handleUserOffline);
     };

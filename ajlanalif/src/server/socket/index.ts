@@ -212,13 +212,22 @@ io.on("connection", (socket) => {
     const becameOnline = addOnlineSocket(user.id, socket.id);
 
     if (becameOnline) {
+      if (process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.log("user_online emitted:", user.id);
+      }
       io.emit("user_online", {
         userId: user.id,
       });
     }
 
+    const onlineUserIds = Array.from(onlineSocketIdsByUserId.keys());
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.log("online_users payload:", onlineUserIds);
+    }
     socket.emit("online_users", {
-      userIds: Array.from(onlineSocketIdsByUserId.keys()),
+      userIds: onlineUserIds,
     });
 
     for (const joinedRoomId of socket.rooms) {
@@ -233,8 +242,10 @@ io.on("connection", (socket) => {
     socket.emit("authenticated", {
       userId: user.id,
     });
-    // eslint-disable-next-line no-console
-    console.log("authenticated user id:", user.id);
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.log("authenticated user id:", user.id);
+    }
   });
 
   socket.on("join_room", (roomId: string) => {
@@ -789,6 +800,10 @@ io.on("connection", (socket) => {
       if (becameOffline) {
         const lastSeenAt = new Date();
 
+        if (process.env.NODE_ENV !== "production") {
+          // eslint-disable-next-line no-console
+          console.log("user_offline emitted:", user.id);
+        }
         io.emit("user_offline", {
           userId: user.id,
           lastSeenAt,

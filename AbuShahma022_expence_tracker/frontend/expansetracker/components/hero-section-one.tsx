@@ -43,6 +43,7 @@ export default function HeroSection() {
                                     <Image
                                         src="https://www.sourcecodester.com/sites/default/files/images/rems/screenshot-2025-06-12-164539.png"
                                         alt="app screen"
+                                        priority
                                         width="2880"
                                         height="1842"
                                         className="object-top-left size-full object-cover"

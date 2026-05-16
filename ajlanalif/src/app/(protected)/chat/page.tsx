@@ -141,6 +141,9 @@ export default function ChatPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/dm" className="rounded-full border border-cyan-400/20 bg-slate-900/70 px-4 py-2 text-xs font-medium text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">
+              DMs
+            </Link>
             <Link href="/profile" className="rounded-full border border-cyan-400/20 bg-slate-900/70 px-4 py-2 text-xs font-medium text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">
               Profile
             </Link>

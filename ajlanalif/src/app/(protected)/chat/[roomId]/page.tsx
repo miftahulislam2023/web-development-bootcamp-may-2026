@@ -631,6 +631,9 @@ export default function RoomChatPage() {
     disconnected: "border-rose-400/20 bg-rose-400/10 text-rose-100",
   };
 
+  const quickLinkActiveClassName = "rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-slate-50";
+  const quickLinkInactiveClassName = "rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900";
+
   const avatarLabel = (name: string | null | undefined) => (name?.trim().charAt(0) ?? "?").toUpperCase();
 
   if (isRoomLoading) {
@@ -695,7 +698,10 @@ export default function RoomChatPage() {
           <div className="mt-6 rounded-2xl border border-white/5 bg-white/5 p-4 text-sm text-slate-300">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Quick links</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/chat" className="rounded-full border border-cyan-400/20 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-cyan-300/35 hover:bg-slate-900">
+              <Link href="/dm" className={quickLinkInactiveClassName}>
+                DMs
+              </Link>
+              <Link href="/chat" className={quickLinkActiveClassName} aria-current="page">
                 Rooms
               </Link>
               <LogoutButton />
@@ -760,7 +766,7 @@ export default function RoomChatPage() {
         </aside>
 
         <section className="flex min-h-0 flex-col overflow-visible rounded-[28px] border border-cyan-400/12 bg-slate-950/75 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:overflow-hidden">
-          <header className="sticky top-0 z-30 flex flex-col gap-4 border-b border-white/5 bg-slate-950/90 px-5 py-5 backdrop-blur-xl sm:px-6 lg:static lg:bg-transparent lg:backdrop-blur-0 lg:flex-row lg:items-center lg:justify-between">
+          <header className="sticky top-0 z-30 flex flex-col gap-4 border-b border-white/5 bg-slate-950/90 px-5 py-5 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/80">Live conversation</p>
               <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight text-slate-50">{room.name}</h1>

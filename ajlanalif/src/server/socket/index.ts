@@ -10,6 +10,7 @@ import {
   editMessageRealtimeSchema,
   sendMessageSchema,
 } from "@/lib/validations/messages";
+import { sendDirectMessageSchema } from "@/lib/validations/direct-messages";
 
 const socketPort = Number(process.env.SOCKET_PORT ?? 3001);
 const socketOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -29,6 +30,31 @@ type SocketUser = {
   image: string | null;
 };
 
+async function getConversationForUser(conversationId: string, userId: string) {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      id: true,
+      userAId: true,
+      userBId: true,
+    },
+  });
+
+  if (!conversation) {
+    return { error: "Conversation not found." as const };
+  }
+
+  if (conversation.userAId !== userId && conversation.userBId !== userId) {
+    return { error: "You are not a participant in this conversation." as const };
+  }
+
+  return { conversation } as const;
+}
+
+function getMessageChannel(message: { roomId: string | null; conversationId: string | null }) {
+  return message.roomId ?? message.conversationId;
+}
+
 io.on("connection", (socket) => {
   // eslint-disable-next-line no-console
   console.log(`socket connected: ${socket.id}`);
@@ -41,6 +67,7 @@ io.on("connection", (socket) => {
       // eslint-disable-next-line no-console
       console.log("unauthorized socket: missing userId");
       socket.emit("socket_error", { message: "Unauthorized" });
+      socket.emit("authentication_failed", { message: "Unauthorized" });
       return;
     }
 
@@ -58,10 +85,14 @@ io.on("connection", (socket) => {
       // eslint-disable-next-line no-console
       console.log("unauthorized socket: user not found", userId);
       socket.emit("socket_error", { message: "Unauthorized" });
+      socket.emit("authentication_failed", { message: "Unauthorized" });
       return;
     }
 
     (socket.data as { user?: SocketUser }).user = user;
+    socket.emit("authenticated", {
+      userId: user.id,
+    });
     // eslint-disable-next-line no-console
     console.log("authenticated user id:", user.id);
   });
@@ -84,6 +115,40 @@ io.on("connection", (socket) => {
     // eslint-disable-next-line no-console
     console.log("leave_room:", roomId);
     socket.leave(roomId);
+  });
+
+  socket.on("join_conversation", async (conversationId: string) => {
+    if (typeof conversationId !== "string" || conversationId.length === 0) {
+      return;
+    }
+
+    const user = (socket.data as { user?: SocketUser }).user;
+
+    if (!user) {
+      socket.emit("socket_error", { message: "Unauthorized" });
+      return;
+    }
+
+    const access = await getConversationForUser(conversationId, user.id);
+
+    if ("error" in access) {
+      socket.emit("socket_error", { message: access.error });
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log("join_conversation:", conversationId);
+    socket.join(conversationId);
+  });
+
+  socket.on("leave_conversation", (conversationId: string) => {
+    if (typeof conversationId !== "string" || conversationId.length === 0) {
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log("leave_conversation:", conversationId);
+    socket.leave(conversationId);
   });
 
   socket.on("send_message", async (payload: unknown) => {
@@ -176,6 +241,75 @@ io.on("connection", (socket) => {
     console.log("receive_message:", message.id);
   });
 
+  socket.on("send_direct_message", async (payload: unknown) => {
+    // eslint-disable-next-line no-console
+    console.log("send_direct_message:", payload);
+
+    const parsed = sendDirectMessageSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      socket.emit("socket_error", { message: "Invalid message payload." });
+      return;
+    }
+
+    const user = (socket.data as { user?: SocketUser }).user;
+
+    if (!user) {
+      socket.emit("socket_error", { message: "Unauthorized" });
+      return;
+    }
+
+    const access = await getConversationForUser(parsed.data.conversationId, user.id);
+
+    if ("error" in access) {
+      socket.emit("socket_error", { message: access.error });
+      return;
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        conversationId: parsed.data.conversationId,
+        authorId: user.id,
+        content: parsed.data.content,
+      },
+      select: {
+        id: true,
+        content: true,
+        conversationId: true,
+        createdAt: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    await prisma.conversation.update({
+      where: { id: parsed.data.conversationId },
+      data: { updatedAt: new Date() },
+    });
+
+    io.to(parsed.data.conversationId).emit("receive_direct_message", {
+      id: message.id,
+      content: message.content,
+      conversationId: message.conversationId,
+      createdAt: message.createdAt,
+      author: {
+        id: message.author.id,
+        username: message.author.username,
+        name: message.author.name,
+        image: message.author.image,
+      },
+    });
+
+    // eslint-disable-next-line no-console
+    console.log("receive_direct_message:", message.id);
+  });
+
   socket.on("edit_message", async (payload: unknown) => {
     // eslint-disable-next-line no-console
     console.log("edit_message:", payload);
@@ -206,6 +340,7 @@ io.on("connection", (socket) => {
         id: true,
         authorId: true,
         roomId: true,
+        conversationId: true,
       },
     });
 
@@ -216,9 +351,11 @@ io.on("connection", (socket) => {
       return;
     }
 
-    if (!existingMessage.roomId) {
+    const channel = getMessageChannel(existingMessage);
+
+    if (!channel) {
       socket.emit("socket_error", {
-        message: "Room not found.",
+        message: "Message thread not found.",
       });
       return;
     }
@@ -252,7 +389,14 @@ io.on("connection", (socket) => {
       },
     });
 
-    io.to(existingMessage.roomId).emit("message_edited", {
+    if (existingMessage.conversationId) {
+      await prisma.conversation.update({
+        where: { id: existingMessage.conversationId },
+        data: { updatedAt: editedAt },
+      });
+    }
+
+    io.to(channel).emit("message_edited", {
       messageId: updatedMessage.id,
       content: updatedMessage.content,
       editedAt: updatedMessage.editedAt,
@@ -297,6 +441,7 @@ io.on("connection", (socket) => {
         id: true,
         authorId: true,
         roomId: true,
+        conversationId: true,
       },
     });
 
@@ -307,9 +452,11 @@ io.on("connection", (socket) => {
       return;
     }
 
-    if (!existingMessage.roomId) {
+    const channel = getMessageChannel(existingMessage);
+
+    if (!channel) {
       socket.emit("socket_error", {
-        message: "Room not found.",
+        message: "Message thread not found.",
       });
       return;
     }
@@ -331,7 +478,14 @@ io.on("connection", (socket) => {
       },
     });
 
-    io.to(existingMessage.roomId).emit("message_deleted", {
+    if (existingMessage.conversationId) {
+      await prisma.conversation.update({
+        where: { id: existingMessage.conversationId },
+        data: { updatedAt: deletedAt },
+      });
+    }
+
+    io.to(channel).emit("message_deleted", {
       messageId: parsed.data.messageId,
       deletedAt,
     });

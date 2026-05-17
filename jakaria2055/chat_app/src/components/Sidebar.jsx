@@ -100,11 +100,11 @@ const Sidebar = () => {
 
         {/* Search Bar */}
         <div className="bg-white/20 backdrop-blur-sm rounded-full flex items-center gap-2 px-4 py-2.5 border border-white/30 focus-within:border-white/50 transition-all duration-300">
-          <Search className="w-4 h-4 text-gray-400" />
+          <Search className="w-4 h-4 text-gray-700" />
           <input
             onChange={(e) => setInput(e.target.value)}
             type="text"
-            className="bg-transparent border-none outline-none text-white text-sm placeholder-gray-500 flex-1"
+            className="bg-transparent border-none outline-none text-white text-sm placeholder-gray-700 flex-1"
             placeholder="Search friends..."
           />
         </div>

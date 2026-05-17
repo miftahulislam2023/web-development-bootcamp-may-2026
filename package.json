@@ -1,0 +1,10 @@
+{
+    "name": "web-development-bootcamp-may-2026",
+    "private": true,
+    "scripts": {
+        "dev": "npm --prefix PraptiH/Chatbot-Project run dev",
+        "build": "npm --prefix PraptiH/Chatbot-Project run build",
+        "lint": "npm --prefix PraptiH/Chatbot-Project run lint",
+        "preview": "npm --prefix PraptiH/Chatbot-Project run preview"
+    }
+}

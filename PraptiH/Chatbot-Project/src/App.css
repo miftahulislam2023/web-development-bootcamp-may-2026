@@ -1,0 +1,65 @@
+.appContainer {
+  max-width: 700px;
+  margin: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatField {
+  display: flex;
+  margin-bottom: 40px;
+}
+
+.chatInput {
+  padding: 10px 15px;
+  font-size: 20px;
+  border-radius: 10px;
+  flex-grow: 1;
+}
+
+.sendBtn {
+  padding: 10px 15px;
+  margin-left: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 20px;
+  background-color: rgb(21, 170, 21);
+  color: white;
+  cursor: pointer;
+}
+
+.chatText {
+  background-color: rgb(237, 236, 236);
+  margin: 0 10px 20px 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  max-width: 300px;
+}
+
+.chatTime{
+  color: rgb(105, 101, 101);
+}
+
+.chatTextUser {
+  display: flex;
+  align-items: start;
+  justify-content: right;
+}
+
+.chatTextRobot {
+  display: flex;
+  align-items: start;
+}
+
+.chatContainer {
+  flex-grow: 1;
+  margin-top: 60px;
+  overflow: scroll;
+  scrollbar-width: none;
+}
+
+.profileImg{
+  width: 45px;
+  height: 45px;
+}

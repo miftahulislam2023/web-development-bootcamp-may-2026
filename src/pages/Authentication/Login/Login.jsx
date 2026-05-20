@@ -4,28 +4,34 @@ import { useTheme } from "../../../context/ThemeContext";
 import { useLocation, useNavigate } from "react-router";
 
 export default function Login() {
-  // ✅ All hook calls at the top level — never inside handlers
-  const { signIn, signInWithGoogle, signInWithFacebook, createUser, updateUserProfile } = useAuth();
+  const {
+    signIn,
+    signInWithGoogle,
+    signInWithFacebook,
+    createUser,
+    updateUserProfile,
+  } = useAuth();
   const { t } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const from = location.state?.from?.pathname || "/app/dashboard";
+  // Redirect to the page the user tried to visit, or fall back to home
+  const from = location.state?.from?.pathname || "/";
 
-  const [tab, setTab]       = useState("login");
-  const [error, setError]   = useState("");
+  const [tab, setTab] = useState("login");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   /* login fields */
-  const [lEmail, setLEmail]     = useState("");
-  const [lPass, setLPass]       = useState("");
+  const [lEmail, setLEmail] = useState("");
+  const [lPass, setLPass] = useState("");
   const [showLPass, setShowLPass] = useState(false);
 
   /* register fields */
-  const [rFName, setRFName]     = useState("");
-  const [rLName, setRLName]     = useState("");
-  const [rEmail, setREmail]     = useState("");
-  const [rPass, setRPass]       = useState("");
+  const [rFName, setRFName] = useState("");
+  const [rLName, setRLName] = useState("");
+  const [rEmail, setREmail] = useState("");
+  const [rPass, setRPass] = useState("");
   const [showRPass, setShowRPass] = useState(false);
 
   function switchTab(newTab) {
@@ -38,13 +44,13 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!lEmail.trim()) return setError("Email is required");
-    if (!lPass)         return setError("Password is required");
+    if (!lPass) return setError("Password is required");
     setLoading(true);
     try {
       await signIn(lEmail.trim(), lPass);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err.code || err.message));
     } finally {
       setLoading(false);
     }
@@ -53,18 +59,23 @@ export default function Login() {
   async function handleRegister(e) {
     e.preventDefault();
     setError("");
-    if (!rFName.trim() || !rLName.trim()) return setError("Full name is required");
-    if (!rEmail.trim())                   return setError("Email is required");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rEmail)) return setError("Enter a valid email");
-    if (rPass.length < 8)                 return setError("Password must be at least 8 characters");
+    if (!rFName.trim() || !rLName.trim())
+      return setError("Full name is required");
+    if (!rEmail.trim()) return setError("Email is required");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rEmail))
+      return setError("Enter a valid email");
+    if (rPass.length < 8)
+      return setError("Password must be at least 8 characters");
     setLoading(true);
     try {
-      // ✅ Using createUser and updateUserProfile from top-level useAuth() — not re-called here
+      // createUser saves email in Firebase automatically
       await createUser(rEmail.trim(), rPass);
-      await updateUserProfile({ displayName: `${rFName.trim()} ${rLName.trim()}` });
+      await updateUserProfile({
+        displayName: `${rFName.trim()} ${rLName.trim()}`,
+      });
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err.code || err.message));
     } finally {
       setLoading(false);
     }
@@ -77,7 +88,7 @@ export default function Login() {
       await signInWithGoogle();
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err.code || err.message));
     } finally {
       setLoading(false);
     }
@@ -90,7 +101,7 @@ export default function Login() {
       await signInWithFacebook();
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err.code || err.message));
     } finally {
       setLoading(false);
     }
@@ -110,7 +121,7 @@ export default function Login() {
     boxSizing: "border-box",
   };
 
-  const label = {
+  const labelStyle = {
     fontSize: 11,
     fontWeight: 700,
     color: t.textSub,
@@ -175,13 +186,19 @@ export default function Login() {
   /* ── icon components ── */
   const GoogleIcon = () => (
     <svg width="15" height="15" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
-      <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.1 33.1 29.6 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 2.9l6.2-6.2C34.4 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-7.9 19.6-20 0-1.4-.1-2.7-.3-4z"/>
+      <path
+        fill="#4285F4"
+        d="M44.5 20H24v8.5h11.8C34.1 33.1 29.6 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 2.9l6.2-6.2C34.4 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-7.9 19.6-20 0-1.4-.1-2.7-.3-4z"
+      />
     </svg>
   );
 
   const FacebookIcon = () => (
     <svg width="15" height="15" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-      <path fill="#1877F2" d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
+      <path
+        fill="#1877F2"
+        d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"
+      />
     </svg>
   );
 
@@ -204,21 +221,36 @@ export default function Login() {
       }}
     >
       {show ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
-          <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-          <line x1="1" y1="1" x2="23" y2="23"/>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+          <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+          <line x1="1" y1="1" x2="23" y2="23" />
         </svg>
       ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-          <circle cx="12" cy="12" r="3"/>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
         </svg>
       )}
     </button>
   );
 
-  /* ── social button row (shared between tabs) ── */
   const SocialRow = () => (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       <button
@@ -226,8 +258,14 @@ export default function Login() {
         onClick={handleGoogle}
         disabled={loading}
         style={socialBtn()}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#4285F4"; e.currentTarget.style.color = "#4285F4"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "#4285F4";
+          e.currentTarget.style.color = "#4285F4";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = t.border;
+          e.currentTarget.style.color = t.text;
+        }}
       >
         <GoogleIcon /> Google
       </button>
@@ -236,8 +274,14 @@ export default function Login() {
         onClick={handleFacebook}
         disabled={loading}
         style={socialBtn()}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#1877F2"; e.currentTarget.style.color = "#1877F2"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "#1877F2";
+          e.currentTarget.style.color = "#1877F2";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = t.border;
+          e.currentTarget.style.color = t.text;
+        }}
       >
         <FacebookIcon /> Facebook
       </button>
@@ -245,14 +289,20 @@ export default function Login() {
   );
 
   const Divider = () => (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "2px 0" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        margin: "2px 0",
+      }}
+    >
       <div style={{ flex: 1, height: 1, background: t.border }} />
       <span style={{ fontSize: 11, color: t.textDim }}>or continue with</span>
       <div style={{ flex: 1, height: 1, background: t.border }} />
     </div>
   );
 
-  /* ── render ── */
   return (
     <div
       style={{
@@ -280,7 +330,14 @@ export default function Login() {
       >
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 6 }}>
-          <div style={{ fontSize: "clamp(22px, 5vw, 26px)", fontWeight: 900, color: t.text, letterSpacing: "-0.04em" }}>
+          <div
+            style={{
+              fontSize: "clamp(22px, 5vw, 26px)",
+              fontWeight: 900,
+              color: t.text,
+              letterSpacing: "-0.04em",
+            }}
+          >
             Spend<span style={{ color: t.accent }}>ora</span>
           </div>
           <div style={{ fontSize: 12, color: t.textSub, marginTop: 4 }}>
@@ -341,15 +398,25 @@ export default function Login() {
 
         {/* ── LOGIN FORM ── */}
         {tab === "login" && (
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Email */}
+          <form
+            onSubmit={handleLogin}
+            style={{ display: "flex", flexDirection: "column", gap: 14 }}
+          >
             <div>
-              <label style={label}>Email</label>
+              <label style={labelStyle}>Email</label>
               <div style={{ position: "relative" }}>
                 <span style={iconWrap}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
                   </svg>
                 </span>
                 <input
@@ -363,14 +430,21 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label style={label}>Password</label>
+              <label style={labelStyle}>Password</label>
               <div style={{ position: "relative" }}>
                 <span style={iconWrap}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
                   </svg>
                 </span>
                 <input
@@ -381,7 +455,10 @@ export default function Login() {
                   onChange={(e) => setLPass(e.target.value)}
                   autoComplete="current-password"
                 />
-                <EyeBtn show={showLPass} onToggle={() => setShowLPass((s) => !s)} />
+                <EyeBtn
+                  show={showLPass}
+                  onToggle={() => setShowLPass((s) => !s)}
+                />
               </div>
             </div>
 
@@ -393,11 +470,19 @@ export default function Login() {
             <SocialRow />
 
             <div style={{ textAlign: "center", fontSize: 12, color: t.textDim }}>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <button
                 type="button"
                 onClick={() => switchTab("register")}
-                style={{ background: "none", border: "none", color: t.accent, cursor: "pointer", fontWeight: 700, fontSize: 12, padding: 0 }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: t.accent,
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  padding: 0,
+                }}
               >
                 Register
               </button>
@@ -407,8 +492,10 @@ export default function Login() {
 
         {/* ── REGISTER FORM ── */}
         {tab === "register" && (
-          <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Name row — stacks on very small screens */}
+          <form
+            onSubmit={handleRegister}
+            style={{ display: "flex", flexDirection: "column", gap: 14 }}
+          >
             <div
               style={{
                 display: "grid",
@@ -417,12 +504,20 @@ export default function Login() {
               }}
             >
               <div>
-                <label style={label}>First Name</label>
+                <label style={labelStyle}>First Name</label>
                 <div style={{ position: "relative" }}>
                   <span style={iconWrap}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
                     </svg>
                   </span>
                   <input
@@ -435,12 +530,20 @@ export default function Login() {
                 </div>
               </div>
               <div>
-                <label style={label}>Last Name</label>
+                <label style={labelStyle}>Last Name</label>
                 <div style={{ position: "relative" }}>
                   <span style={iconWrap}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
                     </svg>
                   </span>
                   <input
@@ -454,14 +557,21 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Email */}
             <div>
-              <label style={label}>Email</label>
+              <label style={labelStyle}>Email</label>
               <div style={{ position: "relative" }}>
                 <span style={iconWrap}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
                   </svg>
                 </span>
                 <input
@@ -475,14 +585,21 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label style={label}>Password</label>
+              <label style={labelStyle}>Password</label>
               <div style={{ position: "relative" }}>
                 <span style={iconWrap}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
                   </svg>
                 </span>
                 <input
@@ -493,9 +610,18 @@ export default function Login() {
                   onChange={(e) => setRPass(e.target.value)}
                   autoComplete="new-password"
                 />
-                <EyeBtn show={showRPass} onToggle={() => setShowRPass((s) => !s)} />
+                <EyeBtn
+                  show={showRPass}
+                  onToggle={() => setShowRPass((s) => !s)}
+                />
               </div>
-              {rPass && <StrengthBar password={rPass} accent={t.accent} border={t.border} />}
+              {rPass && (
+                <StrengthBar
+                  password={rPass}
+                  accent={t.accent}
+                  border={t.border}
+                />
+              )}
             </div>
 
             <button type="submit" disabled={loading} style={primaryBtn}>
@@ -510,7 +636,15 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => switchTab("login")}
-                style={{ background: "none", border: "none", color: t.accent, cursor: "pointer", fontWeight: 700, fontSize: 12, padding: 0 }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: t.accent,
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  padding: 0,
+                }}
               >
                 Sign in
               </button>
@@ -530,7 +664,7 @@ function StrengthBar({ password, accent, border }) {
     /[0-9]/.test(password),
     /[^A-Za-z0-9]/.test(password),
   ];
-  const score  = checks.filter(Boolean).length;
+  const score = checks.filter(Boolean).length;
   const colors = ["", "#e11d48", "#f59e0b", "#3b82f6", "#10b981"];
   const labels = ["", "Weak", "Fair", "Good", "Strong"];
 
@@ -555,4 +689,23 @@ function StrengthBar({ password, accent, border }) {
       </span>
     </div>
   );
+}
+
+/* ── Firebase error code → human message ── */
+function friendlyError(code) {
+  const map = {
+    "auth/user-not-found": "No account found with this email.",
+    "auth/wrong-password": "Incorrect password. Please try again.",
+    "auth/invalid-credential": "Invalid email or password.",
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/weak-password": "Password is too weak.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/too-many-requests": "Too many attempts. Please try again later.",
+    "auth/network-request-failed": "Network error. Check your connection.",
+    "auth/popup-closed-by-user": "Sign-in popup was closed. Please try again.",
+    "auth/cancelled-popup-request": "Only one popup can be open at a time.",
+    "auth/account-exists-with-different-credential":
+      "An account already exists with a different sign-in method.",
+  };
+  return map[code] || code || "Something went wrong. Please try again.";
 }

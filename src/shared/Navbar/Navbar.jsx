@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 
 const NAV_LINKS = [
   { label: "Home", to: "/", type: "route" },
@@ -12,7 +13,7 @@ const NAV_LINKS = [
 ];
 
 function Logo({ onClick }) {
-  const { dark, t } = useTheme();
+  const { t } = useTheme();
   return (
     <button
       onClick={onClick}
@@ -63,12 +64,12 @@ function ThemeToggle({ mobile = false }) {
         background: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
         color: t.textSub,
       }}
-      onMouseEnter={e =>
+      onMouseEnter={(e) =>
         (e.currentTarget.style.background = dark
           ? "rgba(255,255,255,0.11)"
           : "rgba(0,0,0,0.08)")
       }
-      onMouseLeave={e =>
+      onMouseLeave={(e) =>
         (e.currentTarget.style.background = dark
           ? "rgba(255,255,255,0.06)"
           : "rgba(0,0,0,0.04)")
@@ -76,7 +77,6 @@ function ThemeToggle({ mobile = false }) {
     >
       <span className="text-sm leading-none">{dark ? "🌑" : "🔆"}</span>
 
-      {/* toggle track */}
       <span
         className="relative inline-flex rounded-full flex-shrink-0"
         style={{
@@ -88,13 +88,12 @@ function ThemeToggle({ mobile = false }) {
             : "1px solid rgba(0,0,0,0.12)",
         }}
       >
-        {/* knob */}
         <span
           className="absolute top-0.5 rounded-full transition-all duration-300"
           style={{
-            left:       dark ? "calc(100% - 14px)" : 2,
-            width:      12,
-            height:     12,
+            left: dark ? "calc(100% - 14px)" : 2,
+            width: 12,
+            height: 12,
             background: dark ? "#ffffff" : t.accent,
           }}
         />
@@ -110,23 +109,24 @@ function ThemeToggle({ mobile = false }) {
   );
 }
 
-/* ─── Hamburger ───────────────────────────────────────────── */
 function Hamburger({ open }) {
   const { t } = useTheme();
   return (
     <span className="flex flex-col gap-1.5">
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2].map((i) => (
         <span
           key={i}
           className="block rounded-sm transition-all duration-300"
           style={{
-            width:     23,
-            height:    2,
+            width: 23,
+            height: 2,
             background: t.text,
             transform: open
-              ? i === 0 ? "rotate(45deg) translate(5px,5px)"
-              : i === 2 ? "rotate(-45deg) translate(5px,-5px)"
-              : "scaleX(0)"
+              ? i === 0
+                ? "rotate(45deg) translate(5px,5px)"
+                : i === 2
+                ? "rotate(-45deg) translate(5px,-5px)"
+                : "scaleX(0)"
               : "none",
             opacity: open && i === 1 ? 0 : 1,
           }}
@@ -136,76 +136,110 @@ function Hamburger({ open }) {
   );
 }
 
+/* ── User Avatar (shown when logged in) ── */
+function UserAvatar({ user, t }) {
+  const initials = user?.displayName
+    ? user.displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user?.email?.[0]?.toUpperCase() ?? "U";
+
+  return (
+    <div
+      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white select-none"
+      style={{ background: t.accent }}
+      title={user?.displayName || user?.email}
+    >
+      {user?.photoURL ? (
+        <img
+          src={user.photoURL}
+          alt="avatar"
+          className="w-full h-full rounded-full object-cover"
+        />
+      ) : (
+        initials
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
-  const { dark, t }  = useTheme();
-  const navigate     = useNavigate();
-  const location     = useLocation();
+  const { dark, t } = useTheme();
+  const { user, logOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [scrolled,  setScrolled]  = useState(false);
-  const [menuOpen,  setMenuOpen]  = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  /* derive active index from current route */
-const activeIndex = NAV_LINKS.findIndex(
-  (lnk) => lnk.type === "route" && location.pathname === lnk.to
-);
+  const activeIndex = NAV_LINKS.findIndex(
+    (lnk) => lnk.type === "route" && location.pathname === lnk.to
+  );
 
-  /* scroll listener */
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 24);
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  /* close mobile menu on resize ≥ md */
   useEffect(() => {
-    const fn = () => { if (window.innerWidth >= 768) setMenuOpen(false); };
+    const fn = () => {
+      if (window.innerWidth >= 768) setMenuOpen(false);
+    };
     window.addEventListener("resize", fn);
     return () => window.removeEventListener("resize", fn);
   }, []);
 
-  /* close menu on route change */
-  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   const showBg = scrolled || menuOpen;
 
-  /* ── unified click handler ── */
-function handleNavClick(e, item) {
-  e.preventDefault();
-  setMenuOpen(false);
+  function handleNavClick(e, item) {
+    e.preventDefault();
+    setMenuOpen(false);
 
-  if (item.type === "route") {
-    navigate(item.to);
-    return;
-  }
-
-  const scrollToSection = () => {
-    const el = document.getElementById(item.id);
-
-    if (el) {
-      el.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+    if (item.type === "route") {
+      navigate(item.to);
+      return;
     }
-  };
 
-  if (location.pathname !== "/") {
-    navigate("/");
+    const scrollToSection = () => {
+      const el = document.getElementById(item.id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
 
-    setTimeout(() => {
+    if (location.pathname !== "/") {
+      navigate("/");
+      setTimeout(scrollToSection, 300);
+    } else {
       scrollToSection();
-    }, 300);
-  } else {
-    scrollToSection();
+    }
   }
-}
 
-  /* nav link style helper */
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await logOut();
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoggingOut(false);
+      setMenuOpen(false);
+    }
+  }
+
   function linkStyle(i) {
     return {
-      color:      i === activeIndex ? t.text : t.textSub,
+      color: i === activeIndex ? t.text : t.textSub,
       background: "transparent",
-      fontSize:   14,
+      fontSize: 14,
     };
   }
 
@@ -214,18 +248,19 @@ function handleNavClick(e, item) {
       <nav
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
-          background:           showBg ? t.navBg : "transparent",
-          backdropFilter:       showBg ? "blur(24px) saturate(1.4)" : "none",
+          background: showBg ? t.navBg : "transparent",
+          backdropFilter: showBg ? "blur(24px) saturate(1.4)" : "none",
           WebkitBackdropFilter: showBg ? "blur(24px) saturate(1.4)" : "none",
-          borderBottom:        `1px solid ${scrolled ? t.borderLight : "transparent"}`,
+          borderBottom: `1px solid ${scrolled ? t.borderLight : "transparent"}`,
           boxShadow: scrolled
-            ? dark ? "0 6px 32px rgba(0,0,0,0.55)" : "0 6px 24px rgba(0,0,0,0.08)"
+            ? dark
+              ? "0 6px 32px rgba(0,0,0,0.55)"
+              : "0 6px 24px rgba(0,0,0,0.08)"
             : "none",
         }}
       >
         {/* ── Top row ── */}
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 h-[68px] flex items-center justify-between gap-3">
-
           {/* Logo */}
           <Logo
             onClick={() => {
@@ -234,27 +269,26 @@ function handleNavClick(e, item) {
             }}
           />
 
-          {/* Desktop links — hidden below md */}
+          {/* Desktop links */}
           <ul className="hidden md:flex items-center gap-0.5 list-none m-0 p-0 flex-1 justify-center">
             {NAV_LINKS.map((lnk, i) => (
               <li key={lnk.label}>
                 <a
-                href={lnk.type === "route" ? lnk.to : `#${lnk.id}`}
-                  onClick={e => handleNavClick(e, lnk, i)}
+                  href={lnk.type === "route" ? lnk.to : `#${lnk.id}`}
+                  onClick={(e) => handleNavClick(e, lnk, i)}
                   className="relative block px-3.5 py-2 rounded-lg no-underline transition-all duration-200 whitespace-nowrap font-medium"
                   style={linkStyle(i)}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.color      = t.text;
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = t.text;
                     e.currentTarget.style.background = t.hoverBg;
                   }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.color      = i === activeIndex ? t.text : t.textSub;
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color =
+                      i === activeIndex ? t.text : t.textSub;
                     e.currentTarget.style.background = "transparent";
                   }}
                 >
                   {lnk.label}
-
-                  {/* active underline dot */}
                   {i === activeIndex && (
                     <span
                       className="absolute bottom-1 left-1/2 -translate-x-1/2 block rounded-full"
@@ -266,47 +300,85 @@ function handleNavClick(e, item) {
             ))}
           </ul>
 
-          {/* Desktop right — hidden below md */}
+          {/* Desktop right */}
           <div className="hidden md:flex items-center gap-2.5 flex-shrink-0">
             <ThemeToggle />
 
-            <button
-              onClick={() => navigate("/login")}
-              className="px-4 py-2 text-sm font-medium rounded-lg border-none cursor-pointer transition-all duration-200"
-              style={{ color: t.textSub, background: "transparent" }}
-              onMouseEnter={e => {
-                e.currentTarget.style.color      = t.text;
-                e.currentTarget.style.background = t.hoverBg;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color      = t.textSub;
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              Login
-            </button>
+            {user ? (
+              /* ── Logged in: show avatar + logout ── */
+              <div className="flex items-center gap-2.5">
+                <UserAvatar user={user} t={t} />
+                <span
+                  className="text-sm font-medium max-w-[120px] truncate hidden lg:block"
+                  style={{ color: t.textSub }}
+                  title={user.displayName || user.email}
+                >
+                  {user.displayName?.split(" ")[0] || user.email?.split("@")[0]}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="px-4 py-2 text-sm font-semibold rounded-lg border cursor-pointer transition-all duration-200"
+                  style={{
+                    color: t.accent,
+                    background: "transparent",
+                    border: `1px solid ${t.accent}`,
+                    opacity: loggingOut ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = t.accent;
+                    e.currentTarget.style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = t.accent;
+                  }}
+                >
+                  {loggingOut ? "Signing out…" : "Logout"}
+                </button>
+              </div>
+            ) : (
+              /* ── Logged out: show login + sign up ── */
+              <>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border-none cursor-pointer transition-all duration-200"
+                  style={{ color: t.textSub, background: "transparent" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = t.text;
+                    e.currentTarget.style.background = t.hoverBg;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = t.textSub;
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  Login
+                </button>
 
-            <button
-              onClick={() => navigate("/register")}
-              className="px-5 py-2 text-sm font-bold rounded-xl border-none cursor-pointer whitespace-nowrap transition-all duration-200"
-              style={{ background: t.accent, color: "#ffffff" }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = "scale(1.04)";
-                e.currentTarget.style.opacity   = "0.9";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.opacity   = "1";
-              }}
-            >
-              Sign up
-            </button>
+                <button
+                  onClick={() => navigate("/register")}
+                  className="px-5 py-2 text-sm font-bold rounded-xl border-none cursor-pointer whitespace-nowrap transition-all duration-200"
+                  style={{ background: t.accent, color: "#ffffff" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.04)";
+                    e.currentTarget.style.opacity = "0.9";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.opacity = "1";
+                  }}
+                >
+                  Sign up
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Hamburger — visible below md */}
+          {/* Hamburger — mobile */}
           <button
             className="md:hidden flex items-center justify-center p-1.5 rounded-lg border-none cursor-pointer bg-transparent flex-shrink-0"
-            onClick={() => setMenuOpen(o => !o)}
+            onClick={() => setMenuOpen((o) => !o)}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
           >
@@ -317,41 +389,69 @@ function handleNavClick(e, item) {
         {/* ── Mobile dropdown ── */}
         <div
           className="overflow-hidden transition-all duration-[420ms] ease-in-out"
-          style={{ maxHeight: menuOpen ? 640 : 0 }}
+          style={{ maxHeight: menuOpen ? 700 : 0 }}
         >
           <div
             className="pb-5"
             style={{
-              borderTop:      `1px solid ${t.borderLight}`,
-              background:      t.navBg,
+              borderTop: `1px solid ${t.borderLight}`,
+              background: t.navBg,
               backdropFilter: "blur(24px)",
             }}
           >
+            {/* User info strip (mobile, when logged in) */}
+            {user && (
+              <div
+                className="flex items-center gap-3 px-6 py-3.5"
+                style={{ borderBottom: `1px solid ${t.borderLight}` }}
+              >
+                <UserAvatar user={user} t={t} />
+                <div className="min-w-0">
+                  <div
+                    className="text-sm font-semibold truncate"
+                    style={{ color: t.text }}
+                  >
+                    {user.displayName || "User"}
+                  </div>
+                  <div
+                    className="text-xs truncate"
+                    style={{ color: t.textSub }}
+                  >
+                    {user.email}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Mobile nav links */}
             <div className="flex flex-col mt-1">
               {NAV_LINKS.map((lnk, i) => (
                 <a
                   key={lnk.label}
-                 href={lnk.type === "route" ? lnk.to : `#${lnk.id}`}
-                  onClick={e => handleNavClick(e, lnk, i)}
+                  href={lnk.type === "route" ? lnk.to : `#${lnk.id}`}
+                  onClick={(e) => handleNavClick(e, lnk, i)}
                   className="flex items-center gap-3 px-6 py-3.5 no-underline transition-all duration-200 font-medium"
                   style={{
-                    fontSize:   15,
-                    color:      i === activeIndex ? t.text : t.textSub,
-                    background: i === activeIndex
-                      ? (dark ? "rgba(225,29,72,0.08)" : "rgba(225,29,72,0.05)")
-                      : "transparent",
-                    borderLeft: `2px solid ${i === activeIndex ? t.accent : "transparent"}`,
+                    fontSize: 15,
+                    color: i === activeIndex ? t.text : t.textSub,
+                    background:
+                      i === activeIndex
+                        ? dark
+                          ? "rgba(225,29,72,0.08)"
+                          : "rgba(225,29,72,0.05)"
+                        : "transparent",
+                    borderLeft: `2px solid ${
+                      i === activeIndex ? t.accent : "transparent"
+                    }`,
                   }}
                 >
-                  {/* small type badge for route links */}
-                 {lnk.type === "route" && lnk.to !== "/" && (
+                  {lnk.type === "route" && lnk.to !== "/" && (
                     <span
                       className="text-xs px-1.5 py-0.5 rounded-md font-bold"
                       style={{
                         background: t.pillBg,
-                        color:      t.accent,
-                        fontSize:   9,
+                        color: t.accent,
+                        fontSize: 9,
                         letterSpacing: "0.08em",
                       }}
                     >
@@ -373,35 +473,61 @@ function handleNavClick(e, item) {
 
             {/* Mobile auth */}
             <div className="flex gap-2.5 px-6 pt-3">
-              <button
-                onClick={() => { setMenuOpen(false); navigate("/login"); }}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-xl cursor-pointer transition-all duration-200"
-                style={{
-                  color:      t.textSub,
-                  background: "transparent",
-                  border:    `1px solid ${t.border}`,
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.color      = t.text;
-                  e.currentTarget.style.background = t.hoverBg;
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.color      = t.textSub;
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                Login
-              </button>
+              {user ? (
+                /* Logged in: full-width logout */
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="flex-1 py-2.5 text-sm font-bold rounded-xl cursor-pointer transition-all duration-200"
+                  style={{
+                    background: t.accent,
+                    color: "#ffffff",
+                    border: "none",
+                    opacity: loggingOut ? 0.6 : 1,
+                  }}
+                >
+                  {loggingOut ? "Signing out…" : "Logout"}
+                </button>
+              ) : (
+                /* Logged out: login + sign up */
+                <>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/login");
+                    }}
+                    className="flex-1 py-2.5 text-sm font-semibold rounded-xl cursor-pointer transition-all duration-200"
+                    style={{
+                      color: t.textSub,
+                      background: "transparent",
+                      border: `1px solid ${t.border}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = t.text;
+                      e.currentTarget.style.background = t.hoverBg;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = t.textSub;
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    Login
+                  </button>
 
-              <button
-                onClick={() => { setMenuOpen(false); navigate("/register"); }}
-                className="flex-1 py-2.5 text-sm font-bold rounded-xl border-none cursor-pointer transition-all duration-200"
-                style={{ background: t.accent, color: "#ffffff" }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = "0.88")}
-                onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-              >
-                Sign up
-              </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/register");
+                    }}
+                    className="flex-1 py-2.5 text-sm font-bold rounded-xl border-none cursor-pointer transition-all duration-200"
+                    style={{ background: t.accent, color: "#ffffff" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                  >
+                    Sign up
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -1,30 +1,31 @@
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useTheme } from "../../../context/ThemeContext";
-import { useLocation, useNavigate, Link } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 export default function Login() {
-  const { signIn, signInWithGoogle } = useAuth();
+  // ✅ All hook calls at the top level — never inside handlers
+  const { signIn, signInWithGoogle, signInWithFacebook, createUser, updateUserProfile } = useAuth();
   const { t } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
   const from = location.state?.from?.pathname || "/app/dashboard";
 
-  const [tab, setTab] = useState("login");
-  const [error, setError] = useState("");
+  const [tab, setTab]       = useState("login");
+  const [error, setError]   = useState("");
   const [loading, setLoading] = useState(false);
 
   /* login fields */
-  const [lEmail, setLEmail] = useState("");
-  const [lPass, setLPass] = useState("");
+  const [lEmail, setLEmail]     = useState("");
+  const [lPass, setLPass]       = useState("");
   const [showLPass, setShowLPass] = useState(false);
 
   /* register fields */
-  const [rFName, setRFName] = useState("");
-  const [rLName, setRLName] = useState("");
-  const [rEmail, setREmail] = useState("");
-  const [rPass, setRPass] = useState("");
+  const [rFName, setRFName]     = useState("");
+  const [rLName, setRLName]     = useState("");
+  const [rEmail, setREmail]     = useState("");
+  const [rPass, setRPass]       = useState("");
   const [showRPass, setShowRPass] = useState(false);
 
   function switchTab(newTab) {
@@ -32,11 +33,12 @@ export default function Login() {
     setError("");
   }
 
+  /* ── handlers ── */
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
     if (!lEmail.trim()) return setError("Email is required");
-    if (!lPass) return setError("Password is required");
+    if (!lPass)         return setError("Password is required");
     setLoading(true);
     try {
       await signIn(lEmail.trim(), lPass);
@@ -52,13 +54,13 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!rFName.trim() || !rLName.trim()) return setError("Full name is required");
-    if (!rEmail.trim()) return setError("Email is required");
+    if (!rEmail.trim())                   return setError("Email is required");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rEmail)) return setError("Enter a valid email");
-    if (rPass.length < 8) return setError("Password must be at least 8 characters");
+    if (rPass.length < 8)                 return setError("Password must be at least 8 characters");
     setLoading(true);
     try {
-      const { createUser, updateUserProfile } = useAuth();
-      const result = await createUser(rEmail.trim(), rPass);
+      // ✅ Using createUser and updateUserProfile from top-level useAuth() — not re-called here
+      await createUser(rEmail.trim(), rPass);
       await updateUserProfile({ displayName: `${rFName.trim()} ${rLName.trim()}` });
       navigate(from, { replace: true });
     } catch (err) {
@@ -81,7 +83,20 @@ export default function Login() {
     }
   }
 
-  /* shared styles */
+  async function handleFacebook() {
+    setError("");
+    setLoading(true);
+    try {
+      await signInWithFacebook();
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /* ── shared styles ── */
   const inp = {
     width: "100%",
     padding: "10px 12px 10px 38px",
@@ -92,6 +107,7 @@ export default function Login() {
     fontSize: 13,
     outline: "none",
     fontFamily: "inherit",
+    boxSizing: "border-box",
   };
 
   const label = {
@@ -136,32 +152,35 @@ export default function Login() {
     transition: "opacity 0.18s",
   };
 
-  const socialBtn = (color) => ({
+  const socialBtn = () => ({
     flex: 1,
-    padding: "10px 12px",
+    padding: "10px 8px",
     borderRadius: 11,
     border: `1px solid ${t.border}`,
     background: t.cardBg,
     color: t.text,
     fontSize: 13,
     fontWeight: 600,
-    cursor: "pointer",
+    cursor: loading ? "not-allowed" : "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
     fontFamily: "inherit",
     transition: "border-color 0.18s, color 0.18s",
+    whiteSpace: "nowrap",
+    minWidth: 0,
   });
 
+  /* ── icon components ── */
   const GoogleIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 48 48">
+    <svg width="15" height="15" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
       <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.1 33.1 29.6 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 2.9l6.2-6.2C34.4 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-7.9 19.6-20 0-1.4-.1-2.7-.3-4z"/>
     </svg>
   );
 
   const FacebookIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24">
+    <svg width="15" height="15" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
       <path fill="#1877F2" d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
     </svg>
   );
@@ -199,6 +218,41 @@ export default function Login() {
     </button>
   );
 
+  /* ── social button row (shared between tabs) ── */
+  const SocialRow = () => (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={loading}
+        style={socialBtn()}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#4285F4"; e.currentTarget.style.color = "#4285F4"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
+      >
+        <GoogleIcon /> Google
+      </button>
+      <button
+        type="button"
+        onClick={handleFacebook}
+        disabled={loading}
+        style={socialBtn()}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#1877F2"; e.currentTarget.style.color = "#1877F2"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
+      >
+        <FacebookIcon /> Facebook
+      </button>
+    </div>
+  );
+
+  const Divider = () => (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "2px 0" }}>
+      <div style={{ flex: 1, height: 1, background: t.border }} />
+      <span style={{ fontSize: 11, color: t.textDim }}>or continue with</span>
+      <div style={{ flex: 1, height: 1, background: t.border }} />
+    </div>
+  );
+
+  /* ── render ── */
   return (
     <div
       style={{
@@ -207,7 +261,8 @@ export default function Login() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 16,
+        padding: "16px",
+        boxSizing: "border-box",
         transition: "background 0.4s",
       }}
     >
@@ -216,15 +271,16 @@ export default function Login() {
           background: t.phoneBg,
           border: `1px solid ${t.border}`,
           borderRadius: 18,
-          padding: "32px 28px",
+          padding: "clamp(20px, 5vw, 32px) clamp(16px, 6vw, 28px)",
           width: "100%",
-          maxWidth: 380,
+          maxWidth: 400,
           boxShadow: `0 24px 60px ${t.shadow}`,
+          boxSizing: "border-box",
         }}
       >
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 6 }}>
-          <div style={{ fontSize: 26, fontWeight: 900, color: t.text, letterSpacing: "-0.04em" }}>
+          <div style={{ fontSize: "clamp(22px, 5vw, 26px)", fontWeight: 900, color: t.text, letterSpacing: "-0.04em" }}>
             Spend<span style={{ color: t.accent }}>ora</span>
           </div>
           <div style={{ fontSize: 12, color: t.textSub, marginTop: 4 }}>
@@ -265,7 +321,7 @@ export default function Login() {
           ))}
         </div>
 
-        {/* Error */}
+        {/* Error banner */}
         {error && (
           <div
             style={{
@@ -276,6 +332,7 @@ export default function Login() {
               fontSize: 12,
               color: t.accent,
               marginBottom: 14,
+              wordBreak: "break-word",
             }}
           >
             {error}
@@ -332,35 +389,8 @@ export default function Login() {
               {loading ? "Signing in…" : "Sign in"}
             </button>
 
-            {/* Divider */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "2px 0" }}>
-              <div style={{ flex: 1, height: 1, background: t.border }} />
-              <span style={{ fontSize: 11, color: t.textDim }}>or continue with</span>
-              <div style={{ flex: 1, height: 1, background: t.border }} />
-            </div>
-
-            {/* Social buttons */}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                type="button"
-                onClick={handleGoogle}
-                disabled={loading}
-                style={socialBtn()}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#4285F4"; e.currentTarget.style.color = "#4285F4"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
-              >
-                <GoogleIcon /> Google
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                style={socialBtn()}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#1877F2"; e.currentTarget.style.color = "#1877F2"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
-              >
-                <FacebookIcon /> Facebook
-              </button>
-            </div>
+            <Divider />
+            <SocialRow />
 
             <div style={{ textAlign: "center", fontSize: 12, color: t.textDim }}>
               Don't have an account?{" "}
@@ -378,8 +408,14 @@ export default function Login() {
         {/* ── REGISTER FORM ── */}
         {tab === "register" && (
           <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Name row */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {/* Name row — stacks on very small screens */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                gap: 10,
+              }}
+            >
               <div>
                 <label style={label}>First Name</label>
                 <div style={{ position: "relative" }}>
@@ -459,7 +495,6 @@ export default function Login() {
                 />
                 <EyeBtn show={showRPass} onToggle={() => setShowRPass((s) => !s)} />
               </div>
-              {/* Strength bar */}
               {rPass && <StrengthBar password={rPass} accent={t.accent} border={t.border} />}
             </div>
 
@@ -467,35 +502,8 @@ export default function Login() {
               {loading ? "Creating account…" : "Create account"}
             </button>
 
-            {/* Divider */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "2px 0" }}>
-              <div style={{ flex: 1, height: 1, background: t.border }} />
-              <span style={{ fontSize: 11, color: t.textDim }}>or continue with</span>
-              <div style={{ flex: 1, height: 1, background: t.border }} />
-            </div>
-
-            {/* Social buttons */}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                type="button"
-                onClick={handleGoogle}
-                disabled={loading}
-                style={socialBtn()}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#4285F4"; e.currentTarget.style.color = "#4285F4"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
-              >
-                <GoogleIcon /> Google
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                style={socialBtn()}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#1877F2"; e.currentTarget.style.color = "#1877F2"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
-              >
-                <FacebookIcon /> Facebook
-              </button>
-            </div>
+            <Divider />
+            <SocialRow />
 
             <div style={{ textAlign: "center", fontSize: 12, color: t.textDim }}>
               Already have an account?{" "}
@@ -522,7 +530,7 @@ function StrengthBar({ password, accent, border }) {
     /[0-9]/.test(password),
     /[^A-Za-z0-9]/.test(password),
   ];
-  const score = checks.filter(Boolean).length;
+  const score  = checks.filter(Boolean).length;
   const colors = ["", "#e11d48", "#f59e0b", "#3b82f6", "#10b981"];
   const labels = ["", "Weak", "Fair", "Good", "Strong"];
 

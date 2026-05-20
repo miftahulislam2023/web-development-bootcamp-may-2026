@@ -1,88 +1,98 @@
 import React, { useEffect, useState } from 'react';
-import { AuthContext } from '../AuthContext';
-import { auth } from '../../firebase/firebase.init'
-import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from 'firebase/auth';
+import { AuthContext } from './AuthContext';
+import { auth } from '../firebase/firebase.init';
+import {
+  createUserWithEmailAndPassword,
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+} from 'firebase/auth';
 
-const googleProvider = new GoogleAuthProvider()
+const googleProvider = new GoogleAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
 
+export const AuthProvider = ({ children }) => {
+  const [user, setUser]       = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [theme, setTheme]     = useState('light');
 
-const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [password, setPassword] = useState('')
-    const [showPassword, setShowPassword] = useState(false)
-     const [theme, setTheme] = useState('light')
+  /* ── core auth helpers ── */
+  const createUser = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
 
+  const signIn = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
 
-    const createUser = (email, password) => {
-        return createUserWithEmailAndPassword(auth, email, password)
-    }
+  const updateUserProfile = (profileInfo) =>
+    updateProfile(auth.currentUser, profileInfo);
 
-    const signIn = (email, password) => {
-        return signInWithEmailAndPassword(auth, email, password)
-    }
+  const logOutUser = () => {
+    setLoading(true);
+    return signOut(auth);
+  };
 
-   const signInWithGoogle = async () => {
+  /* ── social sign-ins ── */
+  const signInWithGoogle = async () => {
     setLoading(true);
     try {
-        const result = await signInWithPopup(auth, googleProvider);
-        setUser(result.user);
-        return result;
+      const result = await signInWithPopup(auth, googleProvider);
+      setUser(result.user);
+      return result;
     } catch (error) {
-        console.error("Google Sign-in error:", error);
-        alert(error.message); // or show custom toast
-        return null;
+      console.error('Google Sign-in error:', error);
+      throw error;           // let the UI handle the message
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
-
-    const updateUserProfile=profileInfo=>{
-        return updateProfile(auth.currentUser,profileInfo)
-
+  const signInWithFacebook = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithPopup(auth, facebookProvider);
+      setUser(result.user);
+      return result;
+    } catch (error) {
+      console.error('Facebook Sign-in error:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const logOutUser = () => {
-        setLoading(true)
-        return signOut(auth)
-    }
+  /* ── auth state listener ── */
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
+  const authInfo = {
+    user,
+    setUser,
+    loading,
+    setLoading,
+    theme,
+    setTheme,
+    createUser,
+    signIn,
+    updateUserProfile,
+    logOutUser,
+    signInWithGoogle,
+    signInWithFacebook,
+  };
 
-    useEffect(() => {
-        const unSubscribe = onAuthStateChanged(auth, currentUser => {
-            setUser(currentUser)
-            setLoading(false)
-        })
-        return () => {
-            unSubscribe()
-        }
-    }, [])
-
-    const authInfo = {
-        createUser,
-        signIn,
-        updateUserProfile,
-        logOutUser,
-        user,
-        setUser,
-        loading,
-        setLoading,
-        signInWithGoogle,
-        password,
-        setPassword,
-        showPassword,
-        setShowPassword,
-        theme,
-        setTheme
-    }
-    
-
-    return (
-        <AuthContext.Provider value={authInfo}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={authInfo}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthProvider;

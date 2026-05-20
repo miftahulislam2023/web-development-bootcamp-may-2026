@@ -1,0 +1,11 @@
+
+@import "tailwindcss";
+@plugin "daisyui";
+
+.google-sans-font {
+  font-family: "Google Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: weight;
+  font-style: normal;
+ 
+}

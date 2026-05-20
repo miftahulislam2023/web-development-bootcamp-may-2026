@@ -1,6 +1,14 @@
 # 💰 Premium Expense Tracker with Gemini AI Chatbot
 
+[![Live Demo](https://img.shields.io/badge/Demo-Live_on_Vercel-6f37f0?style=for-the-badge&logo=vercel&logoColor=white)](https://premiumexpense-trackerwithgeminiai.vercel.app)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Database-10b981?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+
 A modern, full-stack personal finance and budget management system engineered with **Next.js 16 (App Router)**, **React 19**, and **MongoDB**. This application features an ultra-premium, responsive UI/UX built around a cohesive purple/indigo identity, a smart **Gemini-powered AI Advisor**, interactive analytics, and professional PDF/Excel reporting capabilities.
+
+### 🌐 Live Application Link
+You can access and try the live, fully deployed application here:
+🔗 **[https://premiumexpense-trackerwithgeminiai.vercel.app](https://premiumexpense-trackerwithgeminiai.vercel.app)**
 
 ---
 

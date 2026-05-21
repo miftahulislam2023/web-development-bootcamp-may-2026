@@ -9,6 +9,11 @@ TalkSphere is a production-ready, full-stack real-time chat application built us
 - **Demo Video (Screen Recording):** [https://drive.google.com/drive/folders/1_YgK7LY-poikh0JcgfnNeoGn3JwhJi86?usp=sharing]
 
 
+
+*   **Live Application:** [talksphere-v2x2.onrender.com](https://talksphere-v2x2.onrender.com/)
+*   **Backend API Endpoint:** [talksphere-backend-mpp9.onrender.com](https://talksphere-backend-mpp9.onrender.com/)
+
+
 <br>
 
 ## 📸 App Screenshots

@@ -183,25 +183,6 @@ spendora/
 
 ## ⚙️ Environment Variables
 
-### Frontend `.env`
-```env
-VITE_API_URL=https://my-spendora-server.vercel.app
-VITE_apiKey=your_firebase_api_key
-VITE_authDomain=your_project.firebaseapp.com
-VITE_projectId=your_project_id
-VITE_storageBucket=your_project.firebasestorage.app
-VITE_messagingSenderId=your_sender_id
-VITE_appId=your_app_id
-VITE_image_upload_Key=your_imagebb_key
-```
-
-### Backend `.env`
-```env
-DB_USER=your_mongodb_username
-DB_PASS=your_mongodb_password
-CLIENT_URL=https://your-frontend.netlify.app
-NODE_ENV=production
-```
 
 ---
 

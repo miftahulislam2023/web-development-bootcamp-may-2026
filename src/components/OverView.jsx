@@ -7,7 +7,7 @@ import { useProfile } from "../hooks/userProfile";
 
 import {
   RiArrowUpLine,
-  RiArrowDownLine,
+  RiArrowDownLine ,
   RiWalletLine,
   RiExchangeLine,
   RiPieChartLine,

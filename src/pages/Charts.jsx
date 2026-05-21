@@ -268,7 +268,7 @@ export default function Charts() {
           <Card title="Income vs Expenses" subtitle="Last 6 months">
             <IncomeVsExpense incData={incData} expData={expData} />
           </Card>
-          <Card title="Top categories" subtitle="By spending amount">
+          <Card title="Top categories" subtitle="By spending amount" >
             <TopCategories catData={catData} />
           </Card>
         </div>

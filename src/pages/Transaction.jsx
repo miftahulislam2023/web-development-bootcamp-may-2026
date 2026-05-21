@@ -28,7 +28,7 @@ export default function Transactions() {
 
   /* client-side sort only (server already filters) */
   const filtered = [...expenses].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt )
   );
 
   async function handleDelete(id) {

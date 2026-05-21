@@ -10,7 +10,7 @@ import {
 } from "react-icons/fi";
 
 /* ── API base URL ── */
-export const API_URL = import.meta.env.VITE_API_URL || "https://my-spendora-server.vercel.app";
+export const API_URL = import.meta.env.VITE_API_URL;
 
 /* ── Categories ── */
 /* `icon` = emoji (charts/pills), `Icon` = react-icon component (AddExpense grid) */

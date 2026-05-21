@@ -505,7 +505,7 @@ export default function Overview() {
   const [txList, setTxList] = useState([]);
   const [txLoading, setTxLoading] = useState(true);
 
-  const API = import.meta.env.VITE_API_URL || "https://my-spendora-server.vercel.app";
+ const API = import.meta.env.VITE_API_URL;
 
   // ── FIX: fetch as soon as uid is known, with 2s timeout ──
   const fetchedRef = useRef(false); // prevent double-fetch in StrictMode

@@ -12,6 +12,7 @@ import {
   RiArrowRightSLine,
   RiDeleteBin6Line,
 } from "react-icons/ri";
+import { Helmet } from "react-helmet-async";
 
 /* ── Stat Card ─────────────────────────────────────────────── */
 function StatCard({ label, value, sub, dotColor, icon: Icon }) {
@@ -289,6 +290,10 @@ export default function Dashboard({ setPage }) {
   const barData = byMonth(6);
 
   return (
+      <>
+    <Helmet>
+        <title>Dashboard</title>
+      </Helmet>
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
       {/* ── Stat Cards ── */}
@@ -363,6 +368,8 @@ export default function Dashboard({ setPage }) {
       </Card>
 
     </div>
+    </>
+
   );
 }
 

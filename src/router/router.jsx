@@ -12,11 +12,16 @@ import Service from "../components/Service";
 import Features from "../components/Features";
 import About from "../components/AboutUs";
 import Charts from "../pages/Charts";
+import ServiceDetail from "../pages/ServicesDetails/ServicesDetails";
+import ErrorPage from "../pages/ErrorPage/ErrorPage"
+import Profile from "../components/Profile";
+import OverView from "../components/OverView";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: RootLayout,
+    errorElement: <ErrorPage></ErrorPage>,
     children :[
       {
         index:true,
@@ -29,6 +34,10 @@ export const router = createBrowserRouter([
       {
         path: 'services',
         Component: Service
+      },
+      {
+        path: "/services/:id",
+        Component: ServiceDetail
       },
       {
         path: 'features',
@@ -73,6 +82,14 @@ export const router = createBrowserRouter([
       {
         path:'transactions',
         Component:Transactions
+      },
+      {
+        path:'profile',
+        Component:Profile
+      },
+      {
+        path:'overview',
+        Component: OverView
       },
     ]
   }

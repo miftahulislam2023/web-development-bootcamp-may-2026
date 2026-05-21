@@ -1,53 +1,115 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { API_URL } from "../constants";
 
-const ExpenseCtx = createContext(null);
-
-const SEED = [
-  { id: 1,  desc: "Pizza Hut",       amt: 15,   type: "expense", cat: "Food",          date: "2025-05-10" },
-  { id: 2,  desc: "Spotify",          amt: 9,    type: "expense", cat: "Entertainment", date: "2025-05-09" },
-  { id: 3,  desc: "Uber",             amt: 12,   type: "expense", cat: "Transport",     date: "2025-05-08" },
-  { id: 4,  desc: "Gym membership",   amt: 30,   type: "expense", cat: "Sport",         date: "2025-05-07" },
-  { id: 5,  desc: "Salary",           amt: 3200, type: "income",  cat: "Other",         date: "2025-05-01" },
-  { id: 6,  desc: "Electricity bill", amt: 55,   type: "expense", cat: "Bills",         date: "2025-04-28" },
-  { id: 7,  desc: "Groceries",        amt: 48,   type: "expense", cat: "Food",          date: "2025-04-25" },
-  { id: 8,  desc: "Netflix",          amt: 14,   type: "expense", cat: "Entertainment", date: "2025-04-20" },
-  { id: 9,  desc: "Pharmacy",         amt: 22,   type: "expense", cat: "Health",        date: "2025-04-18" },
-  { id: 10, desc: "Freelance",        amt: 800,  type: "income",  cat: "Other",         date: "2025-04-15" },
-  { id: 11, desc: "Zara",             amt: 65,   type: "expense", cat: "Shopping",      date: "2025-04-10" },
-  { id: 12, desc: "Bus pass",         amt: 18,   type: "expense", cat: "Transport",     date: "2025-04-05" },
-];
+const ExpenseContext = createContext(null);
 
 export function ExpenseProvider({ children }) {
-  const [expenses, setExpenses] = useState(SEED);
+  const [expenses,  setExpenses]  = useState([]);
+  const [summary,   setSummary]   = useState({ totalIncome: 0, totalExpense: 0, balance: 0, count: 0 });
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState(null);
 
-  function addExpense(entry) {
-    setExpenses(prev => [{ ...entry, id: Date.now() }, ...prev]);
-  }
+  /* ── fetch all expenses (optional server-side filters) ── */
+  const fetchExpenses = useCallback(async (filters = {}) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filters.type   && filters.type   !== "All") params.set("type",   filters.type);
+      if (filters.cat    && filters.cat    !== "All") params.set("cat",    filters.cat);
+      if (filters.search && filters.search.trim())    params.set("search", filters.search);
 
-  function deleteExpense(id) {
-    setExpenses(prev => prev.filter(e => e.id !== id));
-  }
+      const res  = await fetch(`${API_URL}/expenses${params.toString() ? "?" + params : ""}`);
+      if (!res.ok) throw new Error("Failed to fetch expenses");
+      const data = await res.json();
+      setExpenses(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  /* ── derived helpers ── */
-  const totalIncome  = expenses.filter(e => e.type === "income").reduce((s, e) => s + e.amt, 0);
-  const totalExpense = expenses.filter(e => e.type === "expense").reduce((s, e) => s + e.amt, 0);
-  const balance      = totalIncome - totalExpense;
+  /* ── fetch summary totals ── */
+  const fetchSummary = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/expenses/summary`);
+      if (!res.ok) throw new Error("Failed to fetch summary");
+      setSummary(await res.json());
+    } catch (err) {
+      console.error("Summary error:", err.message);
+    }
+  }, []);
+
+  /* ── add expense ── */
+  const addExpense = useCallback(async (expense) => {
+    const res = await fetch(`${API_URL}/expenses`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(expense),
+    });
+    if (!res.ok) {
+      const { error: msg } = await res.json();
+      throw new Error(msg || "Failed to add expense");
+    }
+    const created = await res.json();
+    setExpenses(prev => [created, ...prev]);   // optimistic prepend
+    fetchSummary();
+    return created;
+  }, [fetchSummary]);
+
+  /* ── update expense ── */
+  const updateExpense = useCallback(async (id, updates) => {
+    const res = await fetch(`${API_URL}/expenses/${id}`, {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(updates),
+    });
+    if (!res.ok) {
+      const { error: msg } = await res.json();
+      throw new Error(msg || "Failed to update");
+    }
+    const updated = await res.json();
+    setExpenses(prev => prev.map(e => e._id === id ? updated : e));
+    fetchSummary();
+    return updated;
+  }, [fetchSummary]);
+
+  /* ── delete expense (optimistic) ── */
+  const deleteExpense = useCallback(async (id) => {
+    setExpenses(prev => prev.filter(e => e._id !== id));   // remove instantly
+    try {
+      const res = await fetch(`${API_URL}/expenses/${id}`, { method: "DELETE" });
+      if (!res.ok) { fetchExpenses(); throw new Error("Delete failed"); } // rollback
+      fetchSummary();
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [fetchExpenses, fetchSummary]);
+
+  /* ── derived helpers (same API as old context) ── */
+  const totalIncome  = summary.totalIncome;
+  const totalExpense = summary.totalExpense;
+  const balance      = summary.balance;
 
   const now = new Date();
+
   const monthlyExpense = expenses
-    .filter(e => e.type === "expense" && new Date(e.date).getMonth() === now.getMonth())
+    .filter(e =>
+      e.type === "expense" &&
+      new Date(e.date).getMonth()    === now.getMonth() &&
+      new Date(e.date).getFullYear() === now.getFullYear()
+    )
     .reduce((s, e) => s + e.amt, 0);
 
-  /** spending per category (expenses only) */
   function byCategory() {
     const map = {};
-    expenses.filter(e => e.type === "expense").forEach(e => {
-      map[e.cat] = (map[e.cat] || 0) + e.amt;
-    });
+    expenses
+      .filter(e => e.type === "expense")
+      .forEach(e => { map[e.cat] = (map[e.cat] || 0) + e.amt; });
     return map;
   }
 
-  /** spending per month for last N months */
   function byMonth(n = 6, type = "expense") {
     return Array.from({ length: n }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (n - 1) + i, 1);
@@ -62,15 +124,30 @@ export function ExpenseProvider({ children }) {
     });
   }
 
+  useEffect(() => {
+    fetchExpenses();
+    fetchSummary();
+  }, [fetchExpenses, fetchSummary]);
+
   return (
-    <ExpenseCtx.Provider value={{
-      expenses, addExpense, deleteExpense,
+    <ExpenseContext.Provider value={{
+      /* raw state */
+      expenses, loading, error,
+      /* actions */
+      addExpense, updateExpense, deleteExpense, fetchExpenses, fetchSummary,
+      /* summary */
+      summary,
+      /* derived — 100% backward-compatible with old context */
       totalIncome, totalExpense, balance, monthlyExpense,
       byCategory, byMonth,
     }}>
       {children}
-    </ExpenseCtx.Provider>
+    </ExpenseContext.Provider>
   );
 }
 
-export const useExpenses = () => useContext(ExpenseCtx);
+export const useExpenses = () => {
+  const ctx = useContext(ExpenseContext);
+  if (!ctx) throw new Error("useExpenses must be used inside <ExpenseProvider>");
+  return ctx;
+};

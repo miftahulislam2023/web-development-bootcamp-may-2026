@@ -9,6 +9,7 @@ import {
   FaMobileAlt,
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
+import { Helmet } from "react-helmet-async";
 
 export default function About() {
   const { t, dark } = useTheme();
@@ -37,6 +38,10 @@ export default function About() {
   ];
 
   return (
+      <>
+    <Helmet>
+        <title>Spendora || AboutUs</title>
+      </Helmet>
     <div
       style={{
         minHeight: "100vh",
@@ -192,5 +197,6 @@ export default function About() {
         </motion.div>
       </div>
     </div>
+    </>
   );
 }

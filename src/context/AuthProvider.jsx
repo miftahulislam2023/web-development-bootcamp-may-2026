@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   const updateUserProfile = (profileInfo) =>
     updateProfile(auth.currentUser, profileInfo);
 
-  const logOutUser = () => {
+  const logOut = () => {
     setLoading(true);
     return signOut(auth);
   };
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
     createUser,
     signIn,
     updateUserProfile,
-    logOutUser,
+    logOut,
     signInWithGoogle,
     signInWithFacebook,
   };

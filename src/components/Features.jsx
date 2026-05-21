@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
+import { Helmet } from "react-helmet-async";
 
 const features = [
   {
@@ -59,6 +60,10 @@ const Features = () => {
   const { dark, t } = useTheme();
 
   return (
+      <>
+    <Helmet>
+        <title>Spendora || Features</title>
+      </Helmet>
     <section id=""
       className="relative overflow-hidden py-20 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-10"
       style={{ background: t.pageBg }}
@@ -179,6 +184,7 @@ const Features = () => {
         </div>
       </div>
     </section>
+    </>
   );
 };
 

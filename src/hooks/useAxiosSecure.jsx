@@ -3,7 +3,7 @@ import axios from "axios";
 import useAuth from "./useAuth";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "https://my-spendora-server.vercel.app",
   headers: {
     "Content-Type": "application/json", 
   },

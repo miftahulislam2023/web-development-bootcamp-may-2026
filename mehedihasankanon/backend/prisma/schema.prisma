@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  password         String
+  name             String?
+  resetToken       String?
+  maxStorageSpace  Int @default(500000000) 
+  usedStorageSpace Int @default(0)
+  files            File[]         @relation("FileOwner")
+  folders          Folder[]       @relation("FolderOwner")
+  sharedWithMe     SharedAccess[]
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files     File[]
+  owner     User     @relation("FolderOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  parent    Folder?  @relation("SubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folder[] @relation("SubFolders")
+
+  @@index([ownerId])
+}
+
+model File {
+  id         String         @id @default(uuid())
+  name       String
+  fileKey    String         @unique
+  url        String
+  size       Int
+  type       String
+  access     AccessLevel    @default(PRIVATE)
+  ownerId    String
+  folderId   String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  folder     Folder?        @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  owner      User           @relation("FileOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  sharedWith SharedAccess[]
+
+  @@index([ownerId])
+  @@index([fileKey])
+}
+
+model SharedAccess {
+  id         String     @id @default(uuid())
+  fileId     String
+  userId     String
+  permission Permission @default(VIEW)
+  file       File       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fileId, userId])
+}
+
+enum AccessLevel {
+  PRIVATE
+  PUBLIC
+  RESTRICTED
+}
+
+enum Permission {
+  VIEW
+  EDIT
+}

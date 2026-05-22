@@ -1,0 +1,55 @@
+# ============================================
+# LifeOS — Cloudflare Edge Cache Configuration
+# ============================================
+# s-maxage  = Cloudflare CDN edge cache (server-side)
+# max-age   = Browser cache (client-side)
+# immutable = Never revalidate (for hashed assets)
+
+# ── Global Security Headers ──
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# ── Vite Hashed Assets (JS/CSS) — Cache Forever ──
+# These filenames contain content hashes, so they are safe to cache indefinitely.
+/assets/*
+  Cache-Control: public, max-age=31536000, s-maxage=31536000, immutable
+
+# ── Images — 1 Year CDN + 30 Day Browser ──
+/*.png
+  Cache-Control: public, max-age=2592000, s-maxage=31536000
+/*.jpg
+  Cache-Control: public, max-age=2592000, s-maxage=31536000
+/*.jpeg
+  Cache-Control: public, max-age=2592000, s-maxage=31536000
+/*.svg
+  Cache-Control: public, max-age=2592000, s-maxage=31536000
+/*.webp
+  Cache-Control: public, max-age=2592000, s-maxage=31536000
+/*.ico
+  Cache-Control: public, max-age=2592000, s-maxage=31536000
+
+# ── Fonts — Cache Forever ──
+/*.woff2
+  Cache-Control: public, max-age=31536000, s-maxage=31536000, immutable
+/*.woff
+  Cache-Control: public, max-age=31536000, s-maxage=31536000, immutable
+
+# ── PWA Files — Short CDN Cache, Always Revalidate Browser ──
+/manifest.webmanifest
+  Cache-Control: public, max-age=0, s-maxage=86400, must-revalidate
+  Content-Type: application/manifest+json
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+/registerSW.js
+  Cache-Control: public, max-age=0, must-revalidate
+/workbox-*.js
+  Cache-Control: public, max-age=86400, s-maxage=604800
+
+# ── HTML — Never Cache (always get latest) ──
+/
+  Cache-Control: public, max-age=0, s-maxage=3600, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, s-maxage=3600, must-revalidate

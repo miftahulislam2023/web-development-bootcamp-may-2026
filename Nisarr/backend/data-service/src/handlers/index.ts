@@ -1,0 +1,9 @@
+// barrel export for all handlers
+export { handleGenericCRUD } from "./generic.handler.js";
+export { handleTasks } from "./tasks.handler.js";
+export { handleBudget } from "./budget.handler.js";
+export { handleHabits } from "./habits.handler.js";
+export { handleGym } from "./gym.handler.js";
+export { handleAIEnhance } from "./ai.handler.js";
+export { handleHealth } from "./health.handler.js";
+export { handleSync } from "./sync.handler.js";

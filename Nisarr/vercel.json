@@ -1,0 +1,44 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/api/auth/(.*)",
+            "destination": "/api/auth"
+        },
+        {
+            "source": "/api/data/(.*)",
+            "destination": "/api/data"
+        },
+        {
+            "source": "/api/ai/(.*)",
+            "destination": "/api/data"
+        },
+        {
+            "source": "/api/health",
+            "destination": "/api/data"
+        },
+        {
+            "source": "/((?!api/).*)",
+            "destination": "/index.html"
+        }
+    ],
+    "crons": [
+        {
+            "path": "/api/health",
+            "schedule": "0 */6 * * *"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "Cross-Origin-Opener-Policy",
+                    "value": "same-origin-allow-popups"
+                }
+            ]
+        }
+    ]
+}

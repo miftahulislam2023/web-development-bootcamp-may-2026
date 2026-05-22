@@ -1,0 +1,22 @@
+# Handle line endings automatically for files detected as text
+# and perform LF normalization (transient conversion to LF on checkin)
+* text=auto
+
+# Explicitly declare text files to always be LF on checkin
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.css text
+*.scss text
+*.html text
+*.json text
+*.md text
+
+# Denote all files that are truly binary and should not be modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mp4 binary

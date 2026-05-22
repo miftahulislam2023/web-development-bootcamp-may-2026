@@ -1,0 +1,477 @@
+[
+  {
+    "id": 1,
+    "category": "technical",
+    "question": "What is the core tech stack of Life Hub AI?",
+    "answer": "The project is built with Vite, React, TypeScript, Tailwind CSS, Shadcn UI, and uses LibSQL for the local/edge database.",
+    "translations": {}
+  },
+  {
+    "id": 2,
+    "category": "technical",
+    "question": "How is the AI module structured in the project?",
+    "answer": "The AI logic is organized in `src/ai/`. It consists of a central orchestrator in `core/index.ts` and several feature-specific modules like `finance.ts`, `tasks.ts`, and `habits.ts` in `modules/`.",
+    "translations": {}
+  },
+  {
+    "id": 3,
+    "category": "technical",
+    "question": "Which AI model provider is used for Nova?",
+    "answer": "Nova uses the Groq API for fast inference, typically utilizing models like Llama 3 or similar large language models optimized for speed.",
+    "translations": {}
+  },
+  {
+    "id": 4,
+    "category": "technical",
+    "question": "How does Nova handle user intent parsing?",
+    "answer": "Nova processes user messages to extract structured intent (AIIntent), which includes an action (e.g., ADD_TASK), associated data, and a natural language response.",
+    "translations": {}
+  },
+  {
+    "id": 5,
+    "category": "technical",
+    "question": "What database is used for storing user data locally?",
+    "answer": "The application uses LibSQL (via `@libsql/client`) to manage structured data like tasks, notes, and finance records.",
+    "translations": {}
+  },
+  {
+    "id": 6,
+    "category": "technical",
+    "question": "How are protected routes handled in the app?",
+    "answer": "Protected routes are managed by the `ProtectedRoute` component in `src/components/auth/`, ensuring only authenticated users can access the dashboard and его modules.",
+    "translations": {}
+  },
+  {
+    "id": 7,
+    "category": "technical",
+    "question": "What is the purpose of `DashboardLayout`?",
+    "answer": "`DashboardLayout` provides the shared structural elements across all protected pages, including the Sidebar, Topbar, and the AI Chat interface.",
+    "translations": {}
+  },
+  {
+    "id": 8,
+    "category": "technical",
+    "question": "How does the app handle state management for AI context?",
+    "answer": "AI context (messages, availability) is managed via the `AIContext` provider located in `src/contexts/AIContext.tsx`.",
+    "translations": {}
+  },
+  {
+    "id": 9,
+    "category": "technical",
+    "question": "How are icons implemented in the UI?",
+    "answer": "The project uses `lucide-react` for consistent and scalable iconography across all pages and components.",
+    "translations": {}
+  },
+  {
+    "id": 10,
+    "category": "technical",
+    "question": "What library is used for animations?",
+    "answer": "`framer-motion` is used for smooth transitions, page animations, andinteractive UI elements like the glassmorphic cards.",
+    "translations": {}
+  },
+  {
+    "id": 11,
+    "category": "technical",
+    "question": "How does the app handle theme switching (Dark/Light mode)?",
+    "answer": "Theme management is handled through `next-themes` and custom CSS variables, with the state persisted in local storage as `lifeos-theme`.",
+    "translations": {}
+  },
+  {
+    "id": 12,
+    "category": "technical",
+    "question": "What is the role of `personality.ts` in the AI module?",
+    "answer": "`personality.ts` defines Nova's core persona, behavior rules, and the base system prompts that guide her proactive and helpful tone.",
+    "translations": {}
+  },
+  {
+    "id": 13,
+    "category": "technical",
+    "question": "How is the finance module integrated with AI?",
+    "answer": "The `finance.ts` module in `src/ai/modules/` maps user requests (like 'I spent 50 on lunch') to `ADD_EXPENSE` actions using the finance state context.",
+    "translations": {}
+  },
+  {
+    "id": 14,
+    "category": "technical",
+    "question": "How does the study module track progress?",
+    "answer": "The study module tracks progress by calculating the percentage of completed chapters and tasks within a specific subject, stored in the LibSQL database.",
+    "translations": {}
+  },
+  {
+    "id": 15,
+    "category": "technical",
+    "question": "What is the purpose of the `Toaster` component?",
+    "answer": "The app uses `sonner` for rich, non-invasive notifications (toasts) to alert users about action completions or errors.",
+    "translations": {}
+  },
+  {
+    "id": 16,
+    "category": "technical",
+    "question": "How are forms managed in the application?",
+    "answer": "`react-hook-form` along with `zod` for validation is used to handle user inputs efficiently and securely.",
+    "translations": {}
+  },
+  {
+    "id": 17,
+    "category": "technical",
+    "question": "What is 'Proactive Advisor Mode' in Nova?",
+    "answer": "It's a feature where Nova analyzes time, pending habits, and overdue tasks to offer suggestions without being prompted for a specific action.",
+    "translations": {}
+  },
+  {
+    "id": 18,
+    "category": "technical",
+    "question": "How is the development environment configured?",
+    "answer": "The project uses Vite for fast development builds and HMR (Hot Module Replacement), with TypeScript for type safety.",
+    "translations": {}
+  },
+  {
+    "id": 19,
+    "category": "technical",
+    "question": "What is the role of `routes.ts` or the routing structure?",
+    "answer": "Routing is handled by `react-router-dom` in `App.tsx`, defining paths for dashboard modules and public pages like Login and Register.",
+    "translations": {}
+  },
+  {
+    "id": 20,
+    "category": "technical",
+    "question": "How are UI components styled?",
+    "answer": "Styling is done using Tailwind CSS for utility-first design and Shadcn UI (Radix-based) for accessible, pre-built components.",
+    "translations": {}
+  },
+  {
+    "id": 21,
+    "category": "technical",
+    "question": "Where is the main entry point of the React application?",
+    "answer": "The entry point is `src/main.tsx`, which renders the `App` component within a `StrictMode` and handles global providers.",
+    "translations": {}
+  },
+  {
+    "id": 22,
+    "category": "technical",
+    "question": "How does the app handle database migrations?",
+    "answer": "Basic migrations are handled in `App.tsx` within a `useEffect`, ensuring necessary tables and columns are created when the app loads.",
+    "translations": {}
+  },
+  {
+    "id": 23,
+    "category": "technical",
+    "question": "What is the study common preset system?",
+    "answer": "It allows users to quickly add predefined study structures (like standard textbook chapters) to their study tracker.",
+    "translations": {}
+  },
+  {
+    "id": 24,
+    "category": "technical",
+    "question": "How is the AI chat interface implemented?",
+    "answer": "The `AIChatInterface` component uses an overlay design with a scrollable history, glassmorphic styling, and integrated command processing.",
+    "translations": {}
+  },
+  {
+    "id": 25,
+    "category": "technical",
+    "question": "What utility is used for merging Tailwind classes?",
+    "answer": "The `cn` utility wrapper, combining `clsx` and `tailwind-merge`, is used to handle conditional class merging without conflicts.",
+    "translations": {}
+  },
+  {
+    "id": 26,
+    "category": "manual",
+    "question": "How do I add a new task?",
+    "answer": "You can add a task manually on the Tasks page or tell Nova: 'Add a task to buy groceries tonight'.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে একটি নতুন কাজ যোগ করব?",
+        "answer": "আপনি টাস্ক পেজে গিয়ে ম্যানুয়ালি কাজ যোগ করতে পারেন অথবা নোভাকে বলতে পারেন: 'আজ রাতে বাজার করার জন্য একটি টাস্ক যোগ করো'।"
+      }
+    }
+  },
+  {
+    "id": 27,
+    "category": "manual",
+    "question": "Who is Nova?",
+    "answer": "Nova is your proactive AI life assistant designed to help you manage your daily schedules, finances, and goals.",
+    "translations": {
+      "bn": {
+        "question": "নোভা কে?",
+        "answer": "নোভা হলো আপনার প্রো-অ্যাক্টিভ এআই লাইফ অ্যাসিস্ট্যান্ট, যা আপনার দৈনন্দিন সূচি, অর্থ এবং লক্ষ্য ব্যবস্থাপনায় সাহায্য করার জন্য তৈরি করা হয়েছে।"
+      }
+    }
+  },
+  {
+    "id": 28,
+    "category": "manual",
+    "question": "How can I check my budget?",
+    "answer": "Visit the Finance page for a detailed breakdown or ask Nova: 'What's my balance?' or 'Show me my expenses'.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে আমার বাজেট চেক করব?",
+        "answer": "বিস্তারিত তথ্যের জন্য ফিন্যান্স পেজ দেখুন অথবা নোভাকে জিজ্ঞাসা করুন: 'আমার ব্যালেন্স কত?' বা 'আমার খরচগুলো দেখাও'।"
+      }
+    }
+  },
+  {
+    "id": 29,
+    "category": "manual",
+    "question": "How do I track my study progress?",
+    "answer": "Go to the Study page, add your subjects and chapters, and update your progress as you complete them.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে আমার পড়াশোনার অগ্রগতি ট্র্যাক করব?",
+        "answer": "স্টাডি পেজে যান, আপনার বিষয় এবং চ্যাপ্টারগুলো যোগ করুন এবং সেগুলো পড়ার পর অগ্রগতি আপডেট করুন।"
+      }
+    }
+  },
+  {
+    "id": 30,
+    "category": "manual",
+    "question": "Can I use Nova for habit building?",
+    "answer": "Yes, Nova tracks your daily habits. You can log completions on the Habits page or by telling Nova 'I finished my workout'.",
+    "translations": {
+      "bn": {
+        "question": "আমি কি অভ্যেস গড়ার জন্য নোভাকে ব্যবহার করতে পারি?",
+        "answer": "হ্যাঁ, নোভা আপনার দৈনন্দিন অভ্যেস ট্র্যাক করে। আপনি হ্যাবিট পেজে গিয়ে বা নোভাকে 'আমার ব্যায়াম শেষ করেছি' বলে তা নথিভুক্ত করতে পারেন।"
+      }
+    }
+  },
+  {
+    "id": 31,
+    "category": "manual",
+    "question": "How do I create a note?",
+    "answer": "Open the Notes page to write detailed notes or tell Nova to 'Quick note: the meeting is at 10 AM'.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে একটি নোট তৈরি করব?",
+        "answer": "বিস্তারিত নোট লিখতে নোটস পেজ খুলুন অথবা নোভাকে বলুন 'কুইক নোট: মিটিং সকাল ১০টায়'।"
+      }
+    }
+  },
+  {
+    "id": 32,
+    "category": "manual",
+    "question": "How do I manage my inventory?",
+    "answer": "The Inventory page allows you to list items, their categories, and values to keep track of your belongings.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে আমার ইনভেন্টরি পরিচালনা করব?",
+        "answer": "ইনভেন্টরি পেজ আপনাকে আপনার জিনিসের তালিকা, বিভাগ এবং মূল্য লিখে রাখতে সাহায্য করে যাতে আপনি সেগুলোর হিসাব রাখতে পারেন।"
+      }
+    }
+  },
+  {
+    "id": 33,
+    "category": "manual",
+    "question": "What should I do if Nova doesn't understand me?",
+    "answer": "Try to be more specific with your request or use the manual dedicated pages to perform the actions.",
+    "translations": {
+      "bn": {
+        "question": "নোভা আমার কথা না বুঝলে কী করব?",
+        "answer": "আপনার অনুরোধটি আরও সুনির্দিষ্টভাবে বলার চেষ্টা করুন অথবা কাজটি করার জন্য নির্দিষ্ট মেনু বা পেজ ব্যবহার করুন।"
+      }
+    }
+  },
+  {
+    "id": 34,
+    "category": "manual",
+    "question": "How do I change the app theme to dark mode?",
+    "answer": "You can toggle the theme in the Settings page under the Appearance section.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে অ্যাপের থিম ডার্ক মোডে পরিবর্তন করব?",
+        "answer": "আপনি সেটিংস পেজের অ্যাপিয়ারেন্স সেকশন থেকে থিম পরিবর্তন করতে পারেন।"
+      }
+    }
+  },
+  {
+    "id": 35,
+    "category": "manual",
+    "question": "Is my data secure?",
+    "answer": "Life Hub AI uses secure authentication and local storage principles to ensure your personal data remains private.",
+    "translations": {
+      "bn": {
+        "question": "আমার তথ্য কি নিরাপদ?",
+        "answer": "লাইফ হাব এআই আপনার ব্যক্তিগত তথ্য গোপন রাখতে নিরাপদ অথেন্টিকেশন এবং লোকাল স্টোরেজ নীতি ব্যবহার করে।"
+      }
+    }
+  },
+  {
+    "id": 36,
+    "category": "manual",
+    "question": "How do I set a reminder?",
+    "answer": "Just tell Nova: 'Remind me to call Mom at 6 PM' and she will add it to your tasks.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে রিমাইন্ডার সেট করব?",
+        "answer": "নোভাকে শুধু বলুন: 'আমাকে সন্ধ্যা ৬টায় মাকে ফোন করার কথা মনে করিয়ে দিও' এবং সে এটি আপনার টাস্কে যোগ করে দিবে।"
+      }
+    }
+  },
+  {
+    "id": 37,
+    "category": "manual",
+    "question": "Can I export my data?",
+    "answer": "Yes, you can export reports of your finances and tasks from their respective pages in PDF format.",
+    "translations": {
+      "bn": {
+        "question": "আমি কি আমার তথ্য এক্সপোর্ট করতে পারি?",
+        "answer": "হ্যাঁ, আপনি ফিন্যান্স এবং টাস্ক পেজ থেকে আপনার তথ্যের রিপোর্ট পিডিএফ (PDF) ফরম্যাটে এক্সপোর্ট করতে পারেন।"
+      }
+    }
+  },
+  {
+    "id": 38,
+    "category": "manual",
+    "question": "How do I delete an expense?",
+    "answer": "Go to the Finance page, locate the transaction in your history, and click the delete icon.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে একটি খরচ ডিলিট করব?",
+        "answer": "ফিন্যান্স পেজে যান, আপনার হিস্ট্রি থেকে ট্রানজ্যাকশনটি খুঁজে বের করুন এবং ডিলিট আইকনে ক্লিক করুন।"
+      }
+    }
+  },
+  {
+    "id": 39,
+    "category": "manual",
+    "question": "How do I update my profile?",
+    "answer": "Go to the Settings page to update your name, email, and other profile details.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে আমার প্রোফাইল আপডেট করব?",
+        "answer": "আপনার নাম, ইমেল এবং অন্যান্য প্রোফাইল ডিটেইলস আপডেট করতে সেটিংস পেজে যান।"
+      }
+    }
+  },
+  {
+    "id": 40,
+    "category": "manual",
+    "question": "What is the study preset feature?",
+    "answer": "Presets are pre-defined study plans for common subjects that help you set up your study tracking faster.",
+    "translations": {
+      "bn": {
+        "question": "স্টাডি প্রিসেট ফিচারটি কী?",
+        "answer": "প্রিসেট হলো সাধারণ বিষয়গুলোর জন্য আগে থেকে তৈরি করা স্টাডি প্ল্যান যা আপনাকে দ্রুত পড়াশোনা ট্র্যাক করতে সাহায্য করে।"
+      }
+    }
+  },
+  {
+    "id": 41,
+    "category": "manual",
+    "question": "How do I log out?",
+    "answer": "Click on your avatar or the logout button at the bottom of the sidebar to sign out safely.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে লগ আউট করব?",
+        "answer": "নিরাপদে সাইন আউট করতে সাইডবারের নিচে থাকা আপনার প্রোফাইল বা লগ আউট বাটনে ক্লিক করুন।"
+      }
+    }
+  },
+  {
+    "id": 42,
+    "category": "manual",
+    "question": "How does Nova prioritize tasks?",
+    "answer": "Nova uses 'High', 'Medium', and 'Low' labels along with due dates to suggest what you should focus on next.",
+    "translations": {
+      "bn": {
+        "question": "নোভা কীভাবে কাজগুলোকে অগ্রাধিকার দেয়?",
+        "answer": "আপনার পরবর্তী কাজ কোনটি হওয়া উচিত তা বুঝতে নোভা 'High', 'Medium' এবং 'Low' লেবেলের সাথে শেষ তারিখ (due dates) ব্যবহার করে।"
+      }
+    }
+  },
+  {
+    "id": 43,
+    "category": "manual",
+    "question": "Can I add income sources?",
+    "answer": "Yes, on the Finance page, you can toggle between 'Expense' and 'Income' to track your earnings.",
+    "translations": {
+      "bn": {
+        "question": "আমি কি আয়ের উৎস যোগ করতে পারি?",
+        "answer": "হ্যাঁ, ফিন্যান্স পেজে আপনি আপনার আয় ট্র্যাক করার জন্য 'Expense' এবং 'Income'-এর মধ্যে সুইচ করতে পারেন।"
+      }
+    }
+  },
+  {
+    "id": 44,
+    "category": "manual",
+    "question": "How do I complete a habit?",
+    "answer": "Simply check the habit circle on the Habits page or tell Nova: 'Habit done: Drinking Water'.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে একটি অভ্যেস সম্পন্ন করব?",
+        "answer": "হ্যাবিট পেজে থাকা সার্কেলে টিক দিন অথবা নোভাকে বলুন: 'হ্যাবিট ডান: পানি পান করা'।"
+      }
+    }
+  },
+  {
+    "id": 45,
+    "category": "manual",
+    "question": "How do I search for a note?",
+    "answer": "Use the search bar at the top of the Notes page to find specific keywords across your notebooks.",
+    "translations": {
+      "bn": {
+        "question": "আমি কীভাবে নোট খুঁজব?",
+        "answer": "আপনার নোটবুক থেকে নির্দিষ্ট কিওয়ার্ড খুঁজে পেতে নোটস পেজের উপরে থাকা সার্চ বারটি ব্যবহার করুন।"
+      }
+    }
+  },
+  {
+    "id": 46,
+    "category": "manual",
+    "question": "Can I use the app offline?",
+    "answer": "The app is optimized for local usage, but some AI features like Nova's chat require an internet connection for processing.",
+    "translations": {
+      "bn": {
+        "question": "আমি কি অ্যাপটি অফলাইনে ব্যবহার করতে পারব?",
+        "answer": "অ্যাপটি লোকাল ব্যবহারের জন্য অপ্টিমাইজ করা হয়েছে, তবে নোভার চ্যাটের মতো কিছু এআই ফিচারের জন্য ইন্টারনেট সংযোগ প্রয়োজন।"
+      }
+    }
+  },
+  {
+    "id": 47,
+    "category": "manual",
+    "question": "What is the 'Nova Availability' indicator?",
+    "answer": "It shows whether Nova is ready to chat. If it's green, she's online; if red, she might be having connection issues.",
+    "translations": {
+      "bn": {
+        "question": "'নোভা অ্যাভেইলেবিলিটি' ইন্ডিকেটরটি কী?",
+        "answer": "এটি দেখায় নোভা চ্যাট করার জন্য প্রস্তুত কি না। যদি এটি সবুজ হয় তবে সে অনলাইন; লাল হলে সংযোগে সমস্যা হতে পারে।"
+      }
+    }
+  },
+  {
+    "id": 48,
+    "category": "manual",
+    "question": "How do I navigate between pages using Nova?",
+    "answer": "You can say 'Go to tasks' or 'Open settings' and Nova will automatically navigate you there.",
+    "translations": {
+      "bn": {
+        "question": "আমি নোভার মাধ্যমে কীভাবে বিভিন্ন পেজে যাব?",
+        "answer": "আপনি বলতে পারেন 'টাস্কে যাও' বা 'সেটিংস খোলো' এবং নোভা আপনাকে স্বয়ংক্রিয়ভাবে সেখানে নিয়ে যাবে।"
+      }
+    }
+  },
+  {
+    "id": 49,
+    "category": "manual",
+    "question": "Can I personalize Nova's behavior?",
+    "answer": "Currently, Nova's personality is fixed as a proactive advisor, but you can adjust your own user details in Settings.",
+    "translations": {
+      "bn": {
+        "question": "আমি কি নোভার আচরণ নিজের মতো করে বদলে নিতে পারি?",
+        "answer": "আপাতত নোভার ব্যক্তিত্ব একজন প্রো-অ্যাক্টিভ অ্যাডভাইজার হিসেবে নির্ধারিত, তবে আপনি সেটিংসে আপনার নিজের তথ্য পরিবর্তন করতে পারেন।"
+      }
+    }
+  },
+  {
+    "id": 50,
+    "category": "manual",
+    "question": "Where can I see my total savings?",
+    "answer": "The Finance dashboard summarizes your total savings and compares it against your monthly goals.",
+    "translations": {
+      "bn": {
+        "question": "আমি আমার মোট সঞ্চয় কোথায় দেখতে পাব?",
+        "answer": "ফিন্যান্স ড্যাশবোর্ড আপনার মোট সঞ্চয় এবং আপনার মাসিক লক্ষ্যের সাথে তার তুলনা দেখাবে।"
+      }
+    }
+  }
+]

@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  # ── API Gateway ─────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: lifesolver-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web-app
+      - ai-dashboard
+      - auth-service
+      - data-service
+    restart: unless-stopped
+
+  # ── Module 1: Web App (Frontend) ────────────────────────────────
+  web-app:
+    build:
+      context: ./frontend/web-app
+      dockerfile: Dockerfile
+    container_name: lifesolver-web-app
+    expose:
+      - "3001"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ── Module 2: AI Dashboard (Frontend) ───────────────────────────
+  ai-dashboard:
+    build:
+      context: ./frontend/ai-dashboard
+      dockerfile: Dockerfile
+    container_name: lifesolver-ai-dashboard
+    expose:
+      - "3002"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ── Module 3: Auth Service (Backend) ────────────────────────────
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: lifesolver-auth-service
+    expose:
+      - "4001"
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_PORT=4001
+    restart: unless-stopped
+
+  # ── Module 4: Data Service (Backend) ────────────────────────────
+  data-service:
+    build:
+      context: ./backend/data-service
+      dockerfile: Dockerfile
+    container_name: lifesolver-data-service
+    expose:
+      - "4002"
+    env_file:
+      - .env
+    environment:
+      - DATA_SERVICE_PORT=4002
+    restart: unless-stopped

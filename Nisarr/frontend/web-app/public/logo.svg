@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0c1222"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </linearGradient>
+    <linearGradient id="ice" x1="128" y1="100" x2="384" y2="412" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="200" y1="160" x2="312" y2="352" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="16" flood-color="#38bdf8" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
+  
+  <!-- Outer ring glow -->
+  <circle cx="256" cy="256" r="200" stroke="url(#ice)" stroke-width="2" fill="none" opacity="0.2"/>
+  
+  <!-- Snowflake / Crystal structure -->
+  <g transform="translate(256, 256)" filter="url(#shadow)">
+    <!-- Main 6-pointed crystal -->
+    <!-- Vertical arm -->
+    <line x1="0" y1="-120" x2="0" y2="120" stroke="url(#ice)" stroke-width="8" stroke-linecap="round"/>
+    <!-- 60° arms -->
+    <line x1="-103.9" y1="-60" x2="103.9" y2="60" stroke="url(#ice)" stroke-width="8" stroke-linecap="round"/>
+    <line x1="-103.9" y1="60" x2="103.9" y2="-60" stroke="url(#ice)" stroke-width="8" stroke-linecap="round"/>
+    
+    <!-- Branch details - top -->
+    <line x1="0" y1="-120" x2="-28" y2="-88" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="-120" x2="28" y2="-88" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <!-- Branch details - bottom -->
+    <line x1="0" y1="120" x2="-28" y2="88" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="120" x2="28" y2="88" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <!-- Branch details - top right -->
+    <line x1="103.9" y1="-60" x2="75.9" y2="-80" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="103.9" y1="-60" x2="103.9" y2="-28" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <!-- Branch details - bottom left -->
+    <line x1="-103.9" y1="60" x2="-75.9" y2="80" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-103.9" y1="60" x2="-103.9" y2="28" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <!-- Branch details - bottom right -->
+    <line x1="103.9" y1="60" x2="75.9" y2="80" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="103.9" y1="60" x2="103.9" y2="28" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <!-- Branch details - top left -->
+    <line x1="-103.9" y1="-60" x2="-75.9" y2="-80" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-103.9" y1="-60" x2="-103.9" y2="-28" stroke="url(#glow)" stroke-width="5" stroke-linecap="round"/>
+    
+    <!-- Inner hexagon -->
+    <polygon points="0,-55 47.6,-27.5 47.6,27.5 0,55 -47.6,27.5 -47.6,-27.5" 
+      stroke="url(#ice)" stroke-width="3" fill="url(#ice)" fill-opacity="0.1"/>
+    
+    <!-- Center circle with bright glow -->
+    <circle cx="0" cy="0" r="18" fill="url(#glow)" opacity="0.9"/>
+    <circle cx="0" cy="0" r="10" fill="white" opacity="0.8"/>
+    
+    <!-- Tiny dots at arm tips -->
+    <circle cx="0" cy="-120" r="6" fill="url(#glow)"/>
+    <circle cx="0" cy="120" r="6" fill="url(#glow)"/>
+    <circle cx="103.9" cy="-60" r="6" fill="url(#glow)"/>
+    <circle cx="-103.9" cy="60" r="6" fill="url(#glow)"/>
+    <circle cx="103.9" cy="60" r="6" fill="url(#glow)"/>
+    <circle cx="-103.9" cy="-60" r="6" fill="url(#glow)"/>
+  </g>
+</svg>

@@ -1,0 +1,44 @@
+{
+  "name": "socialIO",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:server": "turbo run dev --filter=server",
+    "db:push": "turbo run db:push --filter=@socialIO/db",
+    "db:studio": "turbo run db:studio --filter=@socialIO/db",
+    "db:generate": "turbo run db:generate --filter=@socialIO/db",
+    "db:migrate": "turbo run db:migrate --filter=@socialIO/db",
+    "db:start": "turbo run db:start --filter=@socialIO/db",
+    "db:watch": "turbo run db:watch --filter=@socialIO/db",
+    "db:stop": "turbo run db:stop --filter=@socialIO/db",
+    "db:down": "turbo run db:down --filter=@socialIO/db",
+    "infra:start": "turbo run infra:start --filter=@socialIO/db",
+    "infra:watch": "turbo run infra:watch --filter=@socialIO/db",
+    "infra:stop": "turbo run infra:stop --filter=@socialIO/db",
+    "infra:down": "turbo run infra:down --filter=@socialIO/db",
+    "infra:ps": "turbo run infra:ps --filter=@socialIO/db",
+    "redis:ping": "turbo run redis:ping --filter=@socialIO/db",
+    "redis:cli": "turbo run redis:cli --filter=@socialIO/db"
+  },
+  "dependencies": {
+    "@socialIO/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@socialIO/config": "workspace:*",
+    "@types/node": "^25.8.0",
+    "tsx": "^4.22.0",
+    "turbo": "^2.9.14",
+    "typescript": "catalog:"
+  },
+  "packageManager": "pnpm@10.24.0"
+}

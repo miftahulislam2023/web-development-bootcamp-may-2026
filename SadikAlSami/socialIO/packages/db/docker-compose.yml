@@ -1,0 +1,47 @@
+name: socialIO
+
+services:
+  postgres:
+    image: postgres:18.3-trixie
+    container_name: socialIO-postgres
+    environment:
+      POSTGRES_DB: socialIO
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - socialIO_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.6.3-alpine3.23
+    container_name: socialIO-redis
+    command:
+      [
+        "redis-server",
+        "--save",
+        "",
+        "--appendonly",
+        "no",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  socialIO_postgres_data:

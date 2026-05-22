@@ -1,0 +1,60 @@
+{
+	"name": "@socialIO/db",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		},
+		"./redis": {
+			"default": "./src/redis/index.ts"
+		},
+		"./redis/service": {
+			"default": "./src/redis/service.ts"
+		},
+		"./schema": {
+			"default": "./src/schema/index.ts"
+		},
+		"./lib": {
+			"default": "./src/lib/index.ts"
+		},
+		"./validators": {
+			"default": "./src/validators/index.ts"
+		}
+	},
+	"scripts": {
+		"db:push": "drizzle-kit push",
+		"db:generate": "drizzle-kit generate",
+		"db:studio": "drizzle-kit studio",
+		"db:migrate": "drizzle-kit migrate",
+		"db:start": "docker compose up -d",
+		"db:watch": "docker compose up",
+		"db:stop": "docker compose stop",
+		"db:down": "docker compose down",
+		"infra:start": "docker compose up -d",
+		"infra:watch": "docker compose up",
+		"infra:stop": "docker compose stop",
+		"infra:down": "docker compose down",
+		"infra:ps": "docker compose ps",
+		"redis:ping": "docker compose exec -T redis redis-cli ping",
+		"redis:cli": "docker compose exec redis redis-cli"
+	},
+	"dependencies": {
+		"@socialIO/env": "workspace:*",
+		"dotenv": "catalog:",
+		"drizzle-orm": "^0.45.2",
+		"drizzle-zod": "^0.8.3",
+		"ioredis": "^5.10.1",
+		"pg": "^8.20.0",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@socialIO/config": "workspace:*",
+		"@types/node": "^25.8.0",
+		"@types/pg": "^8.20.0",
+		"drizzle-kit": "^0.31.10",
+		"typescript": "catalog:"
+	}
+}

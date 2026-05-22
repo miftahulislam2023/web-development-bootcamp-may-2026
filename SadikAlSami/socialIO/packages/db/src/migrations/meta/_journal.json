@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1778402978398,
+      "tag": "0000_optimal_wolf_cub",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778458250033,
+      "tag": "0001_faulty_magdalene",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778580371418,
+      "tag": "0002_enable_pg_trgm",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778581479788,
+      "tag": "0003_flowery_silk_fever",
+      "breakpoints": true
+    }
+  ]
+}

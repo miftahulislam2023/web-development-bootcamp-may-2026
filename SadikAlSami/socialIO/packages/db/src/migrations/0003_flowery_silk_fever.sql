@@ -1,0 +1,2 @@
+CREATE INDEX "user_profile_display_name_idx" ON "user_profile" USING btree ("display_name");--> statement-breakpoint
+ALTER TABLE "user_profile" ADD CONSTRAINT "user_profile_display_name_unique" UNIQUE("display_name");

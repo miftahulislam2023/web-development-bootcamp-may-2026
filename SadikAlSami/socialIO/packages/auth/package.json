@@ -1,0 +1,24 @@
+{
+  "name": "@socialIO/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@socialIO/db": "workspace:*",
+    "@socialIO/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@socialIO/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

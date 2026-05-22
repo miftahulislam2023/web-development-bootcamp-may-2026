@@ -1,0 +1,3 @@
+{
+  "extends": "@socialIO/config/tsconfig.base.json"
+}

@@ -1,0 +1,42 @@
+version: '3.9'
+
+# Dev overrides — adds hot reload volumes on top of docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+  server:
+    build:
+      target: dev
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - /app/dist
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=7d
+      - PORT=5000
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "5000:5000"
+    command: npm run dev
+
+  client:
+    build:
+      target: dev
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
+      - WATCHPACK_POLLING=true
+    command: npm run dev
+    ports:
+      - "3000:3000"

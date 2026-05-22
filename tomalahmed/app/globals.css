@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@theme inline {
+  --color-background: #fcf9f8;
+  --color-on-background: #1c1b1b;
+  --color-on-surface: #1c1b1b;
+  --color-surface: #fcf9f8;
+  --color-surface-bright: #fcf9f8;
+  --color-surface-dim: #dcd9d9;
+  --color-surface-variant: #e5e2e1;
+  --color-surface-container: #f0eded;
+  --color-surface-container-low: #f6f3f2;
+  --color-surface-container-high: #eae7e7;
+  --color-surface-container-highest: #e5e2e1;
+  --color-surface-container-lowest: #ffffff;
+  --color-outline-variant: #e6bdb9;
+  --color-outline: #916f6b;
+  /* Deep crimson — primary CTAs (Get Started, Start Chatting) */
+  --color-primary: #b00014;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e0292a;
+  --color-on-primary-container: #fffbff;
+  --color-primary-fixed: #ffdad6;
+  --color-primary-fixed-dim: #ffb4ac;
+  --color-on-primary-fixed: #410002;
+  --color-on-primary-fixed-variant: #93000e;
+  --color-secondary: #5d5f5f;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #dfe0e0;
+  --color-on-secondary-container: #616363;
+  --color-secondary-fixed: #e2e2e2;
+  --color-secondary-fixed-dim: #c6c6c7;
+  --color-on-secondary-fixed: #1a1c1c;
+  --color-on-secondary-fixed-variant: #454747;
+  --color-tertiary: #5b5c5c;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #737575;
+  --color-on-tertiary-container: #fcfcfc;
+  --color-tertiary-fixed: #e2e2e2;
+  --color-tertiary-fixed-dim: #c6c6c7;
+  --color-on-tertiary-fixed: #1a1c1c;
+  --color-on-tertiary-fixed-variant: #454747;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-inverse-surface: #313030;
+  --color-inverse-on-surface: #f3f0ef;
+  --color-inverse-primary: #ffb4ac;
+  --color-surface-tint: #bf0617;
+  --color-on-surface-variant: #5c403c;
+
+  --max-width-container-max: 1200px;
+  --spacing-gutter: 24px;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}

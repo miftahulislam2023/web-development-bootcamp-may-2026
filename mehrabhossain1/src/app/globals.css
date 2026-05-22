@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  /* Signature brand gradient — emerald → teal. Tuned dark enough that white
+     text on it meets WCAG AA. */
+  --gradient-brand: linear-gradient(135deg, #047857 0%, #0f766e 100%);
+}
+
+/*
+ * Design system tokens. Emitted as real CSS variables (non-inline `@theme`),
+ * so each is usable both as a Tailwind utility (`bg-primary`, `shadow-card`,
+ * `rounded-card`, …) and as `var(--token)` in component code.
+ */
+@theme {
+  /* Brand / accent — emerald, dark enough for AA-contrast white text. */
+  --color-primary: #047857;
+  --color-primary-hover: #065f46;
+  --color-primary-active: #064e3b;
+  --color-accent-soft: #ecfdf5;
+
+  /* Foreground — cool slate neutrals */
+  --color-fg: #0f172a;
+  --color-fg-muted: #475569;
+  --color-fg-subtle: #64748b;
+
+  /* Surfaces & borders */
+  --color-surface: #f8fafc;
+  --color-border: #e2e8f0;
+
+  /* Semantic */
+  --color-danger: #e11d48;
+  --color-danger-hover: #be123c;
+
+  /* Typography */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Corner radii */
+  --radius-field: 0.625rem;
+  --radius-btn: 0.75rem;
+  --radius-card: 1rem;
+  --radius-modal: 1.25rem;
+
+  /* Elevation — layered soft shadows + emerald glow */
+  --shadow-card:
+    0 1px 3px rgba(15, 23, 42, 0.06), 0 12px 28px -16px rgba(15, 23, 42, 0.18);
+  --shadow-pop: 0 8px 32px -8px rgba(15, 23, 42, 0.22);
+  --shadow-glow: 0 10px 30px -10px rgba(16, 185, 129, 0.55);
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-fg);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Signature gradient helpers — brand marks, CTAs, gradient text. */
+.bg-gradient-brand {
+  background-image: var(--gradient-brand);
+}
+
+.text-gradient-brand {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Toast entrance. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 0.18s ease-out;
+}
+
+/* Accessibility — honor the user's reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

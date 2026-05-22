@@ -1,0 +1,304 @@
+// Nexora Studio — PostgreSQL schema
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum PurchaseStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum ProjectStatus {
+  draft
+  published
+}
+
+model User {
+  id               String             @id @default(cuid())
+  name             String?
+  email            String             @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  role             Role               @default(user)
+  blockedAt        DateTime?
+  deletedAt        DateTime?
+  accounts         Account[]
+  sessions         Session[]
+  projects              Project[]
+  templates             Template[]              @relation("TemplateAuthor")
+  templatePurchases     TemplatePurchase[]
+  passwordResetTokens   PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  @@index([role])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Project {
+  id              String        @id @default(cuid())
+  name            String
+  slug            String
+  description     String?       @db.Text
+  thumbnail       String?
+  siteType        String        @default("saas")
+  status          ProjectStatus @default(draft)
+  metaTitle       String?
+  metaDescription String?       @db.Text
+  ogImage         String?
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Builder document: { version, sections: [...] }
+  canvasData      Json          @default("{}")
+  viewport        String        @default("desktop")
+  pages           Page[]
+  published       PublishedWebsite?
+  revisions       CanvasRevision[]
+  activities      ProjectActivity[]
+  mediaAssets     MediaAsset[]
+  savedBlocks     SavedBlock[]
+  formSubmissions FormSubmission[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([userId, slug])
+  @@index([userId])
+  @@index([slug])
+  @@index([status])
+}
+
+model Page {
+  id              String   @id @default(cuid())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title           String
+  slug            String
+  sortOrder       Int      @default(0)
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  canvasData      Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([projectId, slug])
+  @@index([projectId])
+}
+
+model Template {
+  id            String             @id @default(cuid())
+  name          String
+  slug          String             @unique
+  description   String?            @db.Text
+  thumbnail     String?
+  category      String?
+  canvasData    Json
+  isPremium     Boolean            @default(false)
+  priceCents    Int                @default(0)
+  stripePriceId String?
+  authorId      String?
+  author        User?              @relation("TemplateAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  purchases     TemplatePurchase[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([category])
+  @@index([isPremium])
+}
+
+model TemplatePurchase {
+  id               String          @id @default(cuid())
+  userId           String
+  templateId       String
+  stripeSessionId String?         @unique
+  status           PurchaseStatus  @default(pending)
+  amountCents      Int?
+  currency         String          @default("usd")
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template         Template        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([templateId])
+  @@index([status])
+}
+
+model ComponentDefinition {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  label        String
+  category     String
+  defaultProps Json
+  schema       Json?
+  createdAt    DateTime @default(now())
+
+  @@index([category])
+}
+
+model CanvasRevision {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  pageId     String?
+  label      String?
+  canvasData Json
+  createdAt  DateTime @default(now())
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model ProjectActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  action    String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder    String   @default("general")
+  filename  String
+  url       String
+  publicId  String?
+  mimeType  String?
+  sizeBytes Int?
+  altText   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([folder])
+}
+
+model SavedBlock {
+  id          String   @id @default(cuid())
+  userId      String
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  sectionData Json
+  blockKey    String?
+  isGlobal    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([blockKey])
+}
+
+model FormSubmission {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subdomain String?
+  data      Json
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model PublishedWebsite {
+  id                 String   @id @default(cuid())
+  projectId          String   @unique
+  project            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subdomain          String   @unique
+  customDomain       String?  @unique
+  domainVerified     Boolean  @default(false)
+  domainVerifyToken  String?
+  snapshotData       Json
+  seoMeta            Json?
+  isActive           Boolean  @default(true)
+  publishedAt        DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([subdomain])
+}

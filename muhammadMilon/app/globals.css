@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --accent: #6366f1;
+  --accent-foreground: #ffffff;
+  --ring: #6366f1;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
+  --card: #0f172a;
+  --card-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #1e293b;
+  --accent: #818cf8;
+  --accent-foreground: #020617;
+  --ring: #818cf8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-sora);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fade up animation */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+/* Ping animation for live badges */
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Spin animation */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Bounce animation */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+  50% { transform: translateY(-8px); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+}
+.animate-bounce {
+  animation: bounce 2s infinite;
+}
+
+/* Builder canvas dot grid */
+.builder-canvas {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--foreground) 8%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 16px 16px;
+}
+
+/* Masonry columns */
+.columns-1 { columns: 1; }
+@media (min-width: 640px) { .columns-2 { columns: 2; } }
+@media (min-width: 1024px) { .columns-3 { columns: 3; } }
+.break-inside-avoid { break-inside: avoid; }
+

@@ -1,0 +1,124 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.development.local
+.env.test.local
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+.next/
+dist/
+build/
+out/
+coverage/
+
+# IDE & Editor
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+.classpath
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+.nyc_output/
+*.lcov
+coverage/
+
+# Production
+.next/
+out/
+dist/
+
+# Misc
+*.pem
+*.key
+*.crt
+
+# Local development files
+.env.local.example (keep this in repo if needed for template)
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+.eslintcache
+
+# Temporary files
+tmp/
+temp/
+
+# System files
+.vscode-settings.json
+
+# Backend specific
+backend/.env.local
+backend/.env.*.local
+backend/.next/
+backend/dist/
+backend/node_modules/
+
+# Frontend specific
+frontend/.env.local
+frontend/.env.*.local
+frontend/.next/
+frontend/dist/
+frontend/node_modules/
+
+# Docker (optional - uncomment if using containers)
+# .dockerignore
+# docker-compose.override.yml
+
+# Vercel (if deploying to Vercel)
+.vercel/
+
+# Next.js telemetry
+.next/telemetry/
+
+# Parcel related files
+dist/
+.cache/
+.parcelcache
+
+# Turbopack cache
+.turbo/
+
+# Keep track files - add important files that shouldn't be ignored
+!.gitkeep
+!README.md
+!LICENSE
+!.env.local.example

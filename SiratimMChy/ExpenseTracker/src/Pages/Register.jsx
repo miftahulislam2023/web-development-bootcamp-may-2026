@@ -115,7 +115,7 @@ const Register = () => {
         }
     };
     return (
-        <div className='flex items-center justify-center min-h-screen px-4 py-8 bg-linear-to-br from-blue-50 via-cyan-50 to-purple-50'>
+        <div className='flex items-center justify-center min-h-screen px-4 py-8 bg-base-100'>
             <title>Registration</title>
 
             <div className="w-full max-w-md -mt-5">

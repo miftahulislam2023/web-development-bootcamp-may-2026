@@ -9,7 +9,7 @@ const AddTransaction = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    const [categories, setCategories] = useState([]); // array of { name, type, ... }
+    const [categories, setCategories] = useState([]);
     const [loadingCategories, setLoadingCategories] = useState(true);
     const [formData, setFormData] = useState({
         type: 'expense',

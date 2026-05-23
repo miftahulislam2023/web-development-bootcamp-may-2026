@@ -121,12 +121,12 @@ const Navbar = () => {
                     </ul>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
                     <img src={logo} alt="Expense Tracker Logo" className="w-10 h-10 md:w-12 md:h-12" />
                     <span className="text-xl md:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                         Cashnivo
                     </span>
-                </div>
+                </Link>
             </div>
 
             <div className="navbar-center hidden lg:flex md:pl-15">

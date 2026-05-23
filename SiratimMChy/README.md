@@ -113,7 +113,7 @@ Cashnivo follows the **MERN stack architecture** with clear separation of concer
 │                   DATABASE - MONGODB (M)                     │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │   MongoDB Atlas (Cloud NoSQL Database)                 │ │
-│  │   - Users Collection                                   │ │
+│  │   - user Collection                                    │ │
 │  │   - Transactions Collection                            │ │
 │  │   - Categories Collection                              │ │
 │  │   - Flexible JSON-like Documents                       │ │
@@ -251,14 +251,20 @@ Cashnivo follows the **MERN stack architecture** with clear separation of concer
 cashnivo-fullstack/
 │
 ├── Expense Backend/              # Backend API Server
-│   ├── node_modules/            # Backend dependencies
-│   ├── .env                     # Environment variables (not in repo)
-│   ├── .gitignore              # Git ignore rules
-│   ├── index.js                # Main server file
-│   ├── package.json            # Backend dependencies
-│   ├── package-lock.json       # Dependency lock file
-│   ├── vercel.json             # Vercel deployment config
-│   └── README.md               # Backend documentation
+│   ├── config/
+│   │   └── db.js                # MongoDB connection configuration
+│   ├── routes/
+│   │   ├── users.js             # User registration and profile endpoints
+│   │   ├── categories.js        # Category CRUD + default category seeding logic
+│   │   ├── transactions.js      # Transaction CRUD endpoints
+│   │   └── stats.js             # Aggregate statistics endpoint
+│   ├── .env                     # Environment variables (never commit this)
+│   ├── .gitignore               # Git ignore rules
+│   ├── index.js                 # Entry point (registers routes/middleware)
+│   ├── package.json             # Backend dependencies
+│   ├── package-lock.json        # Dependency lock file
+│   ├── vercel.json              # Vercel deployment config
+│   └── README.md                # Backend documentation
 │
 └── ExpenseTracker/              # Frontend React Application
     ├── dist/                    # Production build output
@@ -269,16 +275,16 @@ cashnivo-fullstack/
     ├── src/
     │   ├── assets/              # Image assets
     │   ├── Components/          # Reusable components
-    │   │   ├── Aside/          # Sidebar navigation
+    │   │   ├── Aside/           # Sidebar navigation
     │   │   ├── DashboardLayout/ # Dashboard wrapper
-    │   │   ├── Footer/         # Footer component
-    │   │   └── Navbar/         # Navigation bar
+    │   │   ├── Footer/          # Footer component
+    │   │   └── Navbar/          # Navigation bar
     │   ├── Dashboard/           # Dashboard pages
-    │   │   ├── DashboardHome/  # Main dashboard
+    │   │   ├── DashboardHome/   # Main dashboard
     │   │   ├── AddTransaction.jsx
-    │   │   └── Transactions/   # Transaction list
+    │   │   └── Transactions/    # Transaction list
     │   ├── Pages/               # Public pages
-    │   │   ├── Home/           # Landing page components
+    │   │   ├── Home/            # Landing page components
     │   │   ├── Login.jsx
     │   │   ├── Register.jsx
     │   │   ├── Categories.jsx
@@ -286,6 +292,8 @@ cashnivo-fullstack/
     │   │   └── ...
     │   ├── Provider/            # Context providers
     │   │   └── AuthProvider.jsx
+    │   ├── RootLayout/          # Root structural layout
+    │   │   └── RootLayout.jsx   # Public layout (Navbar, Footer, Outlet)
     │   ├── firebase/            # Firebase configuration
     │   ├── routes/              # Route definitions
     │   ├── App.jsx              # Main app component
@@ -573,9 +581,9 @@ GET /stats
 Returns:
 ```json
 {
-  "userCount": 150,
-  "transactionCount": 3420,
-  "categoryCount": 45
+  "users": 150,
+  "transactions": 3420,
+  "categories": 45
 }
 ```
 

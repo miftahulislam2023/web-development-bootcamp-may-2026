@@ -30,6 +30,7 @@
 - [About The Project](#about-the-project)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
+- [Software Architecture](#software-architecture)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -62,17 +63,29 @@
 
 ## ✨ Key Features
 
-### 🏠 Dashboard Overview
-- **Financial Summary Cards**: View current balance, total income, total expenses, and savings rate at a glance
-- **Visual Analytics**: Income vs. Expense comparison with progress bars
-- **Recent Transactions**: Quick access to your latest financial activities
-- **Quick Actions**: Fast navigation to add transactions or manage categories
+### 🏠 User Dashboard & Landing Preview Overview
+
+#### 👤 Authenticated User Dashboard
+- **Financial Summary Cards**: View current balance, total income, total expenses, and savings rate at a glance.
+- **Income vs Expense Chart (last 3 months)**: Interactive `BarChart` comparing monthly income against expenses.
+- **Expense Breakdown Chart**: Interactive `PieChart` showing a breakdown of expenses by category.
+- **Recent Transactions**: Scrollable, responsive list of the latest financial transactions.
+- **Insights & Quick Actions**: Smart automated feedback (e.g., daily average expenses, savings messages) and navigation shortcuts to add transactions or manage categories.
+
+#### 📈 Landing Page Dashboard Preview
+- **Financial Overview Pie Chart**: Current month Income vs. Expense visualization with percentage breakdown.
+- **Expense Breakdown by Category Bar Chart**: Displays category-wise expense trends for the last 2 months:
+  - **Desktop**: Vertical bars with optimized spacing.
+  - **Mobile**: Horizontal bars for better readability.
+- **Transaction Summary Card**: Displays quick stats (Total Transactions, Income Entries, Expense Entries) with calculated average values.
 
 ### 💳 Transaction Management
 - **Add Transactions**: Record income and expenses with amount, date, category, and description
 - **Edit & Delete**: Full CRUD operations on all transactions
 - **Smart Filtering**: Filter transactions by type (income/expense) or view all
+- **Pagination**: Browse transactions with 10 items per page for better performance
 - **Detailed History**: Comprehensive transaction list with search and sort capabilities
+- **Dark Mode**: Full dark theme support for comfortable viewing
 
 ### 📁 Category Management
 - **Custom Categories**: Create unlimited custom categories for both income and expenses
@@ -97,6 +110,8 @@
 - **Toast Notifications**: Real-time feedback for all user actions
 - **Loading States**: Smooth loading indicators for async operations
 - **Error Handling**: Graceful error messages and fallbacks
+- **Dark Mode**: Complete dark theme support with theme persistence
+- **Responsive Charts**: Interactive data visualizations that adapt to screen size
 - **Accessibility**: WCAG-compliant components and semantic HTML
 
 ---
@@ -113,7 +128,7 @@
 ### Backend & Services
 - **[Firebase 12.13.0](https://firebase.google.com/)** - Authentication and hosting
 - **[Axios 1.16.0](https://axios-http.com/)** - HTTP client for API requests
-- **Custom REST API** - Backend API hosted at `cashnivo.vercel.app`
+- **Custom REST API** - REST API backend endpoints for transaction, category, and user management
 
 ### UI Components & Icons
 - **[Lucide React 1.14.0](https://lucide.dev/)** - Beautiful, consistent icons
@@ -122,6 +137,9 @@
 
 ### Data Visualization
 - **[Recharts 3.8.1](https://recharts.org/)** - Composable charting library for React
+  - Pie charts for financial overview
+  - Bar charts for category expense breakdown
+  - Responsive and interactive visualizations
 
 ### User Feedback
 - **[React Toastify 11.1.0](https://fkhadra.github.io/react-toastify/)** - Toast notifications
@@ -130,6 +148,247 @@
 ### Development Tools
 - **[ESLint 10.2.1](https://eslint.org/)** - Code linting and quality
 - **[Vite Plugin React 6.0.1](https://github.com/vitejs/vite-plugin-react)** - React Fast Refresh
+
+---
+
+## 🏗️ Software Architecture
+
+### Architecture Overview
+
+Cashnivo follows a **Component-Based Architecture** with clear separation of concerns, built on modern React patterns and best practices.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Presentation Layer                        │
+│  (React Components, Pages, UI Components)                   │
+├─────────────────────────────────────────────────────────────┤
+│                    State Management Layer                     │
+│  (Context API - AuthProvider, Local State)                  │
+├─────────────────────────────────────────────────────────────┤
+│                    Business Logic Layer                       │
+│  (Utilities, Data Calculations & Aggregations)              │
+├─────────────────────────────────────────────────────────────┤
+│                    API Integration Layer                      │
+│  (Axios Client, Firebase Auth SDK)                          │
+├─────────────────────────────────────────────────────────────┤
+│                    External Services                          │
+│  (Firebase Authentication, REST API, ImgBB)                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Layer Descriptions
+
+#### 1. **Presentation Layer**
+The UI layer composed of React components organized by feature:
+
+- **Pages**: Public-facing pages (Home, Login, Register, About, Contact)
+- **Dashboard Components**: Protected dashboard pages (DashboardHome, Transactions, Categories)
+- **Reusable Components**: Shared UI components (Navbar, Footer, Aside, DashboardLayout)
+- **Styling**: TailwindCSS utility classes + DaisyUI components for consistent design
+
+**Key Components:**
+- `Navbar.jsx` - Navigation with theme toggle and user menu
+- `DashboardLayout.jsx` - Protected dashboard wrapper with sidebar
+- `DashboardPreview.jsx` - Landing page dashboard preview with charts
+- `Transactions.jsx` - Transaction list with pagination and filtering
+
+#### 2. **State Management Layer**
+Uses React Context API for global state management:
+
+- **AuthProvider**: Manages user authentication state and Firebase auth operations
+- **Local Component State**: useState for component-specific state (forms, filters, pagination)
+- **Theme State**: localStorage-based theme persistence (light/dark mode)
+
+**Data Flow:**
+```
+User Action → Component State Update → Re-render → UI Update
+                    ↓
+            Context Update (if global) → All Consumers Re-render
+```
+
+#### 3. **Business Logic Layer**
+Contains application logic and data processing integrated within page layouts and providers:
+
+- **Data Calculations**: Financial summaries, category breakdowns, insights calculations (daily averages, top categories) processed inside page components.
+- **Formatting Utilities**: Internationalization formatting for currencies (`Intl.NumberFormat`) and dates.
+- **Data Aggregation**: Monthly data aggregation for Recharts components.
+- **Validation**: Form validation (e.g., transaction input forms) and data integrity checks.
+
+**Example Logic:**
+```javascript
+// Calculate financial stats
+const stats = transactions.reduce((acc, t) => {
+  const amt = parseFloat(t.amount) || 0;
+  if (t.type === 'income') acc.totalIncome += amt;
+  else if (t.type === 'expense') acc.totalExpense += amt;
+  return acc;
+}, { totalIncome: 0, totalExpense: 0, balance: 0 });
+```
+
+#### 4. **API Integration Layer**
+Handles external API communication directly within components:
+
+- **Axios HTTP Client**: Used directly inside page/dashboard components with REST API endpoints.
+- **Firebase SDK**: Authentication and user state subscriptions.
+- **Error Handling & Feedback**: Toast notifications (`react-toastify`) and modals (`sweetalert2`) for graceful UX updates.
+
+**API Endpoints:**
+- Transactions: CRUD operations
+- Categories: Management and filtering
+- Users: Profile and role information
+
+#### 5. **External Services**
+Third-party and backend services integrated into the application:
+
+- **Firebase Authentication**: User registration, login, password recovery
+- **Firebase Hosting**: Application deployment and CDN
+- **Custom REST API**: Backend API hosting transactions and category data
+- **Google OAuth**: Social authentication
+- **ImgBB API**: Image hosting service for custom user avatars
+
+### Data Flow Architecture
+
+#### User Authentication Flow
+```
+User Input (Login/Register)
+    ↓
+Firebase Auth Service
+    ↓
+AuthProvider Context Update
+    ↓
+Protected Routes Validation
+    ↓
+Dashboard Access
+```
+
+#### Transaction Management Flow
+```
+User Action (Add/Edit/Delete)
+    ↓
+Form Validation
+    ↓
+API Request (Axios)
+    ↓
+Backend Processing
+    ↓
+Response Handling
+    ↓
+Local State Update
+    ↓
+UI Re-render + Toast Notification
+```
+
+#### Data Visualization Flow
+```
+Fetch Transactions from API
+    ↓
+Data Aggregation & Processing
+    ↓
+Category Breakdown Calculation
+    ↓
+Monthly Statistics Compilation
+    ↓
+Recharts Component Rendering
+    ↓
+Interactive Charts Display
+```
+
+### Component Hierarchy
+
+```
+App
+├── RootLayout
+│   ├── Navbar
+│   ├── Routes
+│   │   ├── Home
+│   │   │   ├── Hero
+│   │   │   ├── Features
+│   │   │   ├── HowItWorks
+│   │   │   ├── DashboardPreview (with Charts)
+│   │   │   └── CTABanner
+│   │   ├── Login
+│   │   ├── Register
+│   │   ├── Categories
+│   │   ├── AboutUs
+│   │   ├── ContactUs
+│   │   └── TermsConditions
+│   └── Footer
+└── PrivateRoute
+    └── DashboardLayout
+        ├── Aside (Sidebar)
+        ├── Dashboard Routes
+        │   ├── DashboardHome
+        │   │   ├── FinancialSummary
+        │   │   ├── InsightsActions
+        │   │   └── RecentTransactions
+        │   ├── AddTransaction
+        │   ├── Transactions (with Pagination)
+        │   └── Categories
+        └── Navbar
+```
+
+### Design Patterns Used
+
+#### 1. **Context API Pattern**
+Used for global state management (authentication):
+```javascript
+const { user } = useContext(AuthContext);
+```
+
+#### 2. **Context Provider Pattern**
+Encapsulates global authentication states and methods, exposing them via `AuthContext.Provider` for direct consumption using standard React `useContext(AuthContext)` syntax.
+
+#### 3. **Compound Components Pattern**
+Dashboard components work together:
+- `DashboardHome` + `FinancialSummary` + `InsightsActions` + `RecentTransactions`
+
+#### 4. **Controlled Components Pattern**
+Form inputs with state management:
+```javascript
+const [formData, setFormData] = useState({});
+const handleChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
+```
+
+#### 5. **Higher-Order Component Pattern**
+PrivateRoute wrapper for protected pages:
+```javascript
+<PrivateRoute><DashboardLayout /></PrivateRoute>
+```
+
+### Responsive Design Architecture
+
+- **Mobile-First Approach**: Base styles for mobile, enhanced for larger screens
+- **Breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px)
+- **Adaptive Charts**: Recharts components respond to container width
+- **Flexible Layouts**: CSS Grid and Flexbox for responsive positioning
+
+**Example:**
+```javascript
+// Desktop: Vertical bars | Mobile: Horizontal bars
+<div className="hidden lg:block">
+  {/* Desktop Chart */}
+</div>
+<div className="lg:hidden">
+  {/* Mobile Chart */}
+</div>
+```
+
+### Security Architecture
+
+- **Authentication**: Firebase handles secure user authentication
+- **Protected Routes**: PrivateRoute component prevents unauthorized access
+- **Environment Variables**: Sensitive data stored in `.env.local`
+- **HTTPS**: All API communications encrypted
+- **User-Specific Data**: Transactions and categories filtered by user email
+
+### Performance Optimization
+
+- **Code Splitting**: React Router enables automatic code splitting
+- **Lazy Loading**: Components loaded on-demand
+- **Memoization**: React.memo for preventing unnecessary re-renders
+- **Efficient State Updates**: Minimal re-renders through proper state management
+- **Pagination**: Transaction list paginated (10 items/page) for better performance
+- **Vite Optimization**: Fast build and HMR during development
 
 ---
 
@@ -217,26 +476,34 @@ Before you begin, ensure you have the following installed:
 
 4. **Monitor Your Finances**
    - View your dashboard for real-time financial overview
-   - Check your current balance and savings rate
-   - Analyze income vs. expense trends
-   - Review recent transactions
+   - Check the Financial Overview pie chart for current month breakdown
+   - Analyze expense trends with the Category Breakdown chart
+   - Review your current balance and savings rate
+   - Check recent transactions
 
 5. **Manage Transactions**
    - Navigate to the Transactions page
    - Filter by type (all, income, or expense)
+   - Browse through paginated results (10 items per page)
    - Edit or delete transactions as needed
    - Track your complete financial history
+
+6. **Explore Analytics**
+   - View Financial Overview with current month Income vs. Expense pie chart
+   - Analyze Expense Breakdown by Category with responsive bar charts
+   - Check Transaction Summary for quick statistics
+   - Monitor your savings rate and financial health
 
 ### Key Pages
 
 - **`/`** - Landing page with features and call-to-action
 - **`/login`** - User authentication
 - **`/register`** - New user registration
-- **`/dashboard/dashboardhome`** - Main dashboard with financial overview
+- **`/dashboard/dashboardhome`** - Main dashboard with financial overview, charts, and insights
 - **`/dashboard/add-transaction`** - Add new income or expense
-- **`/dashboard/transactions`** - View and manage all transactions
+- **`/dashboard/transactions`** - View and manage all transactions with pagination
 - **`/dashboard/categories`** - Manage income and expense categories
-- **`/dashboard/profile`** - User profile management
+- **`/dashboard/Profile`** - User profile management
 - **`/about-us`** - About the application
 - **`/contact`** - Contact information
 - **`/terms-conditions`** - Terms and conditions
@@ -261,15 +528,20 @@ cashnivo/
 │   │   ├── Footer/            # Footer component
 │   │   └── Navbar/            # Navigation bar
 │   ├── Dashboard/             # Dashboard pages
-│   │   ├── DashboardHome/     # Main dashboard
+│   │   ├── DashboardHome/     # Main dashboard with analytics
+│   │   │   ├── DashboardHome.jsx
+│   │   │   ├── FinancialSummary.jsx
+│   │   │   ├── InsightsActions.jsx
+│   │   │   └── RecentTransactions.jsx
 │   │   ├── AddTransaction.jsx # Add transaction form
-│   │   └── Transactions/      # Transaction list
+│   │   └── Transactions/      # Transaction list with pagination
 │   ├── Pages/                 # Public pages
 │   │   ├── Home/              # Landing page components
 │   │   │   ├── Hero.jsx
 │   │   │   ├── Features.jsx
 │   │   │   ├── HowItWorks.jsx
 │   │   │   ├── CTABanner.jsx
+│   │   │   ├── DashboardPreview.jsx  # Dashboard preview with charts
 │   │   │   └── Home.jsx
 │   │   ├── Login.jsx
 │   │   ├── Register.jsx
@@ -307,7 +579,7 @@ cashnivo/
 
 ## 🔌 API Integration
 
-Cashnivo integrates with a custom REST API hosted at `https://cashnivo.vercel.app`. The API provides endpoints for:
+Cashnivo integrates with a custom REST API hosted at your server domain (e.g. `https://api.yourdomain.com`) as well as third-party services. The API provides endpoints for:
 
 ### Transactions
 - `GET /transactions?email={userEmail}` - Fetch all transactions for a user
@@ -316,14 +588,22 @@ Cashnivo integrates with a custom REST API hosted at `https://cashnivo.vercel.ap
 - `DELETE /transactions/{id}` - Delete a transaction
 
 ### Categories
-- `GET /categories?email={userEmail}` - Fetch all categories for a user
-- `GET /categories?type={income|expense}&email={userEmail}` - Fetch categories by type
-- `POST /categories` - Create a new category
-- `PUT /categories/{id}` - Update a category
-- `DELETE /categories/{id}` - Delete a category
+- `GET /categories?email={userEmail}` - Fetch all categories for a user (returns default + user custom categories)
+- `GET /categories?type={income|expense}&email={userEmail}` - Fetch categories by type for a user
+- `POST /categories` - Create a new custom category
+- `PUT /categories/{id}` - Update a custom category name
+- `DELETE /categories/{id}` - Delete a custom category
 
 ### Users
+- `POST /users` - Saves or updates user registration details
+- `PUT /users/{email}` - Updates user profile details (displayName, photoURL)
 - `GET /users/role/{email}` - Fetch user role information
+
+### Analytics & System Stats
+- `GET /stats` - Fetch overall stats (total transactions, users count, active entries) used in landing page Hero section
+
+### Third-Party Services
+- **ImgBB API** (`https://api.imgbb.com`): Used in the user profile component to upload custom user avatar images.
 
 ### Request/Response Format
 

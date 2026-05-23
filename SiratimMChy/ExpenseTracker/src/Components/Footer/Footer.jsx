@@ -6,12 +6,11 @@ const Footer = () => {
     return (
         <div className="w-full bg-base-200 px-6 pt-10 pb-5 border-t border-base-300 lg:px-30 mx-auto">
             <footer className="footer grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-20 text-base-content pb-10">
-                {/* Brand Section */}
                 <aside>
-                    <div className="flex items-center gap-2 font-extrabold text-2xl bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+                    <Link to="/" className="flex items-center gap-2 font-extrabold text-2xl bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4 hover:opacity-90 transition-opacity">
                         <img src={logo} alt="Cashnivo Logo" className="w-10 h-10" />
                         <span>Cashnivo</span>
-                    </div>
+                    </Link>
                     <p className="max-w-md text-base-content/80 mb-4 text-sm leading-relaxed">
                         Manage your expenses smarter. Track spending, set budgets, and achieve your financial goals with ease.
                     </p>

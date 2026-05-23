@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../prisma/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum AccountStatus {
+  active
+  inactive
+  suspended
+  pending_verification
+}
+
+enum TransactionType {
+  income
+  expense
+  transfer
+}
+
+enum AccountType {
+  checking
+  savings
+  cash
+  credit_card
+  investment
+  loan
+  wallet
+}
+
+enum BudgetPeriod {
+  monthly
+  yearly
+}
+
+model User {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email           String         @unique
+  username        String?        @unique
+  firstName       String
+  lastName        String
+  currency        String         @default("USD")
+  monthlyIncome   Decimal        @default(0)
+  displayName     String?
+  role            UserRole       @default(user)
+  status          AccountStatus  @default(pending_verification)
+  password        String
+  emailVerifiedAt DateTime?
+  bio             String?
+  avatarUrl       String?
+  isDeleted       Boolean        @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @default(now()) @updatedAt
+  deletedAt       DateTime?
+
+  sessions        Session[]
+  accounts        Account[]
+  categories      Category[]
+  transactions    Transaction[]
+  budgets         Budget[]
+  savingsGoals    SavingsGoal[]
+}
+
+model Session {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @db.Uuid
+  refreshTokenHash String
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String        @db.Uuid
+  name               String
+  type               AccountType
+  currency           String        @default("USD")
+  balance            Decimal       @default(0)
+  institution        String?
+  accountNumberLast4 String?
+  isDefault          Boolean       @default(false)
+  status             AccountStatus @default(active)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @default(now()) @updatedAt
+
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions       Transaction[]
+
+  @@index([userId])
+}
+
+model Category {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String?         @db.Uuid
+  name         String
+  type         TransactionType
+  icon         String?
+  color        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @default(now()) @updatedAt
+
+  user         User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@index([userId])
+  @@index([type])
+}
+
+model Transaction {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String          @db.Uuid
+  accountId     String?         @db.Uuid
+  categoryId    String?         @db.Uuid
+  type          TransactionType
+  amount        Decimal
+  currency      String          @default("USD")
+  paymentMethod String          @default("cash")
+  name          String?
+  date          DateTime
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account       Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  category      Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([type])
+}
+
+model Budget {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String        @db.Uuid
+  categoryId     String?       @db.Uuid
+  name           String
+  limitAmount    Decimal
+  currency       String        @default("USD")
+  period         BudgetPeriod
+  alertThreshold Int           @default(80)
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([period])
+}
+
+model SavingsGoal {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @db.Uuid
+  name          String
+  targetAmount  Decimal
+  currentAmount Decimal   @default(0)
+  currency      String    @default("USD")
+  deadline      DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deadline])
+}

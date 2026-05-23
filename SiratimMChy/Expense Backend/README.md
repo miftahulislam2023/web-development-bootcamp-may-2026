@@ -1,0 +1,461 @@
+﻿# Expense Tracker Backend API
+
+A robust, modular RESTful API backend for personal expense tracking applications. Built with **Node.js**, **Express.js v5**, and **MongoDB Atlas**, this service handles user management, income/expense transaction tracking, smart category organization, and aggregate statistics — all structured with a clean, maintainable module architecture.
+
+---
+
+## ✨ Features
+
+- **Modular Architecture** — Clean separation of concerns across `config/` and `routes/` modules
+- **User Management** — Registration with duplicate-check, profile updates, and lookup by email
+- **Transaction Tracking** — Full CRUD for income and expense transactions, sorted by date descending
+- **Category System** — 20 auto-seeded system categories (protected) plus unlimited custom user categories
+- **Type Filtering** — Filter both transactions and categories by `income` or `expense`
+- **Statistics Dashboard** — Aggregate counts for users, transactions, and categories
+- **CORS Enabled** — Ready for cross-origin requests from any frontend application
+- **Cloud Deployment** — Pre-configured for seamless serverless deployment on Vercel
+- **Auto DB Seeding** — Default categories are seeded automatically on first startup
+
+---
+
+## 📋 Table of Contents
+
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Available Scripts](#available-scripts)
+- [API Endpoints](#api-endpoints)
+- [Request & Response Examples](#request--response-examples)
+- [Database Schema](#database-schema)
+- [Error Handling](#error-handling)
+- [Deployment](#deployment)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology | Version |
+|---|---|---|
+| Runtime | Node.js | v14+ |
+| Framework | Express.js | v5.2.1 |
+| Database | MongoDB Atlas | Driver v7.2 |
+| Environment | dotenv | v17+ |
+| CORS | cors | v2.8 |
+| Dev Server | nodemon | v3+ |
+| Deployment | Vercel | Serverless |
+
+---
+
+## 📁 Project Structure
+
+```
+expense-backend/
+├── index.js              # Entry point — connects DB, registers routes, starts server
+├── config/
+│   └── db.js             # MongoDB client configuration
+├── routes/
+│   ├── users.js          # User registration and profile endpoints
+│   ├── categories.js     # Category CRUD + default category seeding logic
+│   ├── transactions.js   # Transaction CRUD endpoints
+│   └── stats.js          # Aggregate statistics endpoint
+├── .env                  # Environment variables (never commit this)
+├── vercel.json           # Vercel serverless deployment configuration
+└── package.json
+```
+
+---
+
+## ✅ Prerequisites
+
+Before running this project, make sure you have:
+
+- **Node.js** v14 or higher
+- **npm** or yarn package manager
+- A **MongoDB Atlas** account with an active cluster
+- **Git** for version control
+
+---
+
+## 🚀 Installation
+
+**1. Clone the repository**
+```bash
+git clone https://github.com/SiratimMChy/Expense-Tracker-Backend.git
+cd Expense-Tracker-Backend
+```
+
+**2. Install dependencies**
+```bash
+npm install
+```
+
+**3. Configure environment variables**
+
+Create a `.env` file in the root directory:
+```env
+PORT=5000
+DB_USER=your_mongodb_username
+DB_PASS=your_mongodb_password
+```
+
+**4. Start the development server**
+```bash
+npm run dev
+```
+
+> **Note:** On first startup, the server automatically seeds **20 default categories** (10 expense + 10 income) into MongoDB if they do not already exist.
+
+The server will be available at `http://localhost:5000`
+
+---
+
+## 🔐 Environment Variables
+
+| Variable | Description | Required | Default |
+|---|---|---|---|
+| `PORT` | Server port number | No | `3000` |
+| `DB_USER` | MongoDB Atlas username | Yes | — |
+| `DB_PASS` | MongoDB Atlas password | Yes | — |
+
+---
+
+## 📜 Available Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start server with **nodemon** (auto-restarts on file changes) |
+| `npm start` | Start server with Node.js (production) |
+
+---
+
+## 📡 API Endpoints
+
+### Root
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Health check — returns a server status string |
+
+---
+
+### Users
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/users` | Register a new user (skips silently if email already exists) |
+| `GET` | `/users` | Retrieve all registered users |
+| `GET` | `/users/role/:email` | Get a single user record by email address |
+| `PUT` | `/users/:email` | Update a user's `displayName` and/or `photoURL` |
+
+---
+
+### Categories
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/categories` | Create a custom user category |
+| `GET` | `/categories` | Get system categories + user's custom categories |
+| `DELETE` | `/categories/:id` | Delete a custom category (system categories are protected) |
+
+**Query Parameters — `GET /categories`**
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `email` | `string` | ✅ Yes | The user's email address |
+| `type` | `string` | No | Filter by `expense` or `income` |
+
+**Example:** `GET /categories?email=john@example.com&type=expense`
+
+---
+
+### Transactions
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/transactions` | Create a new transaction |
+| `GET` | `/transactions` | Get all transactions for a user, sorted by date descending |
+| `GET` | `/transactions/:id` | Get a single transaction by its MongoDB ObjectId |
+| `PUT` | `/transactions/:id` | Update any fields of an existing transaction |
+| `DELETE` | `/transactions/:id` | Permanently delete a transaction |
+
+**Query Parameters — `GET /transactions`**
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `email` | `string` | ✅ Yes | The user's email address |
+| `type` | `string` | No | Filter by `expense` or `income` |
+
+**Example:** `GET /transactions?email=john@example.com&type=expense`
+
+---
+
+### Statistics
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/stats` | Returns total counts of users, transactions, and categories |
+
+---
+
+## 💡 Request & Response Examples
+
+### Register a User
+
+**Request**
+```bash
+curl -X POST http://localhost:5000/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "displayName": "John Doe",
+    "photoURL": "https://example.com/photo.jpg"
+  }'
+```
+
+**Response — New user created**
+```json
+{ "acknowledged": true, "insertedId": "664f1a2b3c4d5e6f7a8b9c0d" }
+```
+
+**Response — Email already registered**
+```json
+{ "message": "User already exists", "inserted": false }
+```
+
+---
+
+### Create a Transaction
+
+**Request**
+```bash
+curl -X POST http://localhost:5000/transactions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "amount": 50.00,
+    "category": "Food",
+    "type": "expense",
+    "date": "2026-05-23",
+    "description": "Lunch at restaurant"
+  }'
+```
+
+**Response**
+```json
+{ "acknowledged": true, "insertedId": "664f1a2b3c4d5e6f7a8b9c0e" }
+```
+
+---
+
+### Get User Transactions
+
+**Request**
+```bash
+curl "http://localhost:5000/transactions?email=john@example.com&type=expense"
+```
+
+**Response**
+```json
+[
+  {
+    "_id": "664f1a2b3c4d5e6f7a8b9c0e",
+    "email": "john@example.com",
+    "amount": 50,
+    "category": "Food",
+    "type": "expense",
+    "date": "2026-05-23",
+    "description": "Lunch at restaurant"
+  }
+]
+```
+
+---
+
+### Get Aggregate Statistics
+
+**Request**
+```bash
+curl http://localhost:5000/stats
+```
+
+**Response**
+```json
+{ "users": 12, "transactions": 348, "categories": 23 }
+```
+
+---
+
+### Add a Custom Category
+
+**Request**
+```bash
+curl -X POST http://localhost:5000/categories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Gym",
+    "type": "expense",
+    "email": "john@example.com"
+  }'
+```
+
+---
+
+## 🗄️ Database Schema
+
+The API uses a single MongoDB database named `expense-tracker` with three collections.
+
+---
+
+### `user` Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "email": "string — primary identifier",
+  "displayName": "string",
+  "photoURL": "string (URL)"
+}
+```
+
+---
+
+### `categories` Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "name": "string",
+  "type": "string — 'expense' | 'income'",
+  "isDefault": "boolean",
+  "email": "string — present only on custom user categories"
+}
+```
+
+**Auto-seeded System Categories**
+
+| Type | Categories |
+|---|---|
+| Expense | Food, Groceries, Transport, Bills, Shopping, Health, Entertainment, Education, Housing, Other |
+| Income | Salary, Freelance, Business, Investments, Rental Income, Bonus, Commission, Interest, Gift, Other |
+
+> System categories are seeded once on server startup and cannot be deleted via the API.
+
+---
+
+### `transactions` Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "email": "string",
+  "amount": "number",
+  "category": "string",
+  "type": "string — 'expense' | 'income'",
+  "date": "string | Date",
+  "description": "string — optional"
+}
+```
+
+---
+
+## ⚠️ Error Handling
+
+All endpoints return consistent, structured JSON error responses.
+
+| HTTP Status | Meaning | Example Trigger |
+|---|---|---|
+| `400 Bad Request` | Missing or invalid required fields | No `email` in query, missing `type` on category POST |
+| `403 Forbidden` | Action not permitted | Attempting to delete a system default category |
+| `404 Not Found` | Resource does not exist | Category ID not found before deletion |
+| `500 Internal Server Error` | Unexpected server or DB error | MongoDB connection failure |
+
+**Error Response Format**
+```json
+{ "error": "Descriptive error message here" }
+```
+
+---
+
+## ☁️ Deployment
+
+This project is pre-configured for **Vercel** serverless deployment.
+
+### Steps
+
+**1. Install Vercel CLI**
+```bash
+npm install -g vercel
+```
+
+**2. Deploy**
+```bash
+vercel
+```
+
+**3. Set environment variables in Vercel Dashboard**
+- Go to your project → **Settings** → **Environment Variables**
+- Add `DB_USER` and `DB_PASS`
+
+### Vercel Configuration (`vercel.json`)
+
+```json
+{
+  "version": 2,
+  "builds": [{ "src": "index.js", "use": "@vercel/node" }],
+  "routes": [{
+    "src": "/(.*)",
+    "dest": "index.js",
+    "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+  }]
+}
+```
+
+---
+
+## 🔒 Security
+
+- **Credentials** are protected via environment variables — never hard-coded in source
+- **MongoDB Server API v1** enforced for strict, stable, forward-compatible driver behaviour
+- **System category protection** — `DELETE /categories/:id` returns `403 Forbidden` for default categories
+- **Input validation** on all write endpoints with descriptive `400` error responses
+- **`_id` stripping** on transaction `PUT` updates prevents MongoDB immutable field errors
+- **Graceful startup failure** — server calls `process.exit(1)` if DB connection fails, preventing silent errors
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Commit your changes: `git commit -m 'feat: describe your change'`
+4. Push to the branch: `git push origin feature/your-feature-name`
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the **ISC License**.
+
+---
+
+## 👤 Project Maintainer
+
+**Siratim Mustakim Chowdhury**
+
+- 📧 Email: [chowdhurysiratimmustakim@gmail.com](mailto:chowdhurysiratimmustakim@gmail.com)
+- 🐙 GitHub: [@SiratimMChy](https://github.com/SiratimMChy)
+- 💼 LinkedIn: [Siratim Mustakim Chowdhury](https://www.linkedin.com/in/siratim-mustakim-chowdhury/)
+
+For questions or support, please open an issue or reach out via email.
+
+---
+
+*Built with ❤️ using Node.js and MongoDB*

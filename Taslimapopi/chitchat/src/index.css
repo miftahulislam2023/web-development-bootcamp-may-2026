@@ -1,0 +1,100 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap");
+
+@import "tailwindcss";
+@plugin "daisyui" ;
+
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  --color-primary: #5C3D99;
+  --color-secondary: #9F7AEA;
+  --color-accent: #1c164c;
+  --color-neutral: #E0D9FF;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  --color-primary: #9F7AEA;
+  --color-secondary: #5C3D99;
+  --color-accent: #E0D9FF;
+  --color-neutral: #2A2438;
+  --color-base-100: #1F1B2E;
+  --color-base-200: #171625;
+  --color-base-300: #13121E;
+}
+
+body {
+  font-family: "Roboto Slab", serif;
+}
+
+
+/* common button class */
+
+.button {
+  position: relative;
+  overflow: hidden;
+  height: 3rem;
+  padding: 0 2rem;
+  border-radius: .5rem;
+  
+  background: #efd45c;
+  background-size: 400%;
+  
+  color: black;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  z-index: 1;
+  @apply w-full
+}
+
+.button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  border-radius: inherit;
+  background: linear-gradient(82.3deg, rgba(150,93,233,1) 10.8%, rgba(99,88,238,1) 94.3%);
+  transition: transform 0.475s;
+  z-index: -1;
+}
+
+.button:hover::before {
+  transform: scaleX(1);
+}
+
+@property --border-angle {
+  inherits: false;
+  initial-value: 0deg;
+  syntax: "<angle>";
+}
+
+.input {
+  @apply w-full bg-slate-800/50 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent;
+}
+
+.auth-input-icon {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-5;
+}
+
+.auth-input-label {
+  @apply block text-sm font-medium text-slate-300 mb-2;
+}
+
+.auth-badge {
+  @apply inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-cyan-500/20 text-cyan-300;
+}
+
+.auth-btn {
+  @apply w-full bg-cyan-500 text-white rounded-lg py-2.5 font-medium
+  hover:bg-cyan-600 focus:ring-2 focus:ring-cyan-500;
+}
+
+.auth-link {
+  @apply px-4 py-2 inline-block bg-cyan-500/10 rounded-lg text-cyan-400
+  hover:text-cyan-500 text-sm transition-colors;
+}

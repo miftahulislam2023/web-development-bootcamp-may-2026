@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums
+
+enum UserRole {
+  user
+  admin
+}
+
+enum DocPermRole {
+  edit
+  view
+  comment
+}
+
+// Models
+
+model User {
+  id          Int             @id @default(autoincrement())
+  name        String          @db.VarChar(255)
+  email       String          @unique @db.VarChar(255)
+  password    String          @db.VarChar(255)
+  avatar      String?         @db.VarChar(255)
+  role        UserRole        @default(user)
+  color       String          @default("amber")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt     @map("updated_at")
+
+  docs        Doc[]
+  permissions DocPermission[]
+
+  @@map("users")
+}
+
+model Doc {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String    @default("Untitled") @db.VarChar(255)
+  body      Bytes?    // BYTEA — Yjs binary state
+  userId    Int?      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt     @map("updated_at") @db.Timestamptz
+
+  owner       User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  permissions DocPermission[]
+
+  @@map("docs")
+}
+
+model DocPermission {
+  id        Int         @id @default(autoincrement())
+  docId     String      @map("doc_id") @db.Uuid
+  userId    Int         @map("user_id")
+  role      DocPermRole @default(edit)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt     @map("updated_at")
+
+  doc  Doc  @relation(fields: [docId],  references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([docId, userId])  // unique_doc_user constraint
+  @@map("doc_permissions")
+}

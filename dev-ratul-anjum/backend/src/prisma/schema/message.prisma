@@ -1,0 +1,16 @@
+model Message {
+    id             String       @id @default(ulid())
+    text           String?
+    attachments    String[]
+    markAsStar     Boolean      @default(false)
+    senderId       String
+    sender         User         @relation("MessageSender", fields: [senderId], references: [id])
+    receiverId     String
+    receiver       User         @relation("MessageReceiver", fields: [receiverId], references: [id])
+    conversationId String
+    conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+
+    @@map("messages")
+}

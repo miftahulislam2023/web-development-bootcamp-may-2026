@@ -1,0 +1,11 @@
+model UserBlock {
+    id        String   @id @default(uuid())
+    blockerId String
+    blockedId String
+    createdAt DateTime @default(now())
+    blocker   User     @relation("blocking", fields: [blockerId], references: [id])
+    blocked   User     @relation("blockedBy", fields: [blockedId], references: [id])
+
+    @@unique([blockerId, blockedId])
+    @@map("userBlocks")
+}

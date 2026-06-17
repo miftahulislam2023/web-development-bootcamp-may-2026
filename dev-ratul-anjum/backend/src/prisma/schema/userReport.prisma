@@ -1,0 +1,9 @@
+model UserReport {
+    id             String   @id @default(uuid())
+    reporterId     String
+    reportedUserId String
+    createdAt      DateTime @default(now())
+
+    reporter     User @relation("reportsMade", fields: [reporterId], references: [id])
+    reportedUser User @relation("reportsGot", fields: [reportedUserId], references: [id])
+}

@@ -1,0 +1,12 @@
+model Conversation {
+    id            String    @id @default(uuid())
+    creatorId     String
+    creator       User      @relation("ConversationCreator", fields: [creatorId], references: [id])
+    participantId String
+    participant   User      @relation("ConversationParticipant", fields: [participantId], references: [id])
+    createdAt     DateTime  @default(now())
+    messages      Message[]
+
+    @@unique([creatorId, participantId])
+    @@map("conversations")
+}

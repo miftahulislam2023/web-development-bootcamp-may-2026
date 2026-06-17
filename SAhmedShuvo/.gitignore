@@ -1,0 +1,25 @@
+# ── Environment Variables ──
+backend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+
+# ── Dependencies ──
+frontend/node_modules/
+backend/node_modules/
+
+# ── Next.js ──
+frontend/.next/
+frontend/out/
+
+# ── Logs ──
+*.log
+npm-debug.log*
+
+# ── OS Files ──
+.DS_Store
+Thumbs.db
+
+# ── Build Output ──
+dist/
+build/

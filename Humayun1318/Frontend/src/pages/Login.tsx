@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AnimatedLoginIllustration from "@/assets/icons/AnimatedLoginIllustration";
 import AuthLayout from "@/components/layout/Authlayout";
 import { LoginForm } from "@/components/modules/Authentication/LoginForm";
@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import LoginCredentials from "@/components/LoginCredentials";
 
 export default function Login() {
+
+  const [demoCredentials, setDemoCredentials] = useState("");
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
@@ -30,8 +33,8 @@ export default function Login() {
       illustration={<AnimatedLoginIllustration />}
       illustrationSide="right"
     >
-      <LoginForm />
-      <LoginCredentials />
+      <LoginForm demoCredentials={demoCredentials} />
+      <LoginCredentials setDemoCredentials={setDemoCredentials}/>
     </AuthLayout>
   );
 }

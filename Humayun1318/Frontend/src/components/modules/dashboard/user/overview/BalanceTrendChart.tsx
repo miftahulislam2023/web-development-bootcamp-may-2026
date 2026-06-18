@@ -89,6 +89,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+// Main component to display the balance trend chart
 const BalanceTrendChart = () => {
   const { data: transactionsData, isLoading, error } = useGetAllTransactionsQuery({});
   const { user: userData } = useUser();

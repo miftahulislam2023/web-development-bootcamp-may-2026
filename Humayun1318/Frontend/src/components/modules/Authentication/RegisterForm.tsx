@@ -198,11 +198,12 @@ import { Link, useNavigate } from "react-router";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Password from "@/components/ui/Password";
-import { useRegisterMutation } from "@/redux/features/auth/auth.api";
+import { authApi, useRegisterMutation } from "@/redux/features/auth/auth.api";
 import { toast } from "sonner";
 import config from "@/config";
 import { GoogleLogo } from "@/assets/icons/GoogleLogo";
 import { role } from "@/constants/role";
+import { useAppDispatch } from "@/redux/hook";
 
 const registerSchema = z
   .object({
@@ -250,6 +251,7 @@ export function RegisterForm({
 }: React.HTMLAttributes<HTMLDivElement>) {
   const [register, { isLoading }] = useRegisterMutation();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -276,6 +278,7 @@ export function RegisterForm({
       const res = await register(userInfo).unwrap();
 
       if (res.success) {
+        dispatch(authApi.util.invalidateTags(["USER"]));
         toast.success("Account created successfully! Logging you in...", {
           id: toastId,
           position: "top-center",

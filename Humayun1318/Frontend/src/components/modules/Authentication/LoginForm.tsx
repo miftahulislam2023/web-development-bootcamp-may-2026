@@ -15,14 +15,16 @@ import { cn } from "@/lib/utils";
 import { authApi, useLoginMutation } from "@/redux/features/auth/auth.api";
 import { useAppDispatch } from "@/redux/hook";
 import { TRole } from "@/types";
+import { useEffect } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 export function LoginForm({
   className,
+  demoCredentials,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement> & { demoCredentials: string }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
@@ -35,6 +37,16 @@ export function LoginForm({
     },
   });
 
+  useEffect(() => {
+    if (demoCredentials.includes("Admin")) {
+      form.setValue("email", "admin@gmail.com");
+      form.setValue("password", "Admin123");
+    } else if (demoCredentials.includes("User")) {
+      form.setValue("email", "user@gmail.com");
+      form.setValue("password", "User1234");
+    }
+  }, [demoCredentials]);
+
   const [login, { isLoading }] = useLoginMutation();
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
@@ -44,7 +56,7 @@ export function LoginForm({
       });
       return;
     }
-    if(data?.password?.length < 8) {
+    if (data?.password?.length < 8) {
       toast.error("Password must be at least 8 characters", {
         position: "top-center",
       });

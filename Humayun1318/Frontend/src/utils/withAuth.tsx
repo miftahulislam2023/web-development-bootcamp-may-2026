@@ -8,7 +8,6 @@ export const withAuth = (Component: ComponentType, requiredRole?: TRole) => {
   return function AuthWrapper() {
 
     const { data, isLoading, isFetching } = useUserInfoQuery(undefined);
-console.log("withAuth - user info:", data?.data?.role, "isLoading:", isLoading, "isFetching:", isFetching, "requiredRole:", requiredRole);
     // loading state
     if (isLoading || isFetching) {
       return <Loading />;

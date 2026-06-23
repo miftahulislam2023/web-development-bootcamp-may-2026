@@ -1,0 +1,1102 @@
+{
+  "info": {
+    "_postman_id": "6da93947-7fa0-4401-832f-24f250487e37",
+    "name": "Personal Expense API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "39826918"
+  },
+  "item": [
+    {
+      "name": "user",
+      "item": [
+        {
+          "name": "Register user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWZlYjQ1MTVjYjY4MjRlNDA2ZjU0ZGUiLCJlbWFpbCI6Imh1QGdtYWlsLmNvbSIsInJvbGUiOiJzZWVrZXIiLCJpYXQiOjE3NzgzMDAwMDYsImV4cCI6MTc3ODM4NjQwNn0.uN02HU-LQxd6wgHxdiZGUnGGqir2Am9IB0EHdfVTaak",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Humayun Kabir\",\r\n    \"email\": \"Hu87er8ku@a.com\",\r\n    \"password\": \"Pass12345\"\r\n    // \"role\": \"admin\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users/register",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "user update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAxZTA3NzEyNDJmNzEwNTdlNWU5ODQiLCJlbWFpbCI6Imh1QGEuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3Nzg1MDc4OTcsImV4cCI6MTc3ODU5NDI5N30.LPMZR1JFXcKk-9jwWQyFarY8ixkV11EPHwJCPkfteUU",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"kabir\"\r\n    // \"avatarUrl\": null,\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users/update-profile",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users",
+                "update-profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "user status update by admin only",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAxZTM5ODZiZDYzNDk5YzMxODFiNTEiLCJlbWFpbCI6Imh1MTMyQGEuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NTA4Njk3LCJleHAiOjE3Nzg1OTUwOTd9.f48NSETTcmS_L4CQrlSdlnjLcV2GyMeK9r5bCR70F3U",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"status\": \"suspended\"\r\n    // \"avatarUrl\": null,\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users/:id/status",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a01e0771242f71057e5e984"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "change password by own profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAxZTA3NzEyNDJmNzEwNTdlNWU5ODQiLCJlbWFpbCI6Imh1QGEuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3Nzg1MDc4OTcsImV4cCI6MTc3ODU5NDI5N30.LPMZR1JFXcKk-9jwWQyFarY8ixkV11EPHwJCPkfteUU",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"currentPassword\": \"Pass12345\",\r\n    \"newPassword\": \"Pass123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users/change-password",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users",
+                "change-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get own user profile",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAxZTA3NzEyNDJmNzEwNTdlNWU5ODQiLCJlbWFpbCI6Imh1QGEuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3Nzg1MDc4OTcsImV4cCI6MTc3ODU5NDI5N30.LPMZR1JFXcKk-9jwWQyFarY8ixkV11EPHwJCPkfteUU",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"kabir\",\r\n    \"avatarUrl\": null,\r\n    \"currency\": \"USD\",\r\n    \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users/me",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get all users by admin only",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAxZTM5ODZiZDYzNDk5YzMxODFiNTEiLCJlbWFpbCI6Imh1MTMyQGEuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NTA4Njk3LCJleHAiOjE3Nzg1OTUwOTd9.f48NSETTcmS_L4CQrlSdlnjLcV2GyMeK9r5bCR70F3U",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"kabir\",\r\n    \"avatarUrl\": null,\r\n    \"currency\": \"USD\",\r\n    \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get single users by admin only",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAxZTM5ODZiZDYzNDk5YzMxODFiNTEiLCJlbWFpbCI6Imh1MTMyQGEuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NTA4Njk3LCJleHAiOjE3Nzg1OTUwOTd9.f48NSETTcmS_L4CQrlSdlnjLcV2GyMeK9r5bCR70F3U",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"kabir\",\r\n    \"avatarUrl\": null,\r\n    \"currency\": \"USD\",\r\n    \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a01e0771242f71057e5e984"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete own user profile",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAxZDc1M2RiNmFlNzU3NWY2NWE0MGMiLCJlbWFpbCI6Imh1YUBhLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NTA1NTU2LCJleHAiOjE3Nzg1OTE5NTZ9.54YeKhVGgiUotTTn7OgVO4mBkstfTLIGZUCw3-Azd8A",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    // \"password\":\"Pass12345\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/users/delete-account",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "users",
+                "delete-account"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWZlYjQ1MTVjYjY4MjRlNDA2ZjU0ZGUiLCJlbWFpbCI6Imh1QGdtYWlsLmNvbSIsInJvbGUiOiJzZWVrZXIiLCJpYXQiOjE3NzgzMDAwMDYsImV4cCI6MTc3ODM4NjQwNn0.uN02HU-LQxd6wgHxdiZGUnGGqir2Am9IB0EHdfVTaak",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"email\": \"hkrasel9395@gmail.com\",\r\n    \"password\": \"Pass123456\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/auth/login",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "refresh token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{local}}/auth/refresh-token",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "auth",
+                "refresh-token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWZlYjQ1MTVjYjY4MjRlNDA2ZjU0ZGUiLCJlbWFpbCI6Imh1QGdtYWlsLmNvbSIsInJvbGUiOiJzZWVrZXIiLCJpYXQiOjE3NzgzMDAwMDYsImV4cCI6MTc3ODM4NjQwNn0.uN02HU-LQxd6wgHxdiZGUnGGqir2Am9IB0EHdfVTaak",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Humayun Kabir\",\r\n    \"email\": \"Hu12@a.com\",\r\n    \"password\": \"Pass12345\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/auth/logout",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "set password for google login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAyMWIzY2IwMDY2MWVmYjYyNDNkNzQiLCJlbWFpbCI6ImhrcmFzZWw5Mzk1QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NTIyOTQwLCJleHAiOjE3Nzg2MDkzNDB9.2z-JH898tAVtSVHVIwOtH5vKwCytyQ6E5Y7wRDq49ec",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"password\": \"Pass123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/auth/set-password",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "auth",
+                "set-password"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "categories",
+      "item": [
+        {
+          "name": "create custom categories by user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAyMWIzY2IwMDY2MWVmYjYyNDNkNzQiLCJlbWFpbCI6ImhrcmFzZWw5Mzk1QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NTkxNDcxLCJleHAiOjE3Nzg2Nzc4NzF9.NPOhWvrVfZY_e81S81oAvp6wVbDfv0sbccuRoDlbPfQ",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Salary earning\",\r\n    \"type\": \"income\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/categories",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "user's own categories + system categories",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAyMWIzY2IwMDY2MWVmYjYyNDNkNzQiLCJlbWFpbCI6ImhrcmFzZWw5Mzk1QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NjgyODU3LCJleHAiOjE3Nzg3NjkyNTd9.zKkjNfRe7UjZfowrI7iwZD0eqBPIBdrrSpTfILn-MMc",
+                "type": "text"
+              },
+              {
+                "key": "limit",
+                "value": "3",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Hotel cost\",\r\n    \"type\": \"expense\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/categories?limit=2",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "isActive",
+                  "value": "false",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "income",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "2",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "single category",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAzMzVjMTIxMTJlYTliNzM0OTJmYzgiLCJlbWFpbCI6Imh1OEBhLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NTk1MjY1LCJleHAiOjE3Nzg2ODE2NjV9.pnJhocLbES3qAj6nDvLhGlHUHyHxKJZnGaMW1OoQGkA",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Hotel cost\",\r\n    \"type\": \"expense\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/categories/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "categories",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a032d44746077069ec27bf2o"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "owner self category update only",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAyMWIzY2IwMDY2MWVmYjYyNDNkNzQiLCJlbWFpbCI6ImhrcmFzZWw5Mzk1QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NTkxNDcxLCJleHAiOjE3Nzg2Nzc4NzF9.NPOhWvrVfZY_e81S81oAvp6wVbDfv0sbccuRoDlbPfQ",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Hotel cost yyy\"\r\n    // \"type\": \"expense\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/categories/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "categories",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a032d44746077069ec27bf2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "owner self category deleted only",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTAyMWIzY2IwMDY2MWVmYjYyNDNkNzQiLCJlbWFpbCI6ImhrcmFzZWw5Mzk1QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzc4NTkxNDcxLCJleHAiOjE3Nzg2Nzc4NzF9.NPOhWvrVfZY_e81S81oAvp6wVbDfv0sbccuRoDlbPfQ",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Hotel cost yyy\"\r\n    // \"type\": \"expense\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/categories/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "categories",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a032d44746077069ec27bfe"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "transactions",
+      "item": [
+        {
+          "name": "create own transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0MjA1YzgzZDEzZGZiMzU5NDQ4MzUiLCJlbWFpbCI6Imh1ODhAYS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc3ODY1NTMyNiwiZXhwIjoxNzc4NzQxNzI2fQ.G4TW-tDhr1D2vCvRDZf4nKIkOCA72rtYADSwHbAmsbk",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"categoryId\": \"6a032d44746077069ec27bf4\",\r\n    \"type\": \"expense\",\r\n    \"amount\": 50000,\r\n    \"currency\": \"USD\",\r\n    \"description\": \"Monthly salary fooo\",\r\n    \"paymentMethod\": \"bank_transfer\",\r\n    \"tags\": [\r\n        \"salary\",\r\n        \"monthly\",\r\n        \"job\"\r\n    ],\r\n    \"date\": \"2026-05-20\",\r\n    \"isRecurring\": true,\r\n    \"referenceNote\": \"May salary\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/transactions",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get all transactions by user",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0NzUwM2M3OTM0ZWQ1YjdhN2VhYjMiLCJlbWFpbCI6Imh1ODdyOEBhLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3ODY3Njk5NSwiZXhwIjoxNzc4NzYzMzk1fQ.QNwzS-A-I1jvADAjlLzz_cxuiU5FaacNeN9nkxIWXdQ",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Hotel cost\",\r\n    \"type\": \"expense\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/transactions",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "endDate",
+                  "value": "2026-05-05",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-05-02",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "1",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "-createdAt",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "foo",
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get single transaction by user",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0MjA1YzgzZDEzZGZiMzU5NDQ4MzUiLCJlbWFpbCI6Imh1ODhAYS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc3ODY1NTMyNiwiZXhwIjoxNzc4NzQxNzI2fQ.G4TW-tDhr1D2vCvRDZf4nKIkOCA72rtYADSwHbAmsbk",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Hotel cost\",\r\n    \"type\": \"expense\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/transactions/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "transactions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a04484356f1aa29b3a87af6"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get summary of the total balance by user",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0MjA1YzgzZDEzZGZiMzU5NDQ4MzUiLCJlbWFpbCI6Imh1ODhAYS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc3ODY1NTMyNiwiZXhwIjoxNzc4NzQxNzI2fQ.G4TW-tDhr1D2vCvRDZf4nKIkOCA72rtYADSwHbAmsbk",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    \"name\": \"Hotel cost\",\r\n    \"type\": \"expense\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/transactions/summary",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "transactions",
+                "summary"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update transaction by own user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0MjA1YzgzZDEzZGZiMzU5NDQ4MzUiLCJlbWFpbCI6Imh1ODhAYS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc3ODY1NTMyNiwiZXhwIjoxNzc4NzQxNzI2fQ.G4TW-tDhr1D2vCvRDZf4nKIkOCA72rtYADSwHbAmsbk",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    // \"date\": \"2026-05-30\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n    \"categoryId\": \"6a032d44746077069ec27bf3\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/transactions/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "transactions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a04484356f1aa29b3a87af6"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update transaction by own user Copy",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0MjA1YzgzZDEzZGZiMzU5NDQ4MzUiLCJlbWFpbCI6Imh1ODhAYS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc3ODY1NTMyNiwiZXhwIjoxNzc4NzQxNzI2fQ.G4TW-tDhr1D2vCvRDZf4nKIkOCA72rtYADSwHbAmsbk",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \r\n    // \"date\": \"2026-05-30\"\r\n    // \"currency\": \"USD\",\r\n    // \"timezone\": \"Asia/Dhaka\"\r\n    \"categoryId\": \"6a032d44746077069ec27bf3\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/transactions/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "transactions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a04484356f1aa29b3a87af6"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "recurrence",
+      "item": [
+        {
+          "name": "Manually fires the cron logic -admin only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0NzUwM2M3OTM0ZWQ1YjdhN2VhYjMiLCJlbWFpbCI6Imh1ODdyOEBhLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3ODY3Njk5NSwiZXhwIjoxNzc4NzYzMzk1fQ.QNwzS-A-I1jvADAjlLzz_cxuiU5FaacNeN9nkxIWXdQ",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/recurrences/trigger",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "recurrences",
+                "trigger"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "recurrence create by user own",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0NzUwM2M3OTM0ZWQ1YjdhN2VhYjMiLCJlbWFpbCI6Imh1ODdyOEBhLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3ODY3Njk5NSwiZXhwIjoxNzc4NzYzMzk1fQ.QNwzS-A-I1jvADAjlLzz_cxuiU5FaacNeN9nkxIWXdQ",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"categoryId\": \"6a032d44746077069ec27bf2\",\r\n    \"type\": \"expense\",\r\n    \"amount\": 50,\r\n    // \"currency\": \"BDT\",\r\n    // \"description\": \"Daily tea\",\r\n    // \"paymentMethod\": \"CASH\",\r\n    \"frequency\": \"daily\",\r\n    // \"interval\": ,\r\n    \"startDate\": \"2026-05-14\"\r\n    // \"endDate\": null,\r\n    // \"isActive\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/recurrences",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "recurrences"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "recurrence single get by user own",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0NzUwM2M3OTM0ZWQ1YjdhN2VhYjMiLCJlbWFpbCI6Imh1ODdyOEBhLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3ODY3Njk5NSwiZXhwIjoxNzc4NzYzMzk1fQ.QNwzS-A-I1jvADAjlLzz_cxuiU5FaacNeN9nkxIWXdQ",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/recurrences/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "recurrences",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a0497bed27efc0a687d0526"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "all recurrence  get by user own",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0NzU4MmM3OTM0ZWQ1YjdhN2VhYjgiLCJlbWFpbCI6Imh1ODdyOHVAYS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc3ODY3NzEyMywiZXhwIjoxNzc4NzYzNTIzfQ._KK0vLV4eJaRazAR8XobpxTe7jRuR-AkO-kYGZ5Tr0E",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{local}}/recurrences/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "recurrences",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a047abf5ff112f4d7874969"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "recurrence update by user own",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0NzUwM2M3OTM0ZWQ1YjdhN2VhYjMiLCJlbWFpbCI6Imh1ODdyOEBhLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3ODY3Njk5NSwiZXhwIjoxNzc4NzYzMzk1fQ.QNwzS-A-I1jvADAjlLzz_cxuiU5FaacNeN9nkxIWXdQ",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"description\": \"testing.........\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/recurrences/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "recurrences",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a047abf5ff112f4d7874969"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "recurrence deleted by user own",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTA0NzUwM2M3OTM0ZWQ1YjdhN2VhYjMiLCJlbWFpbCI6Imh1ODdyOEBhLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3ODY3Njk5NSwiZXhwIjoxNzc4NzYzMzk1fQ.QNwzS-A-I1jvADAjlLzz_cxuiU5FaacNeN9nkxIWXdQ",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"description\": \"testing.........\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{local}}/recurrences/:id",
+              "host": [
+                "{{local}}"
+              ],
+              "path": [
+                "recurrences",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6a047abf5ff112f4d7874969"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

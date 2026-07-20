@@ -57,4 +57,8 @@ export interface Chat {
   messages: ChatMessage[];
   /** Array of user IDs in this chat */
   memberIds?: string[];
+  /** Pagination cursor for fetching older messages */
+  nextCursor?: string | null;
+  /** Whether there are older messages to fetch */
+  hasMore?: boolean;
 }

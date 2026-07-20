@@ -15,7 +15,7 @@ export async function GET() {
     const friendships = await Friendship.find({
       users: user._id
     })
-      .populate('users', '-password')
+      .populate('users', 'username avatar email')
       .lean();
 
     const friends = friendships.map(friendship => {

@@ -34,10 +34,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const socket = getSocket();
-    setSocketInstance(socket);
-
-    socket.connect();
+    let active = true;
 
     function onConnect() {
       setIsConnected(true);
@@ -60,12 +57,33 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       setOnlineUsers((prev) => prev.filter((id) => id !== userId));
     }
 
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("user:online", onUserOnline);
-    socket.on("user:offline", onUserOffline);
+    async function initializeSocket() {
+      try {
+        const res = await fetch("/api/auth/token");
+        const data = await res.json();
+        if (!active) return;
+
+        if (data.success && data.token) {
+          const socket = getSocket(data.token);
+          setSocketInstance(socket);
+          
+          socket.on("connect", onConnect);
+          socket.on("disconnect", onDisconnect);
+          socket.on("user:online", onUserOnline);
+          socket.on("user:offline", onUserOffline);
+
+          socket.connect();
+        }
+      } catch (err) {
+        console.error("Failed to initialize socket connection:", err);
+      }
+    }
+
+    initializeSocket();
 
     return () => {
+      active = false;
+      const socket = getSocket();
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("user:online", onUserOnline);
@@ -73,14 +91,6 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       socket.disconnect();
     };
   }, [user]); // Re-run if user changes (e.g. login/logout)
-
-  // 2. Register User once connected
-  useEffect(() => {
-    if (!socketInstance || !isConnected || !user?._id) return;
-    
-    console.log(`[Socket] Registering user: ${user._id}`);
-    socketInstance.emit("user:register", user._id);
-  }, [socketInstance, isConnected, user?._id]);
 
   return (
     <SocketContext.Provider value={{ socket: socketInstance, isConnected, onlineUsers }}>

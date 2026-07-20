@@ -43,12 +43,7 @@ export async function POST(req: Request) {
       readBy: [user._id]
     });
 
-    message = await message.populate('sender', 'username email avatar');
-    message = await message.populate('chat');
-    message = await User.populate(message, {
-      path: 'chat.users',
-      select: 'username email avatar',
-    });
+    message = await message.populate('sender', 'username avatar');
 
     // Update latest message in chat
     await Chat.findByIdAndUpdate(chatId, {

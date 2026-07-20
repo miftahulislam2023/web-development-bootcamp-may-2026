@@ -16,7 +16,7 @@ export async function GET() {
       receiver: user._id,
       status: 'pending'
     })
-      .populate('sender', '-password')
+      .populate('sender', 'username avatar email')
       .sort({ createdAt: -1 })
       .lean();
 

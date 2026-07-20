@@ -41,8 +41,9 @@ export async function POST(req: Request) {
     });
 
     const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
-      .populate('users', '-password')
-      .populate('groupAdmin', '-password');
+      .populate('users', 'username avatar')
+      .populate('groupAdmin', 'username')
+      .lean();
 
     return NextResponse.json({ success: true, data: fullGroupChat }, { status: 201 });
   } catch (error: any) {

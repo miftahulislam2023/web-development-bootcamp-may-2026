@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -28,22 +29,38 @@ const io = new Server(PORT, {
   },
 });
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Socket authentication middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    return next(new Error("Authentication error: No token provided"));
+  }
+  try {
+    if (!JWT_SECRET) {
+      return next(new Error("Authentication error: Secret is undefined"));
+    }
+    const payload = jwt.verify(token, JWT_SECRET) as { userId: string };
+    socket.data.userId = payload.userId;
+    next();
+  } catch (err) {
+    return next(new Error("Authentication error: Invalid token"));
+  }
+});
+
 const onlineUsers = new Map<string, string>(); // userId -> socketId
 
 io.on("connection", (socket) => {
-  console.log(`[Socket] New connection: ${socket.id}`);
-
-  // Registration flow for production-friendly cross-domain auth
-  socket.on("user:register", (userId: string) => {
-    if (!userId || typeof userId !== "string") return;
-
-    socket.data.userId = userId;
+  const userId = socket.data.userId;
+  if (userId) {
     onlineUsers.set(userId, socket.id);
     socket.join(userId);
-
-    console.log(`[Socket] User registered: ${userId} (socket: ${socket.id})`);
+    console.log(`[Socket] User connected and authenticated: ${userId} (socket: ${socket.id})`);
     io.emit("user:online", userId);
-  });
+  } else {
+    console.log(`[Socket] Unregistered socket connected: ${socket.id}`);
+  }
 
   socket.on("message:send", (data: { chatId: string; message: any; receiverIds: string[] }) => {
     const { chatId, message, receiverIds } = data;

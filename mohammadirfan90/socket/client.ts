@@ -2,7 +2,7 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-export const getSocket = (): Socket => {
+export const getSocket = (token?: string): Socket => {
   if (!socket) {
     const URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
     
@@ -12,6 +12,9 @@ export const getSocket = (): Socket => {
       autoConnect: false,
       withCredentials: true,
       transports: ["websocket", "polling"],
+      auth: {
+        token: token,
+      },
     });
 
     socket.on("connect", () => {
@@ -25,6 +28,8 @@ export const getSocket = (): Socket => {
     socket.on("connect_error", (error) => {
       console.error(`[Socket] Connection Error:`, error.message);
     });
+  } else if (token) {
+    socket.auth = { token };
   }
   return socket;
 };

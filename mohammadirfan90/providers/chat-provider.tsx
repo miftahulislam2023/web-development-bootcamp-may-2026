@@ -29,7 +29,8 @@ interface ChatState {
 type ChatAction =
   | { type: "SET_CURRENT_USER"; user: ChatUser }
   | { type: "SET_CHATS"; chats: Chat[] }
-  | { type: "SET_MESSAGES"; chatId: string; messages: ChatMessage[] }
+  | { type: "SET_MESSAGES"; chatId: string; messages: ChatMessage[]; nextCursor?: string | null; hasMore?: boolean }
+  | { type: "ADD_OLDER_MESSAGES"; chatId: string; messages: ChatMessage[]; nextCursor?: string | null; hasMore?: boolean }
   | { type: "SELECT_CHAT"; chatId: string }
   | { type: "ADD_MESSAGE"; chatId: string; message: ChatMessage }
   | { type: "CLEAR_UNREAD"; chatId: string }
@@ -52,7 +53,17 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...state,
         chats: state.chats.map((chat) =>
           chat.id === action.chatId
-            ? { ...chat, messages: action.messages }
+            ? { ...chat, messages: action.messages, nextCursor: action.nextCursor, hasMore: action.hasMore }
+            : chat
+        ),
+      };
+    }
+    case "ADD_OLDER_MESSAGES": {
+      return {
+        ...state,
+        chats: state.chats.map((chat) =>
+          chat.id === action.chatId
+            ? { ...chat, messages: [...action.messages, ...chat.messages], nextCursor: action.nextCursor, hasMore: action.hasMore }
             : chat
         ),
       };
@@ -109,6 +120,7 @@ interface ChatContextValue {
   dmChats: Chat[];
   groupChats: Chat[];
   selectChat: (chatId: string) => void;
+  fetchMoreMessages: (chatId: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   refetchChats: () => Promise<void>;
 }
@@ -296,10 +308,43 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           };
         });
         
-        dispatch({ type: "SET_MESSAGES", chatId, messages: mappedMessages });
+        dispatch({ type: "SET_MESSAGES", chatId, messages: mappedMessages, nextCursor: data.nextCursor, hasMore: data.hasMore });
       }
     } catch (err) {
       console.error("Failed to fetch messages:", err);
+    }
+  };
+
+  // 2.5 Fetch More Messages
+  const fetchMoreMessages = async (chatId: string) => {
+    const chat = state.chats.find(c => c.id === chatId);
+    if (!chat || !chat.hasMore || !chat.nextCursor) return;
+
+    try {
+      const res = await fetch(`/api/messages/chat/${chatId}?cursor=${chat.nextCursor}`);
+      const data = await res.json();
+      
+      if (data.data && state.currentUser) {
+        const mappedMessages: ChatMessage[] = data.data.map((m: any) => {
+          const isOwn = m.sender._id === state.currentUser!.id;
+          return {
+            id: m._id,
+            content: m.content,
+            timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isOwn,
+            sender: {
+              id: m.sender._id,
+              name: m.sender.username,
+              initials: getInitials(m.sender.username),
+              avatarUrl: m.sender.avatar,
+            }
+          };
+        });
+        
+        dispatch({ type: "ADD_OLDER_MESSAGES", chatId, messages: mappedMessages, nextCursor: data.nextCursor, hasMore: data.hasMore });
+      }
+    } catch (err) {
+      console.error("Failed to fetch older messages:", err);
     }
   };
 
@@ -367,7 +412,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       state.chats.find((c) => c.id === state.activeChatId) ?? null;
     const dmChats = state.chats.filter((c) => c.type === "dm");
     const groupChats = state.chats.filter((c) => c.type === "group");
-    return { state, activeChat, dmChats, groupChats, selectChat, sendMessage, refetchChats };
+    return { state, activeChat, dmChats, groupChats, selectChat, fetchMoreMessages, sendMessage, refetchChats };
   }, [state]);
 
   return (

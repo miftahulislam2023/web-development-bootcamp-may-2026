@@ -39,14 +39,15 @@ export async function POST(req: Request) {
       isGroupChat: false,
       users: { $all: [user._id, friendId] }
     })
-      .populate('users', '-password')
-      .populate('latestMessage');
+      .populate('users', 'username avatar')
+      .populate('latestMessage')
+      .lean();
 
     if (chat) {
       // Populate sender of latest message if exists
       chat = await User.populate(chat, {
         path: 'latestMessage.sender',
-        select: 'username email avatar',
+        select: 'username avatar',
       });
       return NextResponse.json({ success: true, data: chat });
     }
@@ -59,7 +60,8 @@ export async function POST(req: Request) {
     });
 
     const fullChat = await Chat.findOne({ _id: newChat._id })
-      .populate('users', '-password');
+      .populate('users', 'username avatar')
+      .lean();
 
     return NextResponse.json({ success: true, data: fullChat }, { status: 201 });
   } catch (error: any) {

@@ -19,15 +19,15 @@ export async function GET() {
     Message.init();
 
     let chats = await Chat.find({ users: user._id })
-      .populate('users', '-password')
-      .populate('groupAdmin', '-password')
+      .populate('users', 'username avatar')
+      .populate('groupAdmin', 'username')
       .populate('latestMessage')
       .sort({ updatedAt: -1 })
       .lean();
 
     chats = await User.populate(chats, {
       path: 'latestMessage.sender',
-      select: 'username email avatar',
+      select: 'username avatar',
     });
 
     return NextResponse.json({ success: true, data: chats });

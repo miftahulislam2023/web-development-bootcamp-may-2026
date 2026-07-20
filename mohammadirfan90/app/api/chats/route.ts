@@ -5,6 +5,7 @@ import { User } from '@/models/User';
 // Need to import Message to ensure model is registered before population sometimes, though typically fine.
 import { Message } from '@/models/Message';
 import { connectDB } from '@/lib/db';
+import { decryptMessageDoc } from '@/lib/encryption';
 
 export async function GET() {
   try {
@@ -28,6 +29,12 @@ export async function GET() {
     chats = await User.populate(chats, {
       path: 'latestMessage.sender',
       select: 'username avatar',
+    });
+
+    chats.forEach((chat: any) => {
+      if (chat.latestMessage) {
+        decryptMessageDoc(chat.latestMessage);
+      }
     });
 
     return NextResponse.json({ success: true, data: chats });

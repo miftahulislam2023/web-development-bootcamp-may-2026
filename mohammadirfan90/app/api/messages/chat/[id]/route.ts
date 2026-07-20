@@ -4,6 +4,7 @@ import { Chat } from '@/models/Chat';
 import { Message } from '@/models/Message';
 import { connectDB } from '@/lib/db';
 import mongoose from 'mongoose';
+import { decryptMessageDoc } from '@/lib/encryption';
 
 export async function GET(
   req: Request,
@@ -48,7 +49,7 @@ export async function GET(
       .limit(50)
       .lean();
 
-    messages = messages.reverse();
+    messages = messages.reverse().map(decryptMessageDoc);
 
     const nextCursor = messages.length > 0 ? messages[0]._id : null;
     const hasMore = messages.length === 50;

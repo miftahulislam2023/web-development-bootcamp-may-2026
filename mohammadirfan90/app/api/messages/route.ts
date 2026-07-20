@@ -5,6 +5,7 @@ import { Message } from '@/models/Message';
 import { User } from '@/models/User';
 import { connectDB } from '@/lib/db';
 import mongoose from 'mongoose';
+import { encryptMessage } from '@/lib/encryption';
 
 export async function POST(req: Request) {
   try {
@@ -36,12 +37,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'You are not a member of this chat' }, { status: 403 });
     }
 
+    const encrypted = encryptMessage(content.trim());
+
     let message = await Message.create({
       sender: user._id,
-      content: content.trim(),
+      ciphertext: encrypted.ciphertext,
+      iv: encrypted.iv,
+      authTag: encrypted.authTag,
       chat: chatId,
       readBy: [user._id]
     });
+
+    // Inject the plaintext back into the Mongoose document so the API response
+    // stays fully backwards compatible with the frontend.
+    message.content = content.trim();
 
     message = await message.populate('sender', 'username avatar');
 

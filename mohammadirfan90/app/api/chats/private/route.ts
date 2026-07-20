@@ -5,6 +5,7 @@ import { Friendship } from '@/models/Friendship';
 import { User } from '@/models/User';
 import { connectDB } from '@/lib/db';
 import mongoose from 'mongoose';
+import { decryptMessageDoc } from '@/lib/encryption';
 
 export async function POST(req: Request) {
   try {
@@ -49,6 +50,9 @@ export async function POST(req: Request) {
         path: 'latestMessage.sender',
         select: 'username avatar',
       });
+      if (chat.latestMessage) {
+        decryptMessageDoc(chat.latestMessage);
+      }
       return NextResponse.json({ success: true, data: chat });
     }
 

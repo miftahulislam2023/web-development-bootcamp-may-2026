@@ -4,11 +4,9 @@ A secure, real-time developer collaboration platform featuring server-side messa
 
 DevConnect is a full-stack developer communication tool designed to isolate stateful real-time synchronization from stateless REST resources. By utilizing a hybrid split-deployment model, it deploys a Next.js serverless API alongside an independent, stateful Node.js WebSocket process. Message payloads are secured at rest using AES-256-GCM block ciphers with cryptographically random initialization vectors, while chat history queries maintain consistent O(1) performance using database-level cursor pagination.
 
-![DevConnect Chat Interface](app/screenshots/chat-interface.png)
-
 [![Live Demo](https://img.shields.io/badge/Demo-Live_App-blue?style=flat-square)](https://devconnect-live-chat.vercel.app/)
 [![Repository](https://img.shields.io/badge/Repo-GitHub-181717?style=flat-square)](https://github.com/mohammadirfan90/devconnect-live-chat)
-[![Documentation](https://img.shields.io/badge/Docs-Architecture-8A2BE2?style=flat-square)](app/README-Architecture.md)
+[![Documentation](https://img.shields.io/badge/Docs-Architecture-8A2BE2?style=flat-square)](README-Architecture.md)
 
 ## Why DevConnect?
 
@@ -35,21 +33,12 @@ Traditional communication tools store developers' messages, configuration files,
 
 ## Screenshots
 
-### Landing & Authentication
-![Authentication](app/screenshots/login-signup.png)
-
-### Chat Interface
-![Chat Interface](app/screenshots/chat-interface.png)
-
-### Group Chat Dialog
-![Group Chat](app/screenshots/group-creation-modal.png)
-
-### Friend Request & Search Management
-![Friend Management](app/screenshots/friend-management-1.png)
-![Find Friends](app/screenshots/find-friends.png)
-
-### Dark Mode View
-![Dark Mode](app/screenshots/dark-mode.png)
+* **Landing Page:** *[Placeholder for Landing Page Showcase]*
+* **Authentication:** *[Placeholder for Secure Login/Register Screen]*
+* **Chat Interface:** *[Placeholder for Active Chat Feed]*
+* **Group Chat:** *[Placeholder for Group Creation & Member List]*
+* **Friend Management:** *[Placeholder for Friendship Search & Requests]*
+* **Dark Mode:** *[Placeholder for Dark Theme Showcase]*
 
 ## Key Features
 
@@ -172,11 +161,11 @@ sequenceDiagram
 
 ## Documentation
 
-* [Architecture Guide](app/README-Architecture.md)
-* [API & Database Schema](app/docs/apidbschema.md)
-* [Authentication System](app/docs/authentication.md)
-* [Social Friendship System](app/docs/friendship_system.md)
-* [UI Design Tokens](app/docs/uidesignsystem.md)
+* [Architecture Guide](README-Architecture.md)
+* [API & Database Schema](docs/apidbschema.md)
+* [Authentication System](docs/authentication.md)
+* [Social Friendship System](docs/friendship_system.md)
+* [UI Design Tokens](docs/uidesignsystem.md)
 
 ## Future Improvements
 
